@@ -42,14 +42,23 @@ namespace ArchonLightingSystem
             this.toolTip1 = new System.Windows.Forms.ToolTip(this.components);
             this.toolTip2 = new System.Windows.Forms.ToolTip(this.components);
             this.lbl_fanSpeed = new System.Windows.Forms.Label();
-            this.txt_Addr = new System.Windows.Forms.TextBox();
-            this.txt_Len = new System.Windows.Forms.TextBox();
             this.label1 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.txt_Data = new System.Windows.Forms.TextBox();
+            this.txt_Data_1 = new System.Windows.Forms.TextBox();
             this.btn_Read = new System.Windows.Forms.Button();
             this.btn_Write = new System.Windows.Forms.Button();
+            this.txt_Data_2 = new System.Windows.Forms.TextBox();
+            this.txt_Data_3 = new System.Windows.Forms.TextBox();
+            this.txt_Data_4 = new System.Windows.Forms.TextBox();
+            this.txt_Data_5 = new System.Windows.Forms.TextBox();
+            this.txt_Data_6 = new System.Windows.Forms.TextBox();
+            this.txt_Data_7 = new System.Windows.Forms.TextBox();
+            this.txt_Data_8 = new System.Windows.Forms.TextBox();
+            this.num_Addr = new System.Windows.Forms.NumericUpDown();
+            this.num_Len = new System.Windows.Forms.NumericUpDown();
+            ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
             this.SuspendLayout();
             // 
             // PushbuttonState_lbl
@@ -163,24 +172,6 @@ namespace ArchonLightingSystem
             this.lbl_fanSpeed.TabIndex = 26;
             this.lbl_fanSpeed.Text = "0";
             // 
-            // txt_Addr
-            // 
-            this.txt_Addr.Location = new System.Drawing.Point(12, 184);
-            this.txt_Addr.MaxLength = 3;
-            this.txt_Addr.Name = "txt_Addr";
-            this.txt_Addr.Size = new System.Drawing.Size(56, 20);
-            this.txt_Addr.TabIndex = 27;
-            this.txt_Addr.Text = "0";
-            // 
-            // txt_Len
-            // 
-            this.txt_Len.Location = new System.Drawing.Point(84, 184);
-            this.txt_Len.MaxLength = 2;
-            this.txt_Len.Name = "txt_Len";
-            this.txt_Len.Size = new System.Drawing.Size(56, 20);
-            this.txt_Len.TabIndex = 28;
-            this.txt_Len.Text = "1";
-            // 
             // label1
             // 
             this.label1.AutoSize = true;
@@ -194,7 +185,7 @@ namespace ArchonLightingSystem
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(84, 165);
+            this.label2.Location = new System.Drawing.Point(87, 165);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(25, 13);
             this.label2.TabIndex = 30;
@@ -203,22 +194,22 @@ namespace ArchonLightingSystem
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(155, 165);
+            this.label3.Location = new System.Drawing.Point(15, 218);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(30, 13);
             this.label3.TabIndex = 32;
             this.label3.Text = "Data";
             // 
-            // txt_Data
+            // txt_Data_1
             // 
-            this.txt_Data.Location = new System.Drawing.Point(155, 184);
-            this.txt_Data.Name = "txt_Data";
-            this.txt_Data.Size = new System.Drawing.Size(56, 20);
-            this.txt_Data.TabIndex = 31;
+            this.txt_Data_1.Location = new System.Drawing.Point(12, 234);
+            this.txt_Data_1.Name = "txt_Data_1";
+            this.txt_Data_1.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_1.TabIndex = 31;
             // 
             // btn_Read
             // 
-            this.btn_Read.Location = new System.Drawing.Point(235, 165);
+            this.btn_Read.Location = new System.Drawing.Point(213, 182);
             this.btn_Read.Name = "btn_Read";
             this.btn_Read.Size = new System.Drawing.Size(75, 23);
             this.btn_Read.TabIndex = 33;
@@ -228,7 +219,7 @@ namespace ArchonLightingSystem
             // 
             // btn_Write
             // 
-            this.btn_Write.Location = new System.Drawing.Point(235, 194);
+            this.btn_Write.Location = new System.Drawing.Point(307, 181);
             this.btn_Write.Name = "btn_Write";
             this.btn_Write.Size = new System.Drawing.Size(75, 23);
             this.btn_Write.TabIndex = 34;
@@ -236,19 +227,122 @@ namespace ArchonLightingSystem
             this.btn_Write.UseVisualStyleBackColor = true;
             this.btn_Write.Click += new System.EventHandler(this.btn_Write_Click);
             // 
+            // txt_Data_2
+            // 
+            this.txt_Data_2.Enabled = false;
+            this.txt_Data_2.Location = new System.Drawing.Point(59, 234);
+            this.txt_Data_2.Name = "txt_Data_2";
+            this.txt_Data_2.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_2.TabIndex = 35;
+            // 
+            // txt_Data_3
+            // 
+            this.txt_Data_3.Enabled = false;
+            this.txt_Data_3.Location = new System.Drawing.Point(106, 234);
+            this.txt_Data_3.Name = "txt_Data_3";
+            this.txt_Data_3.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_3.TabIndex = 36;
+            // 
+            // txt_Data_4
+            // 
+            this.txt_Data_4.Enabled = false;
+            this.txt_Data_4.Location = new System.Drawing.Point(153, 234);
+            this.txt_Data_4.Name = "txt_Data_4";
+            this.txt_Data_4.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_4.TabIndex = 37;
+            // 
+            // txt_Data_5
+            // 
+            this.txt_Data_5.Enabled = false;
+            this.txt_Data_5.Location = new System.Drawing.Point(200, 234);
+            this.txt_Data_5.Name = "txt_Data_5";
+            this.txt_Data_5.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_5.TabIndex = 38;
+            // 
+            // txt_Data_6
+            // 
+            this.txt_Data_6.Enabled = false;
+            this.txt_Data_6.Location = new System.Drawing.Point(247, 234);
+            this.txt_Data_6.Name = "txt_Data_6";
+            this.txt_Data_6.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_6.TabIndex = 39;
+            // 
+            // txt_Data_7
+            // 
+            this.txt_Data_7.Enabled = false;
+            this.txt_Data_7.Location = new System.Drawing.Point(294, 234);
+            this.txt_Data_7.Name = "txt_Data_7";
+            this.txt_Data_7.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_7.TabIndex = 40;
+            // 
+            // txt_Data_8
+            // 
+            this.txt_Data_8.Enabled = false;
+            this.txt_Data_8.Location = new System.Drawing.Point(341, 234);
+            this.txt_Data_8.Name = "txt_Data_8";
+            this.txt_Data_8.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_8.TabIndex = 41;
+            // 
+            // num_Addr
+            // 
+            this.num_Addr.Increment = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+            this.num_Addr.Location = new System.Drawing.Point(12, 183);
+            this.num_Addr.Maximum = new decimal(new int[] {
+            255,
+            0,
+            0,
+            0});
+            this.num_Addr.Name = "num_Addr";
+            this.num_Addr.Size = new System.Drawing.Size(62, 20);
+            this.num_Addr.TabIndex = 42;
+            // 
+            // num_Len
+            // 
+            this.num_Len.Location = new System.Drawing.Point(90, 183);
+            this.num_Len.Maximum = new decimal(new int[] {
+            8,
+            0,
+            0,
+            0});
+            this.num_Len.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_Len.Name = "num_Len";
+            this.num_Len.Size = new System.Drawing.Size(66, 20);
+            this.num_Len.TabIndex = 43;
+            this.num_Len.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_Len.ValueChanged += new System.EventHandler(this.numericUpDown2_ValueChanged);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(359, 236);
+            this.ClientSize = new System.Drawing.Size(408, 287);
+            this.Controls.Add(this.num_Len);
+            this.Controls.Add(this.num_Addr);
+            this.Controls.Add(this.txt_Data_8);
+            this.Controls.Add(this.txt_Data_7);
+            this.Controls.Add(this.txt_Data_6);
+            this.Controls.Add(this.txt_Data_5);
+            this.Controls.Add(this.txt_Data_4);
+            this.Controls.Add(this.txt_Data_3);
+            this.Controls.Add(this.txt_Data_2);
             this.Controls.Add(this.btn_Write);
             this.Controls.Add(this.btn_Read);
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.txt_Data);
+            this.Controls.Add(this.txt_Data_1);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Controls.Add(this.txt_Len);
-            this.Controls.Add(this.txt_Addr);
             this.Controls.Add(this.lbl_fanSpeed);
             this.Controls.Add(this.PushbuttonState_lbl);
             this.Controls.Add(this.ToggleLEDs_btn);
@@ -258,6 +352,8 @@ namespace ArchonLightingSystem
             this.Controls.Add(this.progressBar1);
             this.Name = "Form1";
             this.Text = "HID PnP Demo";
+            ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_Len)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -278,14 +374,21 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.ToolTip toolTip1;
         private System.Windows.Forms.ToolTip toolTip2;
         private System.Windows.Forms.Label lbl_fanSpeed;
-        private System.Windows.Forms.TextBox txt_Addr;
-        private System.Windows.Forms.TextBox txt_Len;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.TextBox txt_Data;
+        private System.Windows.Forms.TextBox txt_Data_1;
         private System.Windows.Forms.Button btn_Read;
         private System.Windows.Forms.Button btn_Write;
+        private System.Windows.Forms.TextBox txt_Data_2;
+        private System.Windows.Forms.TextBox txt_Data_3;
+        private System.Windows.Forms.TextBox txt_Data_4;
+        private System.Windows.Forms.TextBox txt_Data_5;
+        private System.Windows.Forms.TextBox txt_Data_6;
+        private System.Windows.Forms.TextBox txt_Data_7;
+        private System.Windows.Forms.TextBox txt_Data_8;
+        private System.Windows.Forms.NumericUpDown num_Addr;
+        private System.Windows.Forms.NumericUpDown num_Len;
     }
 }
 

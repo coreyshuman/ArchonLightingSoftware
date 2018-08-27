@@ -84,11 +84,15 @@ namespace ArchonLightingSystem
                     PushbuttonState_lbl.Text = "Pushbutton State: Pressed";			//Update the pushbutton state text label on the form, so the user can see the result 
 
                 //Update the ANxx/POT Voltage indicator value (progressbar)
-                progressBar1.Value = (int)usbApp.Data.FanSpeed;
+                progressBar1.Value = (int)usbApp.Data.FanSpeed > 3000 ? 3000 : (int)usbApp.Data.FanSpeed;
                 lbl_fanSpeed.Text = usbApp.Data.FanSpeed.ToString();
                 if(usbApp.Data.EepromReadDone)
                 {
-                    txt_Data.Text = usbApp.Data.EepromData[1].ToString();
+                    for (int i = 0; i < usbApp.Data.EepromLength; i++)
+                    {
+                        Control ctn = this.Controls["txt_Data_" + (i + 1)];
+                        ctn.Text = usbApp.Data.EepromData[i].ToString();
+                    }
                     usbApp.Data.EepromReadDone = false;
                 }
             }
@@ -101,17 +105,51 @@ namespace ArchonLightingSystem
 
         private void btn_Read_Click(object sender, EventArgs e)
         {
-            usbApp.Data.EepromAddress = (uint)Int32.Parse(txt_Addr.Text);
-            usbApp.Data.EepromLength = (uint)Int32.Parse(txt_Len.Text);
+            usbApp.Data.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
+            usbApp.Data.EepromLength = (uint)Int32.Parse(num_Len.Text);
             usbApp.Data.EepromReadPending = true;
         }
 
         private void btn_Write_Click(object sender, EventArgs e)
         {
-            usbApp.Data.EepromAddress = (uint)Int32.Parse(txt_Addr.Text);
-            usbApp.Data.EepromLength = (uint)Int32.Parse(txt_Len.Text);
-            usbApp.Data.EepromData[1] = (byte)Int32.Parse(txt_Data.Text);
+            usbApp.Data.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
+            usbApp.Data.EepromLength = (uint)Int32.Parse(num_Len.Text);
+            usbApp.Data.EepromData[0] = (byte)Int32.Parse(txt_Data_1.Text);
+            for (int i = 0; i < usbApp.Data.EepromLength; i++)
+            {
+                Control ctn = this.Controls["txt_Data_" + (i + 1)];
+                usbApp.Data.EepromData[i] = (byte)Int32.Parse(ctn.Text);
+            }
             usbApp.Data.EepromWritePending = true;
+        }
+
+        private void numericUpDown2_ValueChanged(object sender, EventArgs e)
+        {
+            try
+            {
+                int len = (int)num_Len.Value;
+                if (len < 1 || len > 8) throw new Exception();
+                int i = 0;
+                for (i = 0; i < len; i++)
+                {
+                    Control ctn = this.Controls["txt_Data_" + (i + 1)];
+                    ctn.Enabled = true;
+                }
+                for (; i < 8; i++)
+                {
+                    Control ctn = this.Controls["txt_Data_" + (i + 1)];
+                    ctn.Enabled = false;
+                }
+            }
+            catch
+            {
+                num_Len.Text = "1";
+                for (int i = 1; i < 8; i++)
+                {
+                    Control ctn = this.Controls["txt_Data_" + (i + 1)];
+                    ctn.Enabled = false;
+                }
+            }
         }
     } 
 } 
