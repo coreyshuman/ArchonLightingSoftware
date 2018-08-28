@@ -12,6 +12,7 @@ namespace ArchonLightingSystem
         public bool EepromReadPending;
         public bool EepromReadDone;
         public bool EepromWritePending;
+        public bool ReadConfigPending;
         public uint EepromAddress;
         public uint EepromLength;
         public Byte[] EepromData;
@@ -137,6 +138,30 @@ namespace ArchonLightingSystem
                                     {
                                         Console.WriteLine(tempBuffer[1]);
                                     }
+                                }
+                            }
+                        }
+
+                        if (Data.ReadConfigPending)
+                        {
+                            Data.ReadConfigPending = false;
+                            tempBuffer[0] = 0x30;   //READ_EEPROM command (see firmware source code)
+
+                            byteCnt = GenerateFrame(tempBuffer, 3, ref rxtxBuffer, USB_BUFFER_SIZE + 1);
+                            if (byteCnt > 0 && WriteUSBDevice(rxtxBuffer, byteCnt) > 0)
+                            {
+                                //Now get the response packet from the firmware.
+                                if (ReadUSBDevice(ref rxtxBuffer, USB_BUFFER_SIZE + 1) > 0)
+                                {
+                                    byteCnt = ValidateFrame(rxtxBuffer, USB_BUFFER_SIZE + 1, ref tempBuffer, USB_BUFFER_SIZE + 1);
+                                    if (byteCnt > 2 && tempBuffer[0] == 0x30)
+                                    {
+                                        for (i = 0; i < tempBuffer[1]; i++)
+                                        {
+                                            Data.EepromData[i] = tempBuffer[i + 2];
+                                        }
+                                    }
+                                    Data.EepromReadDone = true;
                                 }
                             }
                         }

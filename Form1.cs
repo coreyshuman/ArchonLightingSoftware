@@ -151,5 +151,10 @@ namespace ArchonLightingSystem
                 }
             }
         }
+
+        private void btn_ReadConfig_Click(object sender, EventArgs e)
+        {
+            usbApp.Data.ReadConfigPending = true;
+        }
     } 
 } 

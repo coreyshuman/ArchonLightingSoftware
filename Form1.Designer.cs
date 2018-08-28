@@ -57,6 +57,7 @@ namespace ArchonLightingSystem
             this.txt_Data_8 = new System.Windows.Forms.TextBox();
             this.num_Addr = new System.Windows.Forms.NumericUpDown();
             this.num_Len = new System.Windows.Forms.NumericUpDown();
+            this.btn_ReadConfig = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
             this.SuspendLayout();
@@ -209,9 +210,9 @@ namespace ArchonLightingSystem
             // 
             // btn_Read
             // 
-            this.btn_Read.Location = new System.Drawing.Point(213, 182);
+            this.btn_Read.Location = new System.Drawing.Point(162, 180);
             this.btn_Read.Name = "btn_Read";
-            this.btn_Read.Size = new System.Drawing.Size(75, 23);
+            this.btn_Read.Size = new System.Drawing.Size(61, 23);
             this.btn_Read.TabIndex = 33;
             this.btn_Read.Text = "Read";
             this.btn_Read.UseVisualStyleBackColor = true;
@@ -219,9 +220,11 @@ namespace ArchonLightingSystem
             // 
             // btn_Write
             // 
-            this.btn_Write.Location = new System.Drawing.Point(307, 181);
+            this.btn_Write.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Write.ForeColor = System.Drawing.Color.OrangeRed;
+            this.btn_Write.Location = new System.Drawing.Point(235, 180);
             this.btn_Write.Name = "btn_Write";
-            this.btn_Write.Size = new System.Drawing.Size(75, 23);
+            this.btn_Write.Size = new System.Drawing.Size(53, 23);
             this.btn_Write.TabIndex = 34;
             this.btn_Write.Text = "Write";
             this.btn_Write.UseVisualStyleBackColor = true;
@@ -323,11 +326,22 @@ namespace ArchonLightingSystem
             0});
             this.num_Len.ValueChanged += new System.EventHandler(this.numericUpDown2_ValueChanged);
             // 
+            // btn_ReadConfig
+            // 
+            this.btn_ReadConfig.Location = new System.Drawing.Point(321, 183);
+            this.btn_ReadConfig.Name = "btn_ReadConfig";
+            this.btn_ReadConfig.Size = new System.Drawing.Size(61, 23);
+            this.btn_ReadConfig.TabIndex = 44;
+            this.btn_ReadConfig.Text = "Read Config";
+            this.btn_ReadConfig.UseVisualStyleBackColor = true;
+            this.btn_ReadConfig.Click += new System.EventHandler(this.btn_ReadConfig_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(408, 287);
+            this.Controls.Add(this.btn_ReadConfig);
             this.Controls.Add(this.num_Len);
             this.Controls.Add(this.num_Addr);
             this.Controls.Add(this.txt_Data_8);
@@ -389,6 +403,7 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.TextBox txt_Data_8;
         private System.Windows.Forms.NumericUpDown num_Addr;
         private System.Windows.Forms.NumericUpDown num_Len;
+        private System.Windows.Forms.Button btn_ReadConfig;
     }
 }
 
