@@ -128,14 +128,14 @@ namespace ArchonLightingSystem
             try
             {
                 int len = (int)num_Len.Value;
-                if (len < 1 || len > 8) throw new Exception();
+                if (len < 1 || len > 16) throw new Exception();
                 int i = 0;
                 for (i = 0; i < len; i++)
                 {
                     Control ctn = this.Controls["txt_Data_" + (i + 1)];
                     ctn.Enabled = true;
                 }
-                for (; i < 8; i++)
+                for (; i < 16; i++)
                 {
                     Control ctn = this.Controls["txt_Data_" + (i + 1)];
                     ctn.Enabled = false;
@@ -144,7 +144,7 @@ namespace ArchonLightingSystem
             catch
             {
                 num_Len.Text = "1";
-                for (int i = 1; i < 8; i++)
+                for (int i = 1; i < 16; i++)
                 {
                     Control ctn = this.Controls["txt_Data_" + (i + 1)];
                     ctn.Enabled = false;

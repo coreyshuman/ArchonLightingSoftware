@@ -58,6 +58,14 @@ namespace ArchonLightingSystem
             this.num_Addr = new System.Windows.Forms.NumericUpDown();
             this.num_Len = new System.Windows.Forms.NumericUpDown();
             this.btn_ReadConfig = new System.Windows.Forms.Button();
+            this.txt_Data_16 = new System.Windows.Forms.TextBox();
+            this.txt_Data_15 = new System.Windows.Forms.TextBox();
+            this.txt_Data_14 = new System.Windows.Forms.TextBox();
+            this.txt_Data_13 = new System.Windows.Forms.TextBox();
+            this.txt_Data_12 = new System.Windows.Forms.TextBox();
+            this.txt_Data_11 = new System.Windows.Forms.TextBox();
+            this.txt_Data_10 = new System.Windows.Forms.TextBox();
+            this.txt_Data_9 = new System.Windows.Forms.TextBox();
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
             this.SuspendLayout();
@@ -307,7 +315,7 @@ namespace ArchonLightingSystem
             // 
             this.num_Len.Location = new System.Drawing.Point(90, 183);
             this.num_Len.Maximum = new decimal(new int[] {
-            8,
+            16,
             0,
             0,
             0});
@@ -317,7 +325,7 @@ namespace ArchonLightingSystem
             0,
             0});
             this.num_Len.Name = "num_Len";
-            this.num_Len.Size = new System.Drawing.Size(66, 20);
+            this.num_Len.Size = new System.Drawing.Size(62, 20);
             this.num_Len.TabIndex = 43;
             this.num_Len.Value = new decimal(new int[] {
             1,
@@ -328,7 +336,7 @@ namespace ArchonLightingSystem
             // 
             // btn_ReadConfig
             // 
-            this.btn_ReadConfig.Location = new System.Drawing.Point(321, 183);
+            this.btn_ReadConfig.Location = new System.Drawing.Point(321, 180);
             this.btn_ReadConfig.Name = "btn_ReadConfig";
             this.btn_ReadConfig.Size = new System.Drawing.Size(61, 23);
             this.btn_ReadConfig.TabIndex = 44;
@@ -336,11 +344,83 @@ namespace ArchonLightingSystem
             this.btn_ReadConfig.UseVisualStyleBackColor = true;
             this.btn_ReadConfig.Click += new System.EventHandler(this.btn_ReadConfig_Click);
             // 
+            // txt_Data_16
+            // 
+            this.txt_Data_16.Enabled = false;
+            this.txt_Data_16.Location = new System.Drawing.Point(341, 260);
+            this.txt_Data_16.Name = "txt_Data_16";
+            this.txt_Data_16.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_16.TabIndex = 52;
+            // 
+            // txt_Data_15
+            // 
+            this.txt_Data_15.Enabled = false;
+            this.txt_Data_15.Location = new System.Drawing.Point(294, 260);
+            this.txt_Data_15.Name = "txt_Data_15";
+            this.txt_Data_15.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_15.TabIndex = 51;
+            // 
+            // txt_Data_14
+            // 
+            this.txt_Data_14.Enabled = false;
+            this.txt_Data_14.Location = new System.Drawing.Point(247, 260);
+            this.txt_Data_14.Name = "txt_Data_14";
+            this.txt_Data_14.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_14.TabIndex = 50;
+            // 
+            // txt_Data_13
+            // 
+            this.txt_Data_13.Enabled = false;
+            this.txt_Data_13.Location = new System.Drawing.Point(200, 260);
+            this.txt_Data_13.Name = "txt_Data_13";
+            this.txt_Data_13.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_13.TabIndex = 49;
+            // 
+            // txt_Data_12
+            // 
+            this.txt_Data_12.Enabled = false;
+            this.txt_Data_12.Location = new System.Drawing.Point(153, 260);
+            this.txt_Data_12.Name = "txt_Data_12";
+            this.txt_Data_12.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_12.TabIndex = 48;
+            // 
+            // txt_Data_11
+            // 
+            this.txt_Data_11.Enabled = false;
+            this.txt_Data_11.Location = new System.Drawing.Point(106, 260);
+            this.txt_Data_11.Name = "txt_Data_11";
+            this.txt_Data_11.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_11.TabIndex = 47;
+            // 
+            // txt_Data_10
+            // 
+            this.txt_Data_10.Enabled = false;
+            this.txt_Data_10.Location = new System.Drawing.Point(59, 260);
+            this.txt_Data_10.Name = "txt_Data_10";
+            this.txt_Data_10.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_10.TabIndex = 46;
+            // 
+            // txt_Data_9
+            // 
+            this.txt_Data_9.Enabled = false;
+            this.txt_Data_9.Location = new System.Drawing.Point(12, 260);
+            this.txt_Data_9.Name = "txt_Data_9";
+            this.txt_Data_9.Size = new System.Drawing.Size(41, 20);
+            this.txt_Data_9.TabIndex = 45;
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(408, 287);
+            this.ClientSize = new System.Drawing.Size(408, 298);
+            this.Controls.Add(this.txt_Data_16);
+            this.Controls.Add(this.txt_Data_15);
+            this.Controls.Add(this.txt_Data_14);
+            this.Controls.Add(this.txt_Data_13);
+            this.Controls.Add(this.txt_Data_12);
+            this.Controls.Add(this.txt_Data_11);
+            this.Controls.Add(this.txt_Data_10);
+            this.Controls.Add(this.txt_Data_9);
             this.Controls.Add(this.btn_ReadConfig);
             this.Controls.Add(this.num_Len);
             this.Controls.Add(this.num_Addr);
@@ -404,6 +484,14 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.NumericUpDown num_Addr;
         private System.Windows.Forms.NumericUpDown num_Len;
         private System.Windows.Forms.Button btn_ReadConfig;
+        private System.Windows.Forms.TextBox txt_Data_16;
+        private System.Windows.Forms.TextBox txt_Data_15;
+        private System.Windows.Forms.TextBox txt_Data_14;
+        private System.Windows.Forms.TextBox txt_Data_13;
+        private System.Windows.Forms.TextBox txt_Data_12;
+        private System.Windows.Forms.TextBox txt_Data_11;
+        private System.Windows.Forms.TextBox txt_Data_10;
+        private System.Windows.Forms.TextBox txt_Data_9;
     }
 }
 

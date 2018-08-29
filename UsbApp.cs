@@ -37,13 +37,6 @@ namespace ArchonLightingSystem
         //public uint FanSpeed = 0;			//Updated by ReadWriteThread, read by FormUpdateTimer tick handler (needs to be atomic)
         private BackgroundWorker ReadWriteThread;
 
-        enum CMD
-        {
-            SOH = 1,
-            EOT = 4,
-            DLE = 16
-        };
-
         public UsbApp()
         {
             Data = new AppData();
@@ -65,14 +58,20 @@ namespace ArchonLightingSystem
 
             while (true)
             {
+                
                 try
                 {
                     if (IsAttached == true)	//Do not try to use the read/write handles unless the USB device is attached and ready
                     {
+                        for(i = 0; i < USB_BUFFER_SIZE+1; i++)
+                        {
+                            tempBuffer[i] = 0;
+                            rxtxBuffer[i] = 0;
+                        }
                         //Get Fan Speed
                         tempBuffer[0] = 0x35;	//READ_FAN command (see firmware source code)
 
-                        byteCnt = GenerateFrame(tempBuffer, 1, ref rxtxBuffer, USB_BUFFER_SIZE + 1);
+                        byteCnt = GenerateFrames(tempBuffer, 1, ref rxtxBuffer, USB_BUFFER_SIZE + 1);
 
                         //To get the ADCValue, first, we send a packet with our "READ_POT" command in it.
                         if (byteCnt > 0 && WriteUSBDevice(rxtxBuffer, byteCnt) > 0)	
@@ -93,6 +92,11 @@ namespace ArchonLightingSystem
                         if (Data.EepromReadPending)
                         {
                             Data.EepromReadPending = false;
+                            for (i = 0; i < USB_BUFFER_SIZE + 1; i++)
+                            {
+                                tempBuffer[i] = 0;
+                                rxtxBuffer[i] = 0;
+                            }
                             tempBuffer[0] = 0x38;   //READ_EEPROM command (see firmware source code)
                             tempBuffer[1] = (byte)Data.EepromAddress;
                             tempBuffer[2] = (byte)Data.EepromLength;
@@ -119,6 +123,11 @@ namespace ArchonLightingSystem
                         if (Data.EepromWritePending)
                         {
                             Data.EepromWritePending = false;
+                            for (i = 0; i < USB_BUFFER_SIZE + 1; i++)
+                            {
+                                tempBuffer[i] = 0;
+                                rxtxBuffer[i] = 0;
+                            }
                             tempBuffer[0] = 0x39;   //WRITE_EEPROM command (see firmware source code)
                             tempBuffer[1] = (byte)Data.EepromAddress;
                             tempBuffer[2] = (byte)Data.EepromLength;
@@ -145,23 +154,31 @@ namespace ArchonLightingSystem
                         if (Data.ReadConfigPending)
                         {
                             Data.ReadConfigPending = false;
+                            for (i = 0; i < USB_BUFFER_SIZE + 1; i++)
+                            {
+                                tempBuffer[i] = 0;
+                                rxtxBuffer[i] = 0;
+                            }
                             tempBuffer[0] = 0x30;   //READ_EEPROM command (see firmware source code)
 
                             byteCnt = GenerateFrame(tempBuffer, 3, ref rxtxBuffer, USB_BUFFER_SIZE + 1);
-                            if (byteCnt > 0 && WriteUSBDevice(rxtxBuffer, byteCnt) > 0)
+                            if (byteCnt > 0)
                             {
-                                //Now get the response packet from the firmware.
-                                if (ReadUSBDevice(ref rxtxBuffer, USB_BUFFER_SIZE + 1) > 0)
+                                if (WriteUSBDevice(rxtxBuffer, byteCnt) > 0)
                                 {
-                                    byteCnt = ValidateFrame(rxtxBuffer, USB_BUFFER_SIZE + 1, ref tempBuffer, USB_BUFFER_SIZE + 1);
-                                    if (byteCnt > 2 && tempBuffer[0] == 0x30)
+                                    //Now get the response packet from the firmware.
+                                    if (ReadUSBDevice(ref rxtxBuffer, USB_BUFFER_SIZE + 1) > 0)
                                     {
-                                        for (i = 0; i < tempBuffer[1]; i++)
+                                        byteCnt = ValidateFrame(rxtxBuffer, USB_BUFFER_SIZE + 1, ref tempBuffer, USB_BUFFER_SIZE + 1);
+                                        if (byteCnt > 2 && tempBuffer[0] == 0x30)
                                         {
-                                            Data.EepromData[i] = tempBuffer[i + 2];
+                                            for (i = 0; i < tempBuffer[1]; i++)
+                                            {
+                                                Data.EepromData[i] = tempBuffer[i + 2];
+                                            }
                                         }
+                                        Data.EepromReadDone = true;
                                     }
-                                    Data.EepromReadDone = true;
                                 }
                             }
                         }
@@ -235,56 +252,122 @@ namespace ArchonLightingSystem
 
         }
 
-        
+        private uint GetDeviceResponse()
+        {
+            uint byteCnt;
+            if (ReadUSBDevice(ref rxtxBuffer, USB_BUFFER_SIZE + 1) > 0)
+            {
+                byteCnt = ValidateFrame(rxtxBuffer, USB_BUFFER_SIZE + 1, ref tempBuffer, USB_BUFFER_SIZE + 1);
+                if (byteCnt > 2 && tempBuffer[0] == 0x30)
+                {
+                }
+            }
 
-        private uint GenerateFrame(Byte[] frameData, uint frameLen, ref Byte[] outBuffer, uint outBufferMaxLen)
+        private uint GenerateAndSendFrames(CONTROL_CMD cmd, Byte[] frameData, uint frameLen, ref Byte[] outBuffer, uint outBufferMaxLen)
+        {
+            uint byteCnt;
+            byteCnt = GenerateFrames(frameData, frameLen, ref outBuffer, USB_BUFFER_SIZE + 1);
+            if (byteCnt > 0)
+            {
+                if(WriteUSBDevice(outBuffer, byteCnt) > 0)
+                {
+                    return;
+                }
+            }
+
+        private uint GenerateFrames(CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
         {
             uint outBufferLen = 0;
-            UInt16 crc;
-            uint i;
+            uint packetDataCount;
+            UInt16 crc = 0;
 
-            if (frameLen > 0)
+            while (dataLen > 0)
             {
-                // Calculate CRC of the frame.
-                crc = CalculateCrc(frameData, frameLen);
-
-                // Insert SOH (Indicates beginning of the frame)	
-                outBuffer[outBufferLen++] = (byte)CMD.SOH;
-
-                // Insert Data Link Escape Character.
-                for (i = 0; i < frameLen; i++)
+                if(outBufferLen >= outBufferMaxLen)
                 {
-                    if (frameLen >= outBufferMaxLen)
-                    {
-                        return 0;
-                    }
-                    if ((frameData[i] == (byte)CMD.EOT) || (frameData[i] == (byte)CMD.SOH)
-                        || (frameData[i] == (byte)CMD.DLE))
-                    {
-                        // EOT/SOH/DLE repeated in the data field, insert DLE.
-                        outBuffer[outBufferLen++] = (byte)CMD.DLE;
-                    }
-                    outBuffer[outBufferLen++] = frameData[i];
+                    throw new Exception("Frame Data Overflow.");
+                }
+                outBuffer[outBufferLen++] = (byte)cmd;
+                // if greater than 60 bytes, flag for multibyte
+                outBuffer[outBufferLen++] = (byte)((dataLen > 60 ? (62 | 0x80) : dataLen) + 2);
+                packetDataCount = 0;
+                while (dataLen > 0 && packetDataCount < 60)
+                {
+                    outBuffer[outBufferLen++] = frameData[packetDataCount++];
+                    dataLen--;
                 }
 
-                // add crc to the frame
+                // Add CRC
+                crc = CalculateCrc(outBuffer, outBufferLen-packetDataCount-2, outBuffer[outBufferLen - packetDataCount - 1]);
                 outBuffer[outBufferLen++] = (byte)(crc & 0xFF);
                 outBuffer[outBufferLen++] = (byte)((crc >> 8) & 0xFF);
+            }
 
-                // Mark end of frame with EOT.
-                outBuffer[outBufferLen++] = (byte)CMD.EOT;
+            // pad 0xFF to 64 byte boundary since we always send 64 bytes per packet
+            packetDataCount = outBufferLen % 64;
+            while (packetDataCount-- > 0)
+            {
+                outBuffer[outBufferLen++] = 0xFF;
             }
 
             return (outBufferLen); // Return buffer length.
         }
 
-        private uint ValidateFrame(Byte[] frameData, uint frameLen, ref Byte[] outBuffer, uint outBufferMaxLen)
+        class FrameInfo
+        {
+            public Byte[] FrameData;
+            public uint FrameLen;
+            public uint OutBufferLen;
+            public uint OutBufferMaxLen;
+            public CONTROL_CMD PreviousFrameCmd;
+            public bool Multiframe;
+            public bool FrameValid;
+        }
+        private uint ValidateFrame(FrameInfo frameInfo)
         {
             bool escape = false;
             UInt16 crc;
             bool frameValid = false;
             uint frameIdx = 0;
             uint outBufferLen = 0;
+            uint dataLen = 0;
+
+            bool multipacket = (frameInfo.FrameData[1] & 0x80) == 0x80; // check multipacket flag
+            dataLen = (uint)(frameInfo.FrameData[1] & 0x3F);
+
+            if (frameInfo.Multiframe) {
+                frameIdx += 2; // skip cmd and len
+            }
+            else
+            {
+                frameInfo.PreviousFrameCmd = (CONTROL_CMD)frameInfo.FrameData[0];
+                dataLen += 2; // length + 2 for CMD and LEN
+            }
+
+
+            while (dataLen > 0)
+            {
+                dataLen--;
+
+                RcvBuff.Data[RcvBuff.Len++] = *RxData;
+                RxData++;
+            }
+
+            crc.byte.LB = RcvBuff.Data[RcvBuff.Len - 2];
+            crc.byte.HB = RcvBuff.Data[RcvBuff.Len - 1];
+            if ((CalculateCrc(RcvBuff.Data, (UINT32)(RcvBuff.Len - 2)) == crc.Val) && (RcvBuff.Len > 2))
+            {
+                // CRC matches and frame received is valid.
+                if (multipacket)
+                {
+                    RxFrameValid = TRUE;
+                }
+            }
+            else
+            {
+                RcvBuff.Cmd = 0;
+                RcvBuff.Len = 0;
+            }
 
             while ((frameLen > 0) && (!frameValid)) // Loop till len = 0 or till frame is valid
             {
@@ -377,13 +460,14 @@ namespace ArchonLightingSystem
         /// Calculate CRC for the given data and len
         /// </summary>
         /// <param name="data">data pointer</param>
+        /// <param name="start">start location in array</param>
         /// <param name="len">data length</param>
         /// <returns></returns>
-        UInt16 CalculateCrc(Byte[] data, uint len)
+        UInt16 CalculateCrc(Byte[] data, uint start, uint len)
         {
             UInt16 i;
             UInt16 crc = 0;
-            uint idx = 0;
+            uint idx = start;
 
             while (len-- > 0)
             {

@@ -8,6 +8,7 @@ namespace ArchonLightingSystem
     class UsbDriver : UsbSystemDefinitions
     {
         public const uint USB_BUFFER_SIZE = 64;
+        public const uint DATA_BUFFER_SIZE = 1000;
 
         public bool IsAttached = false;                     //Need to keep track of the USB device attachment status for proper plug and play operation.
         public bool IsAttachedButBroken = false;
