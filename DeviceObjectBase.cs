@@ -1,0 +1,17 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+
+namespace ArchonLightingSystem
+{
+    abstract class DeviceObjectBase
+    {
+        public abstract uint ToBuffer(byte[] buffer);
+        public abstract void FromBuffer(byte[] buffer);
+
+        static public UInt16 UInt16FromBytes(byte low, byte high)
+        {
+            return (UInt16)((UInt16)low | ((UInt16)high << 8));
+        }
+    }
+}

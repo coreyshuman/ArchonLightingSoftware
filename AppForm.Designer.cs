@@ -1,6 +1,6 @@
 namespace ArchonLightingSystem
 {
-    partial class Form1
+    partial class AppForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,8 +29,8 @@ namespace ArchonLightingSystem
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            this.PushbuttonState_lbl = new System.Windows.Forms.Label();
-            this.ToggleLEDs_btn = new System.Windows.Forms.Button();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AppForm));
+            this.btn_readDebug = new System.Windows.Forms.Button();
             this.ANxVoltage_lbl = new System.Windows.Forms.Label();
             this.StatusBox_lbl = new System.Windows.Forms.Label();
             this.StatusBox_txtbx = new System.Windows.Forms.TextBox();
@@ -66,30 +66,21 @@ namespace ArchonLightingSystem
             this.txt_Data_11 = new System.Windows.Forms.TextBox();
             this.txt_Data_10 = new System.Windows.Forms.TextBox();
             this.txt_Data_9 = new System.Windows.Forms.TextBox();
+            this.btn_WriteConfig = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
             this.SuspendLayout();
             // 
-            // PushbuttonState_lbl
+            // btn_readDebug
             // 
-            this.PushbuttonState_lbl.AutoSize = true;
-            this.PushbuttonState_lbl.Enabled = false;
-            this.PushbuttonState_lbl.Location = new System.Drawing.Point(131, 65);
-            this.PushbuttonState_lbl.Name = "PushbuttonState_lbl";
-            this.PushbuttonState_lbl.Size = new System.Drawing.Size(141, 13);
-            this.PushbuttonState_lbl.TabIndex = 25;
-            this.PushbuttonState_lbl.Text = "Pushbutton State: Unknown";
-            // 
-            // ToggleLEDs_btn
-            // 
-            this.ToggleLEDs_btn.Enabled = false;
-            this.ToggleLEDs_btn.Location = new System.Drawing.Point(12, 60);
-            this.ToggleLEDs_btn.Name = "ToggleLEDs_btn";
-            this.ToggleLEDs_btn.Size = new System.Drawing.Size(96, 23);
-            this.ToggleLEDs_btn.TabIndex = 24;
-            this.ToggleLEDs_btn.Text = "ToggleLED(s)";
-            this.ToggleLEDs_btn.UseVisualStyleBackColor = true;
-            this.ToggleLEDs_btn.Click += new System.EventHandler(this.ToggleLEDs_btn_Click);
+            this.btn_readDebug.Enabled = false;
+            this.btn_readDebug.Location = new System.Drawing.Point(12, 60);
+            this.btn_readDebug.Name = "btn_readDebug";
+            this.btn_readDebug.Size = new System.Drawing.Size(96, 23);
+            this.btn_readDebug.TabIndex = 24;
+            this.btn_readDebug.Text = "Read Debug";
+            this.btn_readDebug.UseVisualStyleBackColor = true;
+            this.btn_readDebug.Click += new System.EventHandler(this.ToggleLEDs_btn_Click);
             // 
             // ANxVoltage_lbl
             // 
@@ -336,9 +327,9 @@ namespace ArchonLightingSystem
             // 
             // btn_ReadConfig
             // 
-            this.btn_ReadConfig.Location = new System.Drawing.Point(321, 180);
+            this.btn_ReadConfig.Location = new System.Drawing.Point(299, 38);
             this.btn_ReadConfig.Name = "btn_ReadConfig";
-            this.btn_ReadConfig.Size = new System.Drawing.Size(61, 23);
+            this.btn_ReadConfig.Size = new System.Drawing.Size(97, 23);
             this.btn_ReadConfig.TabIndex = 44;
             this.btn_ReadConfig.Text = "Read Config";
             this.btn_ReadConfig.UseVisualStyleBackColor = true;
@@ -408,11 +399,25 @@ namespace ArchonLightingSystem
             this.txt_Data_9.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_9.TabIndex = 45;
             // 
-            // Form1
+            // btn_WriteConfig
+            // 
+            this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_WriteConfig.ForeColor = System.Drawing.Color.IndianRed;
+            this.btn_WriteConfig.ImageAlign = System.Drawing.ContentAlignment.BottomLeft;
+            this.btn_WriteConfig.Location = new System.Drawing.Point(299, 67);
+            this.btn_WriteConfig.Name = "btn_WriteConfig";
+            this.btn_WriteConfig.Size = new System.Drawing.Size(97, 23);
+            this.btn_WriteConfig.TabIndex = 53;
+            this.btn_WriteConfig.Text = "Write Config";
+            this.btn_WriteConfig.UseVisualStyleBackColor = true;
+            this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
+            // 
+            // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(408, 298);
+            this.Controls.Add(this.btn_WriteConfig);
             this.Controls.Add(this.txt_Data_16);
             this.Controls.Add(this.txt_Data_15);
             this.Controls.Add(this.txt_Data_14);
@@ -438,14 +443,14 @@ namespace ArchonLightingSystem
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.lbl_fanSpeed);
-            this.Controls.Add(this.PushbuttonState_lbl);
-            this.Controls.Add(this.ToggleLEDs_btn);
+            this.Controls.Add(this.btn_readDebug);
             this.Controls.Add(this.ANxVoltage_lbl);
             this.Controls.Add(this.StatusBox_lbl);
             this.Controls.Add(this.StatusBox_txtbx);
             this.Controls.Add(this.progressBar1);
-            this.Name = "Form1";
-            this.Text = "HID PnP Demo";
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.Name = "AppForm";
+            this.Text = "Archon Lighting System";
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).EndInit();
             this.ResumeLayout(false);
@@ -454,9 +459,7 @@ namespace ArchonLightingSystem
         }
 
         #endregion
-
-        private System.Windows.Forms.Label PushbuttonState_lbl;
-        private System.Windows.Forms.Button ToggleLEDs_btn;
+        private System.Windows.Forms.Button btn_readDebug;
         private System.Windows.Forms.Label ANxVoltage_lbl;
         private System.Windows.Forms.Label StatusBox_lbl;
         private System.Windows.Forms.TextBox StatusBox_txtbx;
@@ -492,6 +495,7 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.TextBox txt_Data_11;
         private System.Windows.Forms.TextBox txt_Data_10;
         private System.Windows.Forms.TextBox txt_Data_9;
+        private System.Windows.Forms.Button btn_WriteConfig;
     }
 }
 

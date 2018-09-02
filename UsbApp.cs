@@ -13,9 +13,12 @@ namespace ArchonLightingSystem
         public bool EepromReadDone;
         public bool EepromWritePending;
         public bool ReadConfigPending;
+        public bool WriteConfigPending;
+        public bool ReadDebug;
         public uint EepromAddress;
         public uint EepromLength;
         public Byte[] EepromData;
+        public DeviceConfig deviceConfig;
 
         public AppData()
         {
@@ -23,9 +26,11 @@ namespace ArchonLightingSystem
             EepromReadPending = false;
             EepromReadDone = false;
             EepromWritePending = false;
+            ReadDebug = false;
             EepromAddress = 1;
             EepromLength = 1;
             EepromData = new byte[256];
+            deviceConfig = new DeviceConfig();
         }
     }
 
@@ -39,7 +44,25 @@ namespace ArchonLightingSystem
         {
             Cmd = UsbApp.CONTROL_CMD.CMD_ERROR_OCCURED;
             Len = 0;
-            Data = new byte[512];
+            Data = new byte[UsbApp.CONTROL_BUFFER_SIZE];
+        }
+    }
+
+    class FrameInfo
+    {
+        public Byte[] FrameData;
+        public uint FrameLen;
+        public uint OutBufferMaxLen;
+        public bool Multiframe;
+        public bool FrameValid;
+
+        public FrameInfo()
+        {
+            FrameData = new byte[UsbApp.USB_PACKET_SIZE];
+            FrameLen = 0;
+            OutBufferMaxLen = 512;
+            Multiframe = false;
+            FrameValid = false;
         }
     }
 
@@ -66,8 +89,7 @@ namespace ArchonLightingSystem
 
         private void ReadWriteThread_DoWork(object sender, DoWorkEventArgs e)
         {
-            //Byte[] tempBuffer = new Byte[USB_BUFFER_SIZE + 1];
-            Byte[] rxtxBuffer = new Byte[512];
+            Byte[] rxtxBuffer = new Byte[CONTROL_BUFFER_SIZE];
             uint byteCnt = 0;
             int i = 0;
 
@@ -78,7 +100,7 @@ namespace ArchonLightingSystem
                 {
                     if (IsAttached == true)	//Do not try to use the read/write handles unless the USB device is attached and ready
                     {
-                        for(i = 0; i < 512; i++)
+                        for(i = 0; i < CONTROL_BUFFER_SIZE; i++)
                         {
                             rxtxBuffer[i] = 0;
                         }
@@ -119,7 +141,7 @@ namespace ArchonLightingSystem
                         if (Data.EepromWritePending)
                         {
                             Data.EepromWritePending = false;
-                            for (i = 0; i < USB_BUFFER_SIZE + 1; i++)
+                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
                             }
@@ -130,7 +152,7 @@ namespace ArchonLightingSystem
                                 rxtxBuffer[i + 2] = Data.EepromData[i];
                             }
 
-                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2) > 0)
+                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + Data.EepromLength) > 0)
                             {
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_EEPROM);
                                 if (response != null)
@@ -143,7 +165,7 @@ namespace ArchonLightingSystem
                         if (Data.ReadConfigPending)
                         {
                             Data.ReadConfigPending = false;
-                            for (i = 0; i < USB_BUFFER_SIZE + 1; i++)
+                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
                             }
@@ -153,16 +175,55 @@ namespace ArchonLightingSystem
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONFIG);
                                 if (response != null)
                                 {
-                                    for (i = 0; i < response.Len; i++)
-                                    {
-                                        Data.EepromData[i] = response.Data[i];
-                                    }
+                                    Data.deviceConfig.FromBuffer(response.Data);
                                     Data.EepromReadDone = true;
                                 }
                             }
                         }
 
-                       
+                        if (Data.WriteConfigPending)
+                        {
+                            Data.WriteConfigPending = false;
+                            byteCnt = Data.deviceConfig.ToBuffer(rxtxBuffer);
+                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
+                            {
+                                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);
+                                if (response != null)
+                                {
+                                    
+                                }
+                            }
+                        }
+
+                        if (Data.ReadDebug)
+                        {
+                            Data.ReadDebug = false;
+                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
+                            {
+                                rxtxBuffer[i] = 0;
+                            }
+
+                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_EE_DEBUG, rxtxBuffer, 0) > 0)
+                            {
+                                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EE_DEBUG);
+                                if (response != null)
+                                {
+                                    System.Diagnostics.Debug.WriteLine($"Debug Len: {response.Len}");
+                                    for (i = 0; i < response.Len; )
+                                    {
+                                        var dat = response.Data[i];
+                                        System.Diagnostics.Debug.Write($"{dat.ToString("X2")} ");
+                                        if(++i % 20 == 0)
+                                        {
+                                            System.Diagnostics.Debug.Write("\r\n");
+                                        }
+                                    }
+                                    System.Diagnostics.Debug.WriteLine("\r\n_________________________");
+                                }
+                            }
+                        }
+
+
                     } 
                     else
                     {
@@ -195,7 +256,7 @@ namespace ArchonLightingSystem
             frameInfo.OutBufferMaxLen = 512;
             while (!frameInfo.FrameValid)
             {
-                byteCnt = ReadUSBDevice(ref frameInfo.FrameData, USB_BUFFER_SIZE + 1);
+                byteCnt = ReadUSBDevice(ref frameInfo.FrameData, USB_PACKET_SIZE);
                 if (byteCnt > 0)
                 {
                     frameInfo.FrameLen = byteCnt;
@@ -226,10 +287,10 @@ namespace ArchonLightingSystem
         {
             uint byteCnt;
             uint bytesSent = 0;
-            Byte[] usbBuffer = new byte[USB_BUFFER_SIZE + 1];
-            Byte[] packetsBuffer = new byte[512];
+            Byte[] usbBuffer = new byte[USB_PACKET_SIZE];
+            Byte[] packetsBuffer = new byte[USB_BUFFER_SIZE];
 
-            byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, 512);
+            byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, USB_BUFFER_SIZE);
             while (byteCnt > 0)
             {
                 uint sendLen = byteCnt > 64 ? 64 : byteCnt;
@@ -251,7 +312,8 @@ namespace ArchonLightingSystem
         private uint GenerateFrames(CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
         {
             uint outBufferLen = 0;
-            uint packetDataCount;
+            uint packetDataCount = 0;
+            uint frameDataCount = 0;
             UInt16 crc = 0;
 
             do
@@ -262,16 +324,17 @@ namespace ArchonLightingSystem
                 }
                 outBuffer[outBufferLen++] = (byte)cmd;
                 // if greater than 60 bytes, flag for multibyte
-                outBuffer[outBufferLen++] = (byte)((dataLen > 60 ? (62 | 0x80) : dataLen) + 2);
+                outBuffer[outBufferLen++] = (byte)((dataLen > 60 ? (60 | 0x80) : dataLen) + 2);
                 packetDataCount = 0;
                 while (dataLen > 0 && packetDataCount < 60)
                 {
-                    outBuffer[outBufferLen++] = frameData[packetDataCount++];
+                    outBuffer[outBufferLen++] = frameData[frameDataCount++];
                     dataLen--;
+                    packetDataCount++;
                 }
 
                 // Add CRC
-                crc = CalculateCrc(outBuffer, outBufferLen - packetDataCount - 2, outBuffer[outBufferLen - packetDataCount - 1]);
+                crc = CalculateCrc(outBuffer, outBufferLen - packetDataCount - 2, (uint)(outBuffer[outBufferLen - packetDataCount - 1] & 0x3F));
                 outBuffer[outBufferLen++] = (byte)(crc & 0xFF);
                 outBuffer[outBufferLen++] = (byte)((crc >> 8) & 0xFF);
             }
@@ -287,23 +350,7 @@ namespace ArchonLightingSystem
             return (outBufferLen); // Return buffer length.
         }
 
-        class FrameInfo
-        {
-            public Byte[] FrameData;
-            public uint FrameLen;
-            public uint OutBufferMaxLen;
-            public bool Multiframe;
-            public bool FrameValid;
-
-            public FrameInfo()
-            {
-                FrameData = new byte[USB_BUFFER_SIZE + 1];
-                FrameLen = 0;
-                OutBufferMaxLen = 512;
-                Multiframe = false;
-                FrameValid = false;
-            }
-        }
+        
 
         private uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)
         {

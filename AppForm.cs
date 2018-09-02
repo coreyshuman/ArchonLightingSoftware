@@ -5,11 +5,11 @@ using System.Windows.Forms;
 
 namespace ArchonLightingSystem
 {
-    public partial class Form1 : Form
+    public partial class AppForm : Form
     {
         UsbApp usbApp = null;
 
-        public unsafe Form1()
+        public unsafe AppForm()
         {
             InitializeComponent();
 
@@ -17,8 +17,7 @@ namespace ArchonLightingSystem
             //Initialize tool tips, to provide pop up help when the mouse cursor is moved over objects on the form.
             ANxVoltageToolTip.SetToolTip(this.ANxVoltage_lbl, "If using a board/PIM without a potentiometer, apply an adjustable voltage to the I/O pin.");
             ANxVoltageToolTip.SetToolTip(this.progressBar1, "If using a board/PIM without a potentiometer, apply an adjustable voltage to the I/O pin.");
-            ToggleLEDToolTip.SetToolTip(this.ToggleLEDs_btn, "Sends a packet of data to the USB device.");
-            PushbuttonStateTooltip.SetToolTip(this.PushbuttonState_lbl, "Try pressing pushbuttons on the USB demo board/PIM.");
+            ToggleLEDToolTip.SetToolTip(this.btn_readDebug, "Sends a packet of data to the USB device.");
 
             usbApp = new UsbApp();
             usbApp.RegisterEventHandler(this.Handle);
@@ -42,9 +41,10 @@ namespace ArchonLightingSystem
             base.WndProc(ref m);
         } 
 
+        // read debug
         private void ToggleLEDs_btn_Click(object sender, EventArgs e)
         {
-            //ToggleLEDsPending = true;	//Will get used asynchronously by the ReadWriteThread
+            usbApp.Data.ReadDebug = true;
         }
 
         private void FormUpdateTimer_Tick(object sender, EventArgs e)
@@ -57,19 +57,16 @@ namespace ArchonLightingSystem
             {
                 //Device is connected and ready to communicate, enable user interface on the form 
                 StatusBox_txtbx.Text = "Device Found: AttachedState = TRUE";
-                PushbuttonState_lbl.Enabled = true;	//Make the label no longer greyed out
                 ANxVoltage_lbl.Enabled = true;
-                ToggleLEDs_btn.Enabled = true;
+                btn_readDebug.Enabled = true;
             }
             if ((usbApp.IsAttached == false) || (usbApp.IsAttachedButBroken == true))
             {
                 //Device not available to communicate. Disable user interface on the form.
                 StatusBox_txtbx.Text = "Device Not Detected: Verify Connection/Correct Firmware";
-                PushbuttonState_lbl.Enabled = false;	//Make the label no longer greyed out
                 ANxVoltage_lbl.Enabled = false;
-                ToggleLEDs_btn.Enabled = false;
+                btn_readDebug.Enabled = false;
 
-                PushbuttonState_lbl.Text = "Pushbutton State: Unknown";
                 //ADCValue = 0;
                 progressBar1.Value = 0;
             }
@@ -77,12 +74,6 @@ namespace ArchonLightingSystem
             //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
             if (usbApp.IsAttached == true)
             {
-                //Update the pushbutton state label.
-                if (false == false)
-                    PushbuttonState_lbl.Text = "Pushbutton State: Not Pressed";		//Update the pushbutton state text label on the form, so the user can see the result 
-                else
-                    PushbuttonState_lbl.Text = "Pushbutton State: Pressed";			//Update the pushbutton state text label on the form, so the user can see the result 
-
                 //Update the ANxx/POT Voltage indicator value (progressbar)
                 progressBar1.Value = (int)usbApp.Data.FanSpeed > 3000 ? 3000 : (int)usbApp.Data.FanSpeed;
                 lbl_fanSpeed.Text = usbApp.Data.FanSpeed.ToString();
@@ -155,6 +146,11 @@ namespace ArchonLightingSystem
         private void btn_ReadConfig_Click(object sender, EventArgs e)
         {
             usbApp.Data.ReadConfigPending = true;
+        }
+
+        private void btn_WriteConfig_Click(object sender, EventArgs e)
+        {
+            usbApp.Data.WriteConfigPending = true;
         }
     } 
 } 

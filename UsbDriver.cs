@@ -7,8 +7,7 @@ namespace ArchonLightingSystem
 {
     class UsbDriver : UsbSystemDefinitions
     {
-        public const uint USB_BUFFER_SIZE = 64;
-        public const uint DATA_BUFFER_SIZE = 1000;
+        public const uint USB_PACKET_SIZE = 64 + 1;
 
         public bool IsAttached = false;                     //Need to keep track of the USB device attachment status for proper plug and play operation.
         public bool IsAttachedButBroken = false;
@@ -229,7 +228,7 @@ namespace ArchonLightingSystem
         {
             bool result = false;
             uint bytesWritten = 0;
-            Byte[] usbReport = new Byte[USB_BUFFER_SIZE + 1];
+            Byte[] usbReport = new Byte[USB_PACKET_SIZE];
             int i;
 
             if (this.IsAttached == false)
@@ -242,7 +241,7 @@ namespace ArchonLightingSystem
                // while (bufflen > 0)
                 {
                     // Set output buffer to 0xFF.
-                    for(i=0; i<USB_BUFFER_SIZE+1; i++)
+                    for(i=0; i< USB_PACKET_SIZE; i++)
                     {
                         usbReport[i] = 0xFF;
                     }
@@ -253,7 +252,7 @@ namespace ArchonLightingSystem
                     }
 
                     // WriteFile is a blocking call. It will be a good design if made a non-blocking.
-                    result = WriteFile(this.WriteHandleToUSBDevice, usbReport, USB_BUFFER_SIZE + 1, ref bytesWritten, IntPtr.Zero);
+                    result = WriteFile(this.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, IntPtr.Zero);
                     uint error = (uint)Marshal.GetLastWin32Error();
                 }
 
