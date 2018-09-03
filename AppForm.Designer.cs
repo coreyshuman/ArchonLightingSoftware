@@ -67,16 +67,20 @@ namespace ArchonLightingSystem
             this.txt_Data_10 = new System.Windows.Forms.TextBox();
             this.txt_Data_9 = new System.Windows.Forms.TextBox();
             this.btn_WriteConfig = new System.Windows.Forms.Button();
+            this.menuStrip1 = new System.Windows.Forms.MenuStrip();
+            this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.editConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
+            this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_readDebug
             // 
             this.btn_readDebug.Enabled = false;
-            this.btn_readDebug.Location = new System.Drawing.Point(12, 60);
+            this.btn_readDebug.Location = new System.Drawing.Point(12, 91);
             this.btn_readDebug.Name = "btn_readDebug";
-            this.btn_readDebug.Size = new System.Drawing.Size(96, 23);
+            this.btn_readDebug.Size = new System.Drawing.Size(96, 24);
             this.btn_readDebug.TabIndex = 24;
             this.btn_readDebug.Text = "Read Debug";
             this.btn_readDebug.UseVisualStyleBackColor = true;
@@ -86,7 +90,7 @@ namespace ArchonLightingSystem
             // 
             this.ANxVoltage_lbl.AutoSize = true;
             this.ANxVoltage_lbl.Enabled = false;
-            this.ANxVoltage_lbl.Location = new System.Drawing.Point(12, 105);
+            this.ANxVoltage_lbl.Location = new System.Drawing.Point(12, 136);
             this.ANxVoltage_lbl.Name = "ANxVoltage_lbl";
             this.ANxVoltage_lbl.Size = new System.Drawing.Size(62, 13);
             this.ANxVoltage_lbl.TabIndex = 23;
@@ -95,7 +99,7 @@ namespace ArchonLightingSystem
             // StatusBox_lbl
             // 
             this.StatusBox_lbl.AutoSize = true;
-            this.StatusBox_lbl.Location = new System.Drawing.Point(316, 15);
+            this.StatusBox_lbl.Location = new System.Drawing.Point(316, 46);
             this.StatusBox_lbl.Name = "StatusBox_lbl";
             this.StatusBox_lbl.Size = new System.Drawing.Size(37, 13);
             this.StatusBox_lbl.TabIndex = 22;
@@ -104,7 +108,7 @@ namespace ArchonLightingSystem
             // StatusBox_txtbx
             // 
             this.StatusBox_txtbx.BackColor = System.Drawing.SystemColors.Window;
-            this.StatusBox_txtbx.Location = new System.Drawing.Point(12, 12);
+            this.StatusBox_txtbx.Location = new System.Drawing.Point(12, 43);
             this.StatusBox_txtbx.Name = "StatusBox_txtbx";
             this.StatusBox_txtbx.ReadOnly = true;
             this.StatusBox_txtbx.Size = new System.Drawing.Size(298, 20);
@@ -114,10 +118,10 @@ namespace ArchonLightingSystem
             // 
             this.progressBar1.BackColor = System.Drawing.Color.White;
             this.progressBar1.ForeColor = System.Drawing.Color.Red;
-            this.progressBar1.Location = new System.Drawing.Point(12, 121);
+            this.progressBar1.Location = new System.Drawing.Point(12, 152);
             this.progressBar1.Maximum = 4000;
             this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(298, 23);
+            this.progressBar1.Size = new System.Drawing.Size(298, 24);
             this.progressBar1.Step = 1;
             this.progressBar1.Style = System.Windows.Forms.ProgressBarStyle.Continuous;
             this.progressBar1.TabIndex = 20;
@@ -166,7 +170,7 @@ namespace ArchonLightingSystem
             // lbl_fanSpeed
             // 
             this.lbl_fanSpeed.AutoSize = true;
-            this.lbl_fanSpeed.Location = new System.Drawing.Point(81, 105);
+            this.lbl_fanSpeed.Location = new System.Drawing.Point(81, 136);
             this.lbl_fanSpeed.Name = "lbl_fanSpeed";
             this.lbl_fanSpeed.Size = new System.Drawing.Size(13, 13);
             this.lbl_fanSpeed.TabIndex = 26;
@@ -175,7 +179,7 @@ namespace ArchonLightingSystem
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(15, 165);
+            this.label1.Location = new System.Drawing.Point(15, 196);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(29, 13);
             this.label1.TabIndex = 29;
@@ -185,7 +189,7 @@ namespace ArchonLightingSystem
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(87, 165);
+            this.label2.Location = new System.Drawing.Point(87, 196);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(25, 13);
             this.label2.TabIndex = 30;
@@ -194,7 +198,7 @@ namespace ArchonLightingSystem
             // label3
             // 
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(15, 218);
+            this.label3.Location = new System.Drawing.Point(15, 249);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(30, 13);
             this.label3.TabIndex = 32;
@@ -202,16 +206,16 @@ namespace ArchonLightingSystem
             // 
             // txt_Data_1
             // 
-            this.txt_Data_1.Location = new System.Drawing.Point(12, 234);
+            this.txt_Data_1.Location = new System.Drawing.Point(12, 265);
             this.txt_Data_1.Name = "txt_Data_1";
             this.txt_Data_1.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_1.TabIndex = 31;
             // 
             // btn_Read
             // 
-            this.btn_Read.Location = new System.Drawing.Point(162, 180);
+            this.btn_Read.Location = new System.Drawing.Point(162, 211);
             this.btn_Read.Name = "btn_Read";
-            this.btn_Read.Size = new System.Drawing.Size(61, 23);
+            this.btn_Read.Size = new System.Drawing.Size(61, 24);
             this.btn_Read.TabIndex = 33;
             this.btn_Read.Text = "Read";
             this.btn_Read.UseVisualStyleBackColor = true;
@@ -221,9 +225,9 @@ namespace ArchonLightingSystem
             // 
             this.btn_Write.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_Write.ForeColor = System.Drawing.Color.OrangeRed;
-            this.btn_Write.Location = new System.Drawing.Point(235, 180);
+            this.btn_Write.Location = new System.Drawing.Point(235, 211);
             this.btn_Write.Name = "btn_Write";
-            this.btn_Write.Size = new System.Drawing.Size(53, 23);
+            this.btn_Write.Size = new System.Drawing.Size(53, 24);
             this.btn_Write.TabIndex = 34;
             this.btn_Write.Text = "Write";
             this.btn_Write.UseVisualStyleBackColor = true;
@@ -232,7 +236,7 @@ namespace ArchonLightingSystem
             // txt_Data_2
             // 
             this.txt_Data_2.Enabled = false;
-            this.txt_Data_2.Location = new System.Drawing.Point(59, 234);
+            this.txt_Data_2.Location = new System.Drawing.Point(59, 265);
             this.txt_Data_2.Name = "txt_Data_2";
             this.txt_Data_2.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_2.TabIndex = 35;
@@ -240,7 +244,7 @@ namespace ArchonLightingSystem
             // txt_Data_3
             // 
             this.txt_Data_3.Enabled = false;
-            this.txt_Data_3.Location = new System.Drawing.Point(106, 234);
+            this.txt_Data_3.Location = new System.Drawing.Point(106, 265);
             this.txt_Data_3.Name = "txt_Data_3";
             this.txt_Data_3.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_3.TabIndex = 36;
@@ -248,7 +252,7 @@ namespace ArchonLightingSystem
             // txt_Data_4
             // 
             this.txt_Data_4.Enabled = false;
-            this.txt_Data_4.Location = new System.Drawing.Point(153, 234);
+            this.txt_Data_4.Location = new System.Drawing.Point(153, 265);
             this.txt_Data_4.Name = "txt_Data_4";
             this.txt_Data_4.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_4.TabIndex = 37;
@@ -256,7 +260,7 @@ namespace ArchonLightingSystem
             // txt_Data_5
             // 
             this.txt_Data_5.Enabled = false;
-            this.txt_Data_5.Location = new System.Drawing.Point(200, 234);
+            this.txt_Data_5.Location = new System.Drawing.Point(200, 265);
             this.txt_Data_5.Name = "txt_Data_5";
             this.txt_Data_5.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_5.TabIndex = 38;
@@ -264,7 +268,7 @@ namespace ArchonLightingSystem
             // txt_Data_6
             // 
             this.txt_Data_6.Enabled = false;
-            this.txt_Data_6.Location = new System.Drawing.Point(247, 234);
+            this.txt_Data_6.Location = new System.Drawing.Point(247, 265);
             this.txt_Data_6.Name = "txt_Data_6";
             this.txt_Data_6.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_6.TabIndex = 39;
@@ -272,7 +276,7 @@ namespace ArchonLightingSystem
             // txt_Data_7
             // 
             this.txt_Data_7.Enabled = false;
-            this.txt_Data_7.Location = new System.Drawing.Point(294, 234);
+            this.txt_Data_7.Location = new System.Drawing.Point(294, 265);
             this.txt_Data_7.Name = "txt_Data_7";
             this.txt_Data_7.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_7.TabIndex = 40;
@@ -280,7 +284,7 @@ namespace ArchonLightingSystem
             // txt_Data_8
             // 
             this.txt_Data_8.Enabled = false;
-            this.txt_Data_8.Location = new System.Drawing.Point(341, 234);
+            this.txt_Data_8.Location = new System.Drawing.Point(341, 265);
             this.txt_Data_8.Name = "txt_Data_8";
             this.txt_Data_8.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_8.TabIndex = 41;
@@ -292,7 +296,7 @@ namespace ArchonLightingSystem
             0,
             0,
             0});
-            this.num_Addr.Location = new System.Drawing.Point(12, 183);
+            this.num_Addr.Location = new System.Drawing.Point(12, 214);
             this.num_Addr.Maximum = new decimal(new int[] {
             255,
             0,
@@ -304,7 +308,7 @@ namespace ArchonLightingSystem
             // 
             // num_Len
             // 
-            this.num_Len.Location = new System.Drawing.Point(90, 183);
+            this.num_Len.Location = new System.Drawing.Point(90, 214);
             this.num_Len.Maximum = new decimal(new int[] {
             16,
             0,
@@ -327,9 +331,9 @@ namespace ArchonLightingSystem
             // 
             // btn_ReadConfig
             // 
-            this.btn_ReadConfig.Location = new System.Drawing.Point(299, 38);
+            this.btn_ReadConfig.Location = new System.Drawing.Point(299, 69);
             this.btn_ReadConfig.Name = "btn_ReadConfig";
-            this.btn_ReadConfig.Size = new System.Drawing.Size(97, 23);
+            this.btn_ReadConfig.Size = new System.Drawing.Size(97, 24);
             this.btn_ReadConfig.TabIndex = 44;
             this.btn_ReadConfig.Text = "Read Config";
             this.btn_ReadConfig.UseVisualStyleBackColor = true;
@@ -338,7 +342,7 @@ namespace ArchonLightingSystem
             // txt_Data_16
             // 
             this.txt_Data_16.Enabled = false;
-            this.txt_Data_16.Location = new System.Drawing.Point(341, 260);
+            this.txt_Data_16.Location = new System.Drawing.Point(341, 291);
             this.txt_Data_16.Name = "txt_Data_16";
             this.txt_Data_16.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_16.TabIndex = 52;
@@ -346,7 +350,7 @@ namespace ArchonLightingSystem
             // txt_Data_15
             // 
             this.txt_Data_15.Enabled = false;
-            this.txt_Data_15.Location = new System.Drawing.Point(294, 260);
+            this.txt_Data_15.Location = new System.Drawing.Point(294, 291);
             this.txt_Data_15.Name = "txt_Data_15";
             this.txt_Data_15.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_15.TabIndex = 51;
@@ -354,7 +358,7 @@ namespace ArchonLightingSystem
             // txt_Data_14
             // 
             this.txt_Data_14.Enabled = false;
-            this.txt_Data_14.Location = new System.Drawing.Point(247, 260);
+            this.txt_Data_14.Location = new System.Drawing.Point(247, 291);
             this.txt_Data_14.Name = "txt_Data_14";
             this.txt_Data_14.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_14.TabIndex = 50;
@@ -362,7 +366,7 @@ namespace ArchonLightingSystem
             // txt_Data_13
             // 
             this.txt_Data_13.Enabled = false;
-            this.txt_Data_13.Location = new System.Drawing.Point(200, 260);
+            this.txt_Data_13.Location = new System.Drawing.Point(200, 291);
             this.txt_Data_13.Name = "txt_Data_13";
             this.txt_Data_13.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_13.TabIndex = 49;
@@ -370,7 +374,7 @@ namespace ArchonLightingSystem
             // txt_Data_12
             // 
             this.txt_Data_12.Enabled = false;
-            this.txt_Data_12.Location = new System.Drawing.Point(153, 260);
+            this.txt_Data_12.Location = new System.Drawing.Point(153, 291);
             this.txt_Data_12.Name = "txt_Data_12";
             this.txt_Data_12.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_12.TabIndex = 48;
@@ -378,7 +382,7 @@ namespace ArchonLightingSystem
             // txt_Data_11
             // 
             this.txt_Data_11.Enabled = false;
-            this.txt_Data_11.Location = new System.Drawing.Point(106, 260);
+            this.txt_Data_11.Location = new System.Drawing.Point(106, 291);
             this.txt_Data_11.Name = "txt_Data_11";
             this.txt_Data_11.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_11.TabIndex = 47;
@@ -386,7 +390,7 @@ namespace ArchonLightingSystem
             // txt_Data_10
             // 
             this.txt_Data_10.Enabled = false;
-            this.txt_Data_10.Location = new System.Drawing.Point(59, 260);
+            this.txt_Data_10.Location = new System.Drawing.Point(59, 291);
             this.txt_Data_10.Name = "txt_Data_10";
             this.txt_Data_10.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_10.TabIndex = 46;
@@ -394,7 +398,7 @@ namespace ArchonLightingSystem
             // txt_Data_9
             // 
             this.txt_Data_9.Enabled = false;
-            this.txt_Data_9.Location = new System.Drawing.Point(12, 260);
+            this.txt_Data_9.Location = new System.Drawing.Point(12, 291);
             this.txt_Data_9.Name = "txt_Data_9";
             this.txt_Data_9.Size = new System.Drawing.Size(41, 20);
             this.txt_Data_9.TabIndex = 45;
@@ -404,19 +408,44 @@ namespace ArchonLightingSystem
             this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btn_WriteConfig.ForeColor = System.Drawing.Color.IndianRed;
             this.btn_WriteConfig.ImageAlign = System.Drawing.ContentAlignment.BottomLeft;
-            this.btn_WriteConfig.Location = new System.Drawing.Point(299, 67);
+            this.btn_WriteConfig.Location = new System.Drawing.Point(299, 98);
             this.btn_WriteConfig.Name = "btn_WriteConfig";
-            this.btn_WriteConfig.Size = new System.Drawing.Size(97, 23);
+            this.btn_WriteConfig.Size = new System.Drawing.Size(97, 24);
             this.btn_WriteConfig.TabIndex = 53;
             this.btn_WriteConfig.Text = "Write Config";
             this.btn_WriteConfig.UseVisualStyleBackColor = true;
             this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
             // 
+            // menuStrip1
+            // 
+            this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.optionsToolStripMenuItem});
+            this.menuStrip1.Location = new System.Drawing.Point(0, 0);
+            this.menuStrip1.Name = "menuStrip1";
+            this.menuStrip1.Size = new System.Drawing.Size(408, 24);
+            this.menuStrip1.TabIndex = 54;
+            this.menuStrip1.Text = "menuStrip1";
+            // 
+            // optionsToolStripMenuItem
+            // 
+            this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.editConfigToolStripMenuItem});
+            this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
+            this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
+            this.optionsToolStripMenuItem.Text = "Options";
+            // 
+            // editConfigToolStripMenuItem
+            // 
+            this.editConfigToolStripMenuItem.Name = "editConfigToolStripMenuItem";
+            this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.editConfigToolStripMenuItem.Text = "Edit Config";
+            this.editConfigToolStripMenuItem.Click += new System.EventHandler(this.editConfigToolStripMenuItem_Click);
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(408, 298);
+            this.ClientSize = new System.Drawing.Size(408, 437);
             this.Controls.Add(this.btn_WriteConfig);
             this.Controls.Add(this.txt_Data_16);
             this.Controls.Add(this.txt_Data_15);
@@ -448,11 +477,15 @@ namespace ArchonLightingSystem
             this.Controls.Add(this.StatusBox_lbl);
             this.Controls.Add(this.StatusBox_txtbx);
             this.Controls.Add(this.progressBar1);
+            this.Controls.Add(this.menuStrip1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
+            this.MainMenuStrip = this.menuStrip1;
             this.Name = "AppForm";
             this.Text = "Archon Lighting System";
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).EndInit();
+            this.menuStrip1.ResumeLayout(false);
+            this.menuStrip1.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -496,6 +529,9 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.TextBox txt_Data_10;
         private System.Windows.Forms.TextBox txt_Data_9;
         private System.Windows.Forms.Button btn_WriteConfig;
+        private System.Windows.Forms.MenuStrip menuStrip1;
+        private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem editConfigToolStripMenuItem;
     }
 }
 

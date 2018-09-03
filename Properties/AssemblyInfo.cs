@@ -5,12 +5,12 @@ using System.Runtime.InteropServices;
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[assembly: AssemblyTitle("HID PnP Demo")]
+[assembly: AssemblyTitle("Archon Lighting System")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
-[assembly: AssemblyCompany("Microchip Technology Inc.")]
-[assembly: AssemblyProduct("HID PnP Demo")]
-[assembly: AssemblyCopyright("Copyright © Microchip Technology Inc. 2009")]
+[assembly: AssemblyCompany("Veldt Software")]
+[assembly: AssemblyProduct("Archon Lighting System")]
+[assembly: AssemblyCopyright("Copyright © Veldt Software, 2018")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -20,7 +20,7 @@ using System.Runtime.InteropServices;
 [assembly: ComVisible(false)]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[assembly: Guid("63f053db-de5b-4715-af73-ed2baaa1b5a8")]
+[assembly: Guid("63f023db-de5b-4745-af73-ed2baa81b5b8")]
 
 // Version information for an assembly consists of the following four values:
 //

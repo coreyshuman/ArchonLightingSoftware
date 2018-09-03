@@ -4,9 +4,9 @@ using System.Text;
 
 namespace ArchonLightingSystem
 {
-    abstract class DeviceObjectBase
+    public abstract class DeviceObjectBase
     {
-        public abstract uint ToBuffer(byte[] buffer);
+        public abstract uint ToBuffer(ref byte[] buffer);
         public abstract void FromBuffer(byte[] buffer);
 
         static public UInt16 UInt16FromBytes(byte low, byte high)

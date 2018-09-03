@@ -8,6 +8,7 @@ namespace ArchonLightingSystem
     public partial class AppForm : Form
     {
         UsbApp usbApp = null;
+        ConfigViewForm configView = null;
 
         public unsafe AppForm()
         {
@@ -151,6 +152,22 @@ namespace ArchonLightingSystem
         private void btn_WriteConfig_Click(object sender, EventArgs e)
         {
             usbApp.Data.WriteConfigPending = true;
+        }
+
+        private void editConfigToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(configView == null || configView.IsDisposed)
+            {
+                configView = new ConfigViewForm();
+                configView.AppDataRef = usbApp.Data;
+                configView.UpdateFormData();
+                configView.Show();
+            } 
+            if(configView.WindowState == FormWindowState.Minimized)
+            {
+                configView.WindowState = FormWindowState.Normal;
+            }
+            configView.Focus();
         }
     } 
 } 

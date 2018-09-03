@@ -4,7 +4,7 @@ using System.Text;
 
 namespace ArchonLightingSystem
 {
-    class DeviceController
+    public class DeviceController
     {
         public const uint DeviceCount = 5;
         public const uint LedCountPerDevice = 12;

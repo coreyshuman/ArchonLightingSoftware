@@ -6,7 +6,7 @@ using System.Text;
 
 namespace ArchonLightingSystem
 {
-    class AppData
+    public class AppData
     {
         public uint FanSpeed;
         public bool EepromReadPending;
@@ -184,7 +184,7 @@ namespace ArchonLightingSystem
                         if (Data.WriteConfigPending)
                         {
                             Data.WriteConfigPending = false;
-                            byteCnt = Data.deviceConfig.ToBuffer(rxtxBuffer);
+                            byteCnt = Data.deviceConfig.ToBuffer(ref rxtxBuffer);
                             if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
                             {
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);
