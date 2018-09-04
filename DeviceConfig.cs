@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace ArchonLightingSystem
 {
@@ -8,17 +6,22 @@ namespace ArchonLightingSystem
     {
         public const uint FanSpeedOffset = 4;
         public const uint LedModeOffset = 9;
-        public const uint LedColorOffset = 14;
-        public UInt16 Crc;
-        public UInt16 Length;
-        public Byte[] FanSpeed;
-        public Byte[] LedMode;
-        public Byte[,] Colors;
+        public const uint LedSpeedOffset = 14;
+        public const uint LedColorOffset = 20;
+        public UInt16 Crc { get; set; }
+        public UInt16 Length { get; set; }
+        public Byte[] FanSpeed { get; set; }
+        public Byte[] LedMode { get; set; }
+        public Byte[] LedSpeed { get; set; }
+        public Byte Unused1 { get; set; }
+        public Byte[,] Colors { get; set; }
 
         public DeviceConfig()
         {
             FanSpeed = new byte[DeviceController.DeviceCount];
             LedMode = new byte[DeviceController.DeviceCount];
+            LedSpeed = new byte[DeviceController.DeviceCount];
+            Unused1 = 0;
             Colors = new byte[DeviceController.DeviceCount, DeviceController.LedBytesPerDevice];
         }
 
@@ -31,6 +34,7 @@ namespace ArchonLightingSystem
             {
                 FanSpeed[i] = buffer[i + FanSpeedOffset];
                 LedMode[i] = buffer[i + LedModeOffset];
+                LedSpeed[i] = buffer[i + LedSpeedOffset];
             }
             for (i = 0; i < DeviceController.DeviceCount; i++)
             {
@@ -50,6 +54,7 @@ namespace ArchonLightingSystem
             {
                 buffer[i + FanSpeedOffset] = FanSpeed[i];
                 buffer[i + LedModeOffset] = LedMode[i];
+                buffer[i + LedSpeedOffset] = LedSpeed[i];
             }
             for (i = 0; i < DeviceController.DeviceCount; i++)
             {

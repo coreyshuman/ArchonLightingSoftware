@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Threading;
 using System.ComponentModel;
-using System.Text;
 
 namespace ArchonLightingSystem
 {
@@ -18,7 +16,7 @@ namespace ArchonLightingSystem
         public uint EepromAddress;
         public uint EepromLength;
         public Byte[] EepromData;
-        public DeviceConfig deviceConfig;
+        public DeviceConfig DeviceConfig;
 
         public AppData()
         {
@@ -30,7 +28,7 @@ namespace ArchonLightingSystem
             EepromAddress = 1;
             EepromLength = 1;
             EepromData = new byte[256];
-            deviceConfig = new DeviceConfig();
+            DeviceConfig = new DeviceConfig();
         }
     }
 
@@ -175,7 +173,7 @@ namespace ArchonLightingSystem
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONFIG);
                                 if (response != null)
                                 {
-                                    Data.deviceConfig.FromBuffer(response.Data);
+                                    Data.DeviceConfig.FromBuffer(response.Data);
                                     Data.EepromReadDone = true;
                                 }
                             }
@@ -184,7 +182,7 @@ namespace ArchonLightingSystem
                         if (Data.WriteConfigPending)
                         {
                             Data.WriteConfigPending = false;
-                            byteCnt = Data.deviceConfig.ToBuffer(ref rxtxBuffer);
+                            byteCnt = Data.DeviceConfig.ToBuffer(ref rxtxBuffer);
                             if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
                             {
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);

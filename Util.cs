@@ -1,8 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ArchonLightingSystem
 {
@@ -22,6 +19,11 @@ namespace ArchonLightingSystem
             {
                 yield return array[i, column];
             }
+        }
+
+        public static string[] ToStringArray(this byte[] array)
+        {
+            return array.Select(d => ((int)d).ToString()).ToArray();
         }
     }
 }

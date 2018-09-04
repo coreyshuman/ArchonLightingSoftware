@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace ArchonLightingSystem
+﻿namespace ArchonLightingSystem
 {
     partial class UsbApp
     {

@@ -32,7 +32,12 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConfigViewForm));
             this.colorsGridView1 = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
-            this.fanModeGridView = new System.Windows.Forms.DataGridView();
+            this.btn_ResetConfig = new System.Windows.Forms.Button();
+            this.ledSpeedGridView = new System.Windows.Forms.DataGridView();
+            this.label4 = new System.Windows.Forms.Label();
+            this.btn_WriteConfig = new System.Windows.Forms.Button();
+            this.btn_ReadConfig = new System.Windows.Forms.Button();
+            this.fanSpeedGridView = new System.Windows.Forms.DataGridView();
             this.ledModeGridView = new System.Windows.Forms.DataGridView();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
@@ -47,8 +52,6 @@
             this.bindingNavigatorMoveNextItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorMoveLastItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.btn_ReadConfig = new System.Windows.Forms.Button();
-            this.btn_WriteConfig = new System.Windows.Forms.Button();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
             this.deviceConfigBindingSource = new System.Windows.Forms.BindingSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.colorsGridView1)).BeginInit();
@@ -56,7 +59,8 @@
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
             this.splitContainer1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.fanModeGridView)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ledSpeedGridView)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fanSpeedGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ledModeGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ledColorNavigator)).BeginInit();
             this.ledColorNavigator.SuspendLayout();
@@ -69,7 +73,7 @@
             this.colorsGridView1.AllowUserToDeleteRows = false;
             this.colorsGridView1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Left | System.Windows.Forms.AnchorStyles.Right)));
             this.colorsGridView1.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.colorsGridView1.Location = new System.Drawing.Point(0, 70);
+            this.colorsGridView1.Location = new System.Drawing.Point(-1, 70);
             this.colorsGridView1.Name = "colorsGridView1";
             this.colorsGridView1.Size = new System.Drawing.Size(1277, 59);
             this.colorsGridView1.TabIndex = 1;
@@ -83,9 +87,12 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_ResetConfig);
+            this.splitContainer1.Panel1.Controls.Add(this.ledSpeedGridView);
+            this.splitContainer1.Panel1.Controls.Add(this.label4);
             this.splitContainer1.Panel1.Controls.Add(this.btn_WriteConfig);
             this.splitContainer1.Panel1.Controls.Add(this.btn_ReadConfig);
-            this.splitContainer1.Panel1.Controls.Add(this.fanModeGridView);
+            this.splitContainer1.Panel1.Controls.Add(this.fanSpeedGridView);
             this.splitContainer1.Panel1.Controls.Add(this.ledModeGridView);
             this.splitContainer1.Panel1.Controls.Add(this.label3);
             this.splitContainer1.Panel1.Controls.Add(this.label2);
@@ -95,23 +102,73 @@
             this.splitContainer1.Panel2.Controls.Add(this.label1);
             this.splitContainer1.Panel2.Controls.Add(this.ledColorNavigator);
             this.splitContainer1.Panel2.Controls.Add(this.colorsGridView1);
-            this.splitContainer1.Size = new System.Drawing.Size(1277, 543);
-            this.splitContainer1.SplitterDistance = 241;
+            this.splitContainer1.Size = new System.Drawing.Size(1277, 740);
+            this.splitContainer1.SplitterDistance = 328;
             this.splitContainer1.TabIndex = 2;
             // 
-            // fanModeGridView
+            // btn_ResetConfig
             // 
-            this.fanModeGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.fanModeGridView.Location = new System.Drawing.Point(0, 77);
-            this.fanModeGridView.Name = "fanModeGridView";
-            this.fanModeGridView.Size = new System.Drawing.Size(1277, 69);
-            this.fanModeGridView.TabIndex = 3;
+            this.btn_ResetConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_ResetConfig.Location = new System.Drawing.Point(409, 12);
+            this.btn_ResetConfig.Name = "btn_ResetConfig";
+            this.btn_ResetConfig.Size = new System.Drawing.Size(98, 35);
+            this.btn_ResetConfig.TabIndex = 8;
+            this.btn_ResetConfig.Text = "Reset Config";
+            this.btn_ResetConfig.UseVisualStyleBackColor = true;
+            this.btn_ResetConfig.Click += new System.EventHandler(this.btn_ResetConfig_Click);
+            // 
+            // ledSpeedGridView
+            // 
+            this.ledSpeedGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.ledSpeedGridView.Location = new System.Drawing.Point(-1, 257);
+            this.ledSpeedGridView.Name = "ledSpeedGridView";
+            this.ledSpeedGridView.Size = new System.Drawing.Size(1277, 69);
+            this.ledSpeedGridView.TabIndex = 7;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label4.Location = new System.Drawing.Point(3, 234);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(96, 20);
+            this.label4.TabIndex = 6;
+            this.label4.Text = "Led Speed";
+            // 
+            // btn_WriteConfig
+            // 
+            this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_WriteConfig.Location = new System.Drawing.Point(305, 12);
+            this.btn_WriteConfig.Name = "btn_WriteConfig";
+            this.btn_WriteConfig.Size = new System.Drawing.Size(98, 35);
+            this.btn_WriteConfig.TabIndex = 5;
+            this.btn_WriteConfig.Text = "Write Config";
+            this.btn_WriteConfig.UseVisualStyleBackColor = true;
+            this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
+            // 
+            // btn_ReadConfig
+            // 
+            this.btn_ReadConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_ReadConfig.Location = new System.Drawing.Point(204, 13);
+            this.btn_ReadConfig.Name = "btn_ReadConfig";
+            this.btn_ReadConfig.Size = new System.Drawing.Size(95, 35);
+            this.btn_ReadConfig.TabIndex = 4;
+            this.btn_ReadConfig.Text = "Read Config";
+            this.btn_ReadConfig.UseVisualStyleBackColor = true;
+            this.btn_ReadConfig.Click += new System.EventHandler(this.btn_ReadConfig_Click);
+            // 
+            // fanSpeedGridView
+            // 
+            this.fanSpeedGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.fanSpeedGridView.Location = new System.Drawing.Point(0, 68);
+            this.fanSpeedGridView.Name = "fanSpeedGridView";
+            this.fanSpeedGridView.Size = new System.Drawing.Size(1277, 69);
+            this.fanSpeedGridView.TabIndex = 3;
             // 
             // ledModeGridView
             // 
             this.ledModeGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.ledModeGridView.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.ledModeGridView.Location = new System.Drawing.Point(0, 172);
+            this.ledModeGridView.Location = new System.Drawing.Point(0, 163);
             this.ledModeGridView.Name = "ledModeGridView";
             this.ledModeGridView.Size = new System.Drawing.Size(1277, 69);
             this.ledModeGridView.TabIndex = 2;
@@ -120,7 +177,7 @@
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(4, 149);
+            this.label3.Location = new System.Drawing.Point(4, 140);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(88, 20);
             this.label3.TabIndex = 1;
@@ -130,7 +187,7 @@
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(3, 54);
+            this.label2.Location = new System.Drawing.Point(3, 45);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(160, 20);
             this.label2.TabIndex = 0;
@@ -239,26 +296,6 @@
             this.bindingNavigatorSeparator2.Name = "bindingNavigatorSeparator2";
             this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
-            // btn_ReadConfig
-            // 
-            this.btn_ReadConfig.Location = new System.Drawing.Point(13, 13);
-            this.btn_ReadConfig.Name = "btn_ReadConfig";
-            this.btn_ReadConfig.Size = new System.Drawing.Size(75, 23);
-            this.btn_ReadConfig.TabIndex = 4;
-            this.btn_ReadConfig.Text = "Read Config";
-            this.btn_ReadConfig.UseVisualStyleBackColor = true;
-            this.btn_ReadConfig.Click += new System.EventHandler(this.btn_ReadConfig_Click);
-            // 
-            // btn_WriteConfig
-            // 
-            this.btn_WriteConfig.Location = new System.Drawing.Point(94, 12);
-            this.btn_WriteConfig.Name = "btn_WriteConfig";
-            this.btn_WriteConfig.Size = new System.Drawing.Size(75, 23);
-            this.btn_WriteConfig.TabIndex = 5;
-            this.btn_WriteConfig.Text = "Write Config";
-            this.btn_WriteConfig.UseVisualStyleBackColor = true;
-            this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
-            // 
             // updateTimer
             // 
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
@@ -271,7 +308,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1277, 543);
+            this.ClientSize = new System.Drawing.Size(1277, 740);
             this.Controls.Add(this.splitContainer1);
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MaximizeBox = false;
@@ -286,7 +323,8 @@
             this.splitContainer1.Panel2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).EndInit();
             this.splitContainer1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.fanModeGridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.ledSpeedGridView)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.fanSpeedGridView)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ledModeGridView)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.ledColorNavigator)).EndInit();
             this.ledColorNavigator.ResumeLayout(false);
@@ -313,10 +351,13 @@
         private System.Windows.Forms.ToolStripButton bindingNavigatorMoveNextItem;
         private System.Windows.Forms.ToolStripButton bindingNavigatorMoveLastItem;
         private System.Windows.Forms.ToolStripSeparator bindingNavigatorSeparator2;
-        private System.Windows.Forms.DataGridView fanModeGridView;
+        private System.Windows.Forms.DataGridView fanSpeedGridView;
         private System.Windows.Forms.DataGridView ledModeGridView;
         private System.Windows.Forms.Button btn_WriteConfig;
         private System.Windows.Forms.Button btn_ReadConfig;
         private System.Windows.Forms.Timer updateTimer;
+        private System.Windows.Forms.Button btn_ResetConfig;
+        private System.Windows.Forms.DataGridView ledSpeedGridView;
+        private System.Windows.Forms.Label label4;
     }
 }

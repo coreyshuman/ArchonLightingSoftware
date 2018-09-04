@@ -1,9 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Text;
 using System.Windows.Forms;
 using System.Linq;
 
@@ -11,7 +7,8 @@ namespace ArchonLightingSystem
 {
     public partial class ConfigViewForm : Form
     {
-        private AppData appData;
+        private DataGridView[] topGrids;
+        private AppData appData = new AppData();
         private int numberOfGrids = 3;
         private int currentDevice = 0;
         public AppData AppDataRef
@@ -26,60 +23,63 @@ namespace ArchonLightingSystem
             }
         }
 
+        #region Initializers
         public ConfigViewForm()
         {
             InitializeComponent();
+            topGrids = new DataGridView[] { fanSpeedGridView, ledModeGridView, ledSpeedGridView };
+
             InitializeGrid();
             InitializeNavigator();
         }
 
-        public void UpdateFormData()
+        private void InitializeNavigator()
         {
             int i;
+            var bindingSource = new BindingSource();
+            ledColorNavigator.BindingSource = bindingSource;
 
-            fanModeGridView.Rows.Clear();
-            fanModeGridView.Rows.Add(appData.deviceConfig.FanSpeed.Select(d => ((int)d).ToString()).ToArray());
-            ledModeGridView.Rows.Clear();
-            ledModeGridView.Rows.Add(appData.deviceConfig.LedMode.Select(d => ((int)d).ToString()).ToArray());
-
-            int dataPerGrid = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
-            for (i=1; i<=numberOfGrids; i++)
+            for (i = 0; i < DeviceController.DeviceCount; i++)
             {
-                DataGridView gView = ((DataGridView)this.splitContainer1.Panel2.Controls["colorsGridView" + i]);
-                gView.Rows.Clear();
-                gView.Rows.Add(appData.deviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
+                bindingSource.Add(i);
             }
-            
 
+            bindingSource.PositionChanged += BindingSource_PositionChanged;
         }
 
         private void InitializeGrid()
         {
             int i, gridNum;
+            DataGridView gView;
 
-            fanModeGridView.ColumnCount = (int)DeviceController.DeviceCount;
-            ledModeGridView.ColumnCount = (int)DeviceController.DeviceCount;
-            fanModeGridView.RowHeadersVisible = true;
-            ledModeGridView.RowHeadersVisible = true;
-            fanModeGridView.AllowUserToAddRows = false;
-            ledModeGridView.AllowUserToAddRows = false;
-            fanModeGridView.AllowUserToDeleteRows = false;
-            ledModeGridView.AllowUserToDeleteRows = false;
-            fanModeGridView.CellValidating += FanModeGridView_CellValidating;
-            fanModeGridView.CellEndEdit += FanModeGridView_CellEndEdit;
-            ledModeGridView.CellValidating += LedModeGridView_CellValidating;
-            ledModeGridView.CellEndEdit += LedModeGridView_CellEndEdit;
+            int[] cellRangeMax = new int[] { 100, 10, 10 };
+
+            topGrids.Select(grid =>
+            {
+                grid.ColumnCount = (int)DeviceController.DeviceCount;
+                grid.RowHeadersVisible = true;
+                grid.AllowUserToAddRows = false;
+                grid.AllowUserToDeleteRows = false;
+                grid.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(grid));
+                grid.CellEndEdit += CellEndHandler(GetDataPropertyForGrid(grid));
+                for (i = 1; i <= DeviceController.DeviceCount; i++)
+                {
+                    grid.Columns[i - 1].Name = $"D{i}";
+                }
+                return grid;
+            }).ToArray();
+
             for (i = 1; i <= DeviceController.DeviceCount; i++)
             {
                 string name = $"D{i}";
-                fanModeGridView.Columns[i - 1].Name = name;
+                fanSpeedGridView.Columns[i - 1].Name = name;
                 ledModeGridView.Columns[i - 1].Name = name;
             }
-                       
-            for(gridNum = 1; gridNum <= numberOfGrids; gridNum++)
+
+            for (gridNum = 1; gridNum <= numberOfGrids; gridNum++)
             {
-                DataGridView gView;
-                if(gridNum == 1)
+
+                if (gridNum == 1)
                 {
                     gView = colorsGridView1;
                 }
@@ -100,7 +100,7 @@ namespace ArchonLightingSystem
                 gView.AllowUserToDeleteRows = false;
                 gView.GridColor = Color.Black;
                 gView.ColumnCount = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
-                gView.CellValidating += ColorGridView_CellValidating;
+                gView.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(gView));
                 gView.CellEndEdit += ColorGridView_CellEndEdit;
 
                 int offsetStart = (int)(DeviceController.LedBytesPerDevice / numberOfGrids * (gridNum - 1));
@@ -118,13 +118,45 @@ namespace ArchonLightingSystem
                     gView.Columns[i - 1 - offsetStart].Name = name;
                 }
             }
+        }
+        #endregion
 
+        #region Form Update
+        public void UpdateFormData()
+        {
+            int i;
 
-            string[] row0 = { "0", "128", "57" };
+            topGrids.Select(grid =>
+            {
+                grid.Rows.Clear();
+                grid.Rows.Add(((byte[])GetDataPropertyForGrid(grid).GetValue(appData.DeviceConfig)).ToStringArray());
+                return grid;
+            }).ToArray();
 
-            //colorsGridView.Rows.Add(row0);
+            int dataPerGrid = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
+            for (i=1; i<=numberOfGrids; i++)
+            {
+                DataGridView gView = ((DataGridView)this.splitContainer1.Panel2.Controls["colorsGridView" + i]);
+                gView.Rows.Clear();
+                gView.Rows.Add(appData.DeviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
+            }
+            
 
-            //colorsGridView.Update();
+        }
+        #endregion
+
+        #region EventHandlers
+        private DataGridViewCellEventHandler CellEndHandler(System.Reflection.PropertyInfo property)
+        {
+            return (object sender, DataGridViewCellEventArgs e) =>
+            {
+                var gView = ((DataGridView)sender);
+                gView.Rows[e.RowIndex].ErrorText = String.Empty;
+                var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
+                var numVal = int.Parse(value);
+                byte[] configArray = (byte[])property.GetValue(appData.DeviceConfig, null);
+                configArray[e.ColumnIndex] = (byte)numVal;
+            };
         }
 
         private void ColorGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -135,92 +167,18 @@ namespace ArchonLightingSystem
             gView.Rows[e.RowIndex].ErrorText = String.Empty;
             var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
             var numVal = int.Parse(value);
-            appData.deviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
+            appData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
         }
 
-        private void ColorGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
+        private DataGridViewCellValidatingEventHandler DataGridValidateNumericRangeHandler(Tuple<int, int> minMax)
         {
-            if (ValidateCellNumericRange(sender, e.FormattedValue, 0, 255))
+            return (object sender, DataGridViewCellValidatingEventArgs e) =>
             {
-                e.Cancel = true;
-            }
-        }
-
-        private void LedModeGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-        {
-            if (ValidateCellNumericRange(sender, e.FormattedValue, 0, 10))
-            {
-                e.Cancel = true;
-            }
-        }
-
-        private void LedModeGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            var gView = ((DataGridView)sender);
-            gView.Rows[e.RowIndex].ErrorText = String.Empty;
-            var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
-            var numVal = int.Parse(value);
-            appData.deviceConfig.LedMode[e.ColumnIndex] = (byte)numVal;
-        }
-
-        private void FanModeGridView_CellValidating(object sender, DataGridViewCellValidatingEventArgs e)
-        {
-            if (ValidateCellNumericRange(sender, e.FormattedValue, 0, 100))
-            {
-                e.Cancel = true;
-            }
-        }
-
-        private void FanModeGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            var gView = ((DataGridView)sender);
-            gView.Rows[e.RowIndex].ErrorText = String.Empty;
-            var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
-            var numVal = int.Parse(value);
-            appData.deviceConfig.FanSpeed[e.ColumnIndex] = (byte)numVal;
-        }
-
-        private bool ValidateCellNumericRange(object sender, object value, int min, int max)
-        {
-            var gView = ((DataGridView)sender);
-            string valStr = value.ToString();
-            int number = 0;
-            // Confirm that the cell is not empty.
-            if (string.IsNullOrEmpty(valStr))
-            {
-                gView.Rows[0].ErrorText = "Value can not be empty";
-                return true;
-            }
-
-            if (!int.TryParse(valStr, out number))
-            {
-                gView.Rows[0].ErrorText = "Value must be a number";
-                return true;
-            }
-
-            if(number < min || number > max)
-            {
-                gView.Rows[0].ErrorText = $"Value must be between {min} and {max}";
-                return true;
-            }
-
-            return false;
-        }
-
-       
-
-        private void InitializeNavigator()
-        {
-            int i;
-            var bindingSource = new BindingSource();
-            ledColorNavigator.BindingSource = bindingSource;
-
-            for(i=0; i<DeviceController.DeviceCount; i++)
-            {
-                bindingSource.Add(i);
-            }
-
-            bindingSource.PositionChanged += BindingSource_PositionChanged;
+                if (ValidateCellNumericRange(sender, e.FormattedValue, minMax.Item1, minMax.Item2))
+                {
+                    e.Cancel = true;
+                }
+            };
         }
 
         private void BindingSource_PositionChanged(object sender, EventArgs e)
@@ -246,5 +204,70 @@ namespace ArchonLightingSystem
             updateTimer.Enabled = false;
             UpdateFormData();
         }
+
+        private void btn_ResetConfig_Click(object sender, EventArgs e)
+        {
+
+        }
+        #endregion
+
+        #region Helpers
+        private System.Reflection.PropertyInfo GetDataPropertyForGrid(DataGridView grid)
+        {
+            string propName = "";
+
+            switch (grid.Name)
+            {
+                case "fanSpeedGridView": propName = "FanSpeed"; break;
+                case "ledModeGridView": propName = "LedMode"; break;
+                case "ledSpeedGridView": propName = "LedSpeed"; break;
+                default: propName = "Colors"; break;
+            }
+
+            return appData.DeviceConfig.GetType().GetProperty(propName);
+        }
+
+        private Tuple<int, int> GetNumericValidationRangeForGrid(DataGridView grid)
+        {
+            Tuple<int, int> minMax = null;
+
+            switch (grid.Name)
+            {
+                case "fanSpeedGridView": minMax = new Tuple<int, int>(0, 100); break;
+                case "ledModeGridView": minMax = new Tuple<int, int>(0, 16); break;
+                case "ledSpeedGridView": minMax = new Tuple<int, int>(0, 10); break;
+                default: minMax = new Tuple<int, int>(0, 255); break;
+            }
+
+            return minMax;
+        }
+
+        private bool ValidateCellNumericRange(object sender, object value, int min, int max)
+        {
+            var gView = ((DataGridView)sender);
+            string valStr = value.ToString();
+            int number = 0;
+            // Confirm that the cell is not empty.
+            if (string.IsNullOrEmpty(valStr))
+            {
+                gView.Rows[0].ErrorText = "Value can not be empty";
+                return true;
+            }
+
+            if (!int.TryParse(valStr, out number))
+            {
+                gView.Rows[0].ErrorText = "Value must be a number";
+                return true;
+            }
+
+            if (number < min || number > max)
+            {
+                gView.Rows[0].ErrorText = $"Value must be between {min} and {max}";
+                return true;
+            }
+
+            return false;
+        }
+        #endregion
     }
 }
