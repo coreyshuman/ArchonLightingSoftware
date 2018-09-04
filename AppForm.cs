@@ -1,6 +1,6 @@
 using System;
 using System.Windows.Forms;
-
+using ArchonLightingSystem.Components;
 
 
 namespace ArchonLightingSystem
@@ -9,6 +9,7 @@ namespace ArchonLightingSystem
     {
         UsbApp usbApp = null;
         ConfigViewForm configView = null;
+        Panel fanSpeedBar1;
 
         public unsafe AppForm()
         {
@@ -17,7 +18,6 @@ namespace ArchonLightingSystem
 
             //Initialize tool tips, to provide pop up help when the mouse cursor is moved over objects on the form.
             ANxVoltageToolTip.SetToolTip(this.ANxVoltage_lbl, "If using a board/PIM without a potentiometer, apply an adjustable voltage to the I/O pin.");
-            ANxVoltageToolTip.SetToolTip(this.progressBar1, "If using a board/PIM without a potentiometer, apply an adjustable voltage to the I/O pin.");
             ToggleLEDToolTip.SetToolTip(this.btn_readDebug, "Sends a packet of data to the USB device.");
 
             usbApp = new UsbApp();
@@ -26,12 +26,30 @@ namespace ArchonLightingSystem
 
             if (usbApp.IsAttached == true)
             {
-                StatusBox_txtbx.Text = "Device Found, AttachedState = TRUE";
+                statusLabel.Text = "Device Found, AttachedState = TRUE";
             }
             else
             {
-                StatusBox_txtbx.Text = "Device not found, verify connect/correct firmware";
+                statusLabel.Text = "Device not found, verify connect/correct firmware";
             }
+
+            fanSpeedBar1 = new Panel();
+            fanSpeedBar1.Left = 0;
+            fanSpeedBar1.Top = 0;
+            fanSpeedBar1.Height = fanPanel1.Height;
+            fanSpeedBar1.Width = fanPanel1.Width;
+            fanSpeedBar1.Parent = fanPanel1;
+            fanSpeedBar1.BackColor = System.Drawing.Color.Blue;
+            fanSpeedBar1.Show();
+        }
+
+        void SetFanSpeedValue(int value)
+        {
+            if (value > 3000) value = 3000;
+            int size = (int)(fanPanel1.Height * value / 3000);
+            int top = fanPanel1.Height - size;
+            fanSpeedBar1.Height = size;
+            fanSpeedBar1.Top = top;
         }
 
         //This is a callback function that gets called when a Windows message is received by the form.
@@ -57,27 +75,27 @@ namespace ArchonLightingSystem
             if (usbApp.IsAttached == true)
             {
                 //Device is connected and ready to communicate, enable user interface on the form 
-                StatusBox_txtbx.Text = "Device Found: AttachedState = TRUE";
+                statusLabel.Text = "Device Found: AttachedState = TRUE";
                 ANxVoltage_lbl.Enabled = true;
                 btn_readDebug.Enabled = true;
             }
             if ((usbApp.IsAttached == false) || (usbApp.IsAttachedButBroken == true))
             {
                 //Device not available to communicate. Disable user interface on the form.
-                StatusBox_txtbx.Text = "Device Not Detected: Verify Connection/Correct Firmware";
+                statusLabel.Text = "Device Not Detected: Verify Connection/Correct Firmware";
                 ANxVoltage_lbl.Enabled = false;
                 btn_readDebug.Enabled = false;
 
-                //ADCValue = 0;
-                progressBar1.Value = 0;
+                SetFanSpeedValue(0);
             }
 
             //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
             if (usbApp.IsAttached == true)
             {
                 //Update the ANxx/POT Voltage indicator value (progressbar)
-                progressBar1.Value = (int)usbApp.Data.FanSpeed > 3000 ? 3000 : (int)usbApp.Data.FanSpeed;
-                lbl_fanSpeed.Text = usbApp.Data.FanSpeed.ToString();
+                //fanSpeedBar1.Value = (int)usbApp.Data.FanSpeed[0] > 3000 ? 3000 : (int)usbApp.Data.FanSpeed[0];
+                SetFanSpeedValue((int)usbApp.Data.FanSpeed[0]);
+                lbl_fanSpeed.Text = usbApp.Data.FanSpeed[0].ToString();
                 if(usbApp.Data.EepromReadDone)
                 {
                     for (int i = 0; i < usbApp.Data.EepromLength; i++)

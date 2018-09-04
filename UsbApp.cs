@@ -6,7 +6,7 @@ namespace ArchonLightingSystem
 {
     public class AppData
     {
-        public uint FanSpeed;
+        public uint[] FanSpeed;
         public bool EepromReadPending;
         public bool EepromReadDone;
         public bool EepromWritePending;
@@ -20,7 +20,7 @@ namespace ArchonLightingSystem
 
         public AppData()
         {
-            FanSpeed = 0;
+            FanSpeed = new uint[DeviceController.DeviceCount];
             EepromReadPending = false;
             EepromReadDone = false;
             EepromWritePending = false;
@@ -67,10 +67,6 @@ namespace ArchonLightingSystem
     partial class UsbApp : UsbDriver
     {
         public AppData Data;
-        //Variables used by the application/form updates.
-        public bool PushbuttonPressed = false;     //Updated by ReadWriteThread, read by FormUpdateTimer tick handler (needs to be atomic)
-        public bool ToggleLEDsPending = false;     //Updated by ToggleLED(s) button click event handler, used by ReadWriteThread (needs to be atomic)
-        //public uint FanSpeed = 0;			//Updated by ReadWriteThread, read by FormUpdateTimer tick handler (needs to be atomic)
         private BackgroundWorker ReadWriteThread;
 
         public UsbApp()
@@ -102,16 +98,19 @@ namespace ArchonLightingSystem
                         {
                             rxtxBuffer[i] = 0;
                         }
-                        /*
+                        
                         if(GenerateAndSendFrames(CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
                         {
                             ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_FANSPEED);
                             if(response != null)
                             {
-                                Data.FanSpeed = (uint)(response.Data[1] << 8) + response.Data[0];	//Need to reformat the data from two unsigned chars into one unsigned int.
+                                for (i = 0; i < DeviceController.DeviceCount; i++)
+                                {
+                                    Data.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
+                                }
                             }
                         }
-                        */
+                        
                         if (Data.EepromReadPending)
                         {
                             Data.EepromReadPending = false;
