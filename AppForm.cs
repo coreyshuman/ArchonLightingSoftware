@@ -1,24 +1,24 @@
 using System;
 using System.Windows.Forms;
 using ArchonLightingSystem.Components;
+using ArchonLightingSystem.Models;
+using ArchonLightingSystem.UsbApplication;
 
 
 namespace ArchonLightingSystem
 {
     public partial class AppForm : Form
     {
-        UsbApp usbApp = null;
-        ConfigViewForm configView = null;
+        private UsbApp usbApp = null;
+        private ConfigViewForm configView = null;
+        private bool configUpdateReady = false;
+        private bool formIsInitialized = false;
+        private UInt16[] fanBuffer;
         Panel fanSpeedBar1;
 
         public unsafe AppForm()
         {
             InitializeComponent();
-
-
-            //Initialize tool tips, to provide pop up help when the mouse cursor is moved over objects on the form.
-            ANxVoltageToolTip.SetToolTip(this.ANxVoltage_lbl, "If using a board/PIM without a potentiometer, apply an adjustable voltage to the I/O pin.");
-            ToggleLEDToolTip.SetToolTip(this.btn_readDebug, "Sends a packet of data to the USB device.");
 
             usbApp = new UsbApp();
             usbApp.RegisterEventHandler(this.Handle);
@@ -41,11 +41,41 @@ namespace ArchonLightingSystem
             fanSpeedBar1.Parent = fanPanel1;
             fanSpeedBar1.BackColor = System.Drawing.Color.Blue;
             fanSpeedBar1.Show();
+
+            fanBuffer = new UInt16[10];
+
+            cbo_LightingMode.Items.Add("Off");
+            cbo_LightingMode.Items.Add("Steady");
+            cbo_LightingMode.Items.Add("Rotate");
+        }
+
+        void UpdateFormSettings(DeviceControllerData controller)
+        {
+            lbl_Address.Text = controller.DeviceAddress.ToString();
+            trackBar1.Value = controller.DeviceConfig.FanSpeed[0];
+            cbo_LightingMode.SelectedIndex = controller.DeviceConfig.LedMode[0];
+            button1.BackColor = GetLedColor(0, 0);
+            button2.BackColor = GetLedColor(0, 1);
+            button3.BackColor = GetLedColor(0, 2);
+            button4.BackColor = GetLedColor(0, 3);
         }
 
         void SetFanSpeedValue(int value)
         {
             if (value > 3000) value = 3000;
+            int i;
+            int total = 0;
+            for(i=9; i>0; i--)
+            {
+                fanBuffer[i] = fanBuffer[i - 1]; 
+            }
+            fanBuffer[0] = (UInt16)value;
+            for(i=0; i<10; i++)
+            {
+                total += fanBuffer[i];
+            }
+            value = total / 10;
+
             int size = (int)(fanPanel1.Height * value / 3000);
             int top = fanPanel1.Height - size;
             fanSpeedBar1.Height = size;
@@ -63,7 +93,7 @@ namespace ArchonLightingSystem
         // read debug
         private void ToggleLEDs_btn_Click(object sender, EventArgs e)
         {
-            usbApp.Data.ReadDebug = true;
+            usbApp.AppData.ReadDebug = true;
         }
 
         private void FormUpdateTimer_Tick(object sender, EventArgs e)
@@ -92,18 +122,29 @@ namespace ArchonLightingSystem
             //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
             if (usbApp.IsAttached == true)
             {
-                //Update the ANxx/POT Voltage indicator value (progressbar)
-                //fanSpeedBar1.Value = (int)usbApp.Data.FanSpeed[0] > 3000 ? 3000 : (int)usbApp.Data.FanSpeed[0];
-                SetFanSpeedValue((int)usbApp.Data.FanSpeed[0]);
-                lbl_fanSpeed.Text = usbApp.Data.FanSpeed[0].ToString();
-                if(usbApp.Data.EepromReadDone)
+                if (!formIsInitialized && usbApp.AppData.DeviceControllerData != null && usbApp.AppData.DeviceControllerData.IsInitialized)
                 {
-                    for (int i = 0; i < usbApp.Data.EepromLength; i++)
+                    UpdateFormSettings(usbApp.AppData.DeviceControllerData);
+                    formIsInitialized = true;
+                }
+
+                SetFanSpeedValue((int)usbApp.AppData.DeviceControllerData.MeasuredFanRpm[0]);
+                //lbl_fanSpeed.Text = usbApp.AppData.FanSpeed[0].ToString();
+                if(usbApp.AppData.EepromReadDone)
+                {
+                    for (int i = 0; i < usbApp.AppData.EepromLength; i++)
                     {
                         Control ctn = this.Controls["txt_Data_" + (i + 1)];
-                        ctn.Text = usbApp.Data.EepromData[i].ToString();
+                        //ctn.Text = usbApp.AppData.EepromData[i].ToString();
                     }
-                    usbApp.Data.EepromReadDone = false;
+                    usbApp.AppData.EepromReadDone = false;
+                }
+
+                if(configUpdateReady)
+                {
+                    configUpdateReady = false;
+                    usbApp.AppData.DeviceControllerData.DeviceConfig.FanSpeed[0] = (byte)trackBar1.Value;
+                    usbApp.AppData.UpdateConfigPending = true;
                 }
             }
         }
@@ -115,22 +156,22 @@ namespace ArchonLightingSystem
 
         private void btn_Read_Click(object sender, EventArgs e)
         {
-            usbApp.Data.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
-            usbApp.Data.EepromLength = (uint)Int32.Parse(num_Len.Text);
-            usbApp.Data.EepromReadPending = true;
+            usbApp.AppData.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
+            usbApp.AppData.EepromLength = (uint)Int32.Parse(num_Len.Text);
+            usbApp.AppData.EepromReadPending = true;
         }
 
         private void btn_Write_Click(object sender, EventArgs e)
         {
-            usbApp.Data.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
-            usbApp.Data.EepromLength = (uint)Int32.Parse(num_Len.Text);
-            usbApp.Data.EepromData[0] = (byte)Int32.Parse(txt_Data_1.Text);
-            for (int i = 0; i < usbApp.Data.EepromLength; i++)
+            usbApp.AppData.EepromAddress = (uint)Int32.Parse(num_Addr.Text);
+            usbApp.AppData.EepromLength = (uint)Int32.Parse(num_Len.Text);
+            //usbApp.AppData.EepromData[0] = (byte)Int32.Parse(txt_Data_1.Text);
+            for (int i = 0; i < usbApp.AppData.EepromLength; i++)
             {
                 Control ctn = this.Controls["txt_Data_" + (i + 1)];
-                usbApp.Data.EepromData[i] = (byte)Int32.Parse(ctn.Text);
+                //usbApp.AppData.EepromData[i] = (byte)Int32.Parse(ctn.Text);
             }
-            usbApp.Data.EepromWritePending = true;
+            usbApp.AppData.EepromWritePending = true;
         }
 
         private void numericUpDown2_ValueChanged(object sender, EventArgs e)
@@ -164,12 +205,12 @@ namespace ArchonLightingSystem
 
         private void btn_ReadConfig_Click(object sender, EventArgs e)
         {
-            usbApp.Data.ReadConfigPending = true;
+            usbApp.AppData.ReadConfigPending = true;
         }
 
         private void btn_WriteConfig_Click(object sender, EventArgs e)
         {
-            usbApp.Data.WriteConfigPending = true;
+            usbApp.AppData.WriteConfigPending = true;
         }
 
         private void editConfigToolStripMenuItem_Click(object sender, EventArgs e)
@@ -177,7 +218,7 @@ namespace ArchonLightingSystem
             if(configView == null || configView.IsDisposed)
             {
                 configView = new ConfigViewForm();
-                configView.AppDataRef = usbApp.Data;
+                configView.InitializeForm(usbApp.AppData);
                 configView.UpdateFormData();
                 configView.Show();
             } 
@@ -186,6 +227,64 @@ namespace ArchonLightingSystem
                 configView.WindowState = FormWindowState.Normal;
             }
             configView.Focus();
+        }
+
+        private void SetLedColor(System.Drawing.Color color, int deviceIdx, int ledIdx)
+        {
+            ledIdx *= 3;
+            usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.G;
+            usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.R;
+            usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.B;
+        }
+        
+        private System.Drawing.Color GetLedColor(int deviceIdx, int ledIdx)
+        {
+            ledIdx *= 3;
+            byte G = usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            byte R = usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            byte B = usbApp.AppData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            return System.Drawing.Color.FromArgb(R, G, B);
+        }
+        
+
+        private void UpdateColorClickHandler(object sender, int ledIdx)
+        {
+            colorDialog1.ShowDialog();
+            var color = colorDialog1.Color;
+            SetLedColor(color, 0, ledIdx);
+            ((Button)sender).BackColor = color;
+            configUpdateReady = true;
+        }
+        private void button1_Click(object sender, EventArgs e)
+        {
+            UpdateColorClickHandler(sender, 0);
+        }
+
+        private void trackBar1_Scroll(object sender, EventArgs e)
+        {
+            usbApp.AppData.DeviceControllerData.DeviceConfig.FanSpeed[0] = (byte)((TrackBar)sender).Value;
+            configUpdateReady = true;
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            UpdateColorClickHandler(sender, 1);
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            UpdateColorClickHandler(sender, 2);
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            UpdateColorClickHandler(sender, 3);
+        }
+
+        private void cbo_LightingMode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            usbApp.AppData.DeviceControllerData.DeviceConfig.LedMode[0] = (byte)cbo_LightingMode.SelectedIndex;
+            configUpdateReady = true;
         }
     } 
 } 

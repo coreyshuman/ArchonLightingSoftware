@@ -1,77 +1,19 @@
 ﻿using System;
 using System.Threading;
 using System.ComponentModel;
+using ArchonLightingSystem.Models;
+using ArchonLightingSystem.Common;
 
-namespace ArchonLightingSystem
+namespace ArchonLightingSystem.UsbApplication
 {
-    public class AppData
+    public partial class UsbApp : UsbDriver
     {
-        public uint[] FanSpeed;
-        public bool EepromReadPending;
-        public bool EepromReadDone;
-        public bool EepromWritePending;
-        public bool ReadConfigPending;
-        public bool WriteConfigPending;
-        public bool ReadDebug;
-        public uint EepromAddress;
-        public uint EepromLength;
-        public Byte[] EepromData;
-        public DeviceConfig DeviceConfig;
-
-        public AppData()
-        {
-            FanSpeed = new uint[DeviceController.DeviceCount];
-            EepromReadPending = false;
-            EepromReadDone = false;
-            EepromWritePending = false;
-            ReadDebug = false;
-            EepromAddress = 1;
-            EepromLength = 1;
-            EepromData = new byte[256];
-            DeviceConfig = new DeviceConfig();
-        }
-    }
-
-    class ControlPacket
-    {
-        public UsbApp.CONTROL_CMD Cmd;
-        public UInt16 Len;
-        public Byte[] Data;
-
-        public ControlPacket()
-        {
-            Cmd = UsbApp.CONTROL_CMD.CMD_ERROR_OCCURED;
-            Len = 0;
-            Data = new byte[UsbApp.CONTROL_BUFFER_SIZE];
-        }
-    }
-
-    class FrameInfo
-    {
-        public Byte[] FrameData;
-        public uint FrameLen;
-        public uint OutBufferMaxLen;
-        public bool Multiframe;
-        public bool FrameValid;
-
-        public FrameInfo()
-        {
-            FrameData = new byte[UsbApp.USB_PACKET_SIZE];
-            FrameLen = 0;
-            OutBufferMaxLen = 512;
-            Multiframe = false;
-            FrameValid = false;
-        }
-    }
-
-    partial class UsbApp : UsbDriver
-    {
-        public AppData Data;
+        public ApplicationData AppData;
         private BackgroundWorker ReadWriteThread;
 
         public UsbApp()
         {
-            Data = new AppData();
+            AppData = new ApplicationData();
             //Recommend performing USB read/write operations in a separate thread.  Otherwise,
             //the Read/Write operations are effectively blocking functions and can lock up the
             //user interface if the I/O operations take a long time to complete.
@@ -89,11 +31,19 @@ namespace ArchonLightingSystem
 
             while (true)
             {
-                
                 try
                 {
                     if (IsAttached == true)	//Do not try to use the read/write handles unless the USB device is attached and ready
                     {
+                        if(AppData.DeviceControllerData == null)
+                        {
+                            AppData.DeviceControllerData = new DeviceControllerData();
+                        }
+                        if(!AppData.DeviceControllerData.IsInitialized)
+                        {
+                            GetDeviceInitialization(AppData.DeviceControllerData);
+                        }
+
                         for(i = 0; i < CONTROL_BUFFER_SIZE; i++)
                         {
                             rxtxBuffer[i] = 0;
@@ -104,52 +54,44 @@ namespace ArchonLightingSystem
                             ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_FANSPEED);
                             if(response != null)
                             {
-                                for (i = 0; i < DeviceController.DeviceCount; i++)
+                                for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
                                 {
-                                    Data.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
+                                    //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
+                                    AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
                                 }
                             }
                         }
                         
-                        if (Data.EepromReadPending)
+                        if (AppData.EepromReadPending)
                         {
-                            Data.EepromReadPending = false;
-                            for (i = 0; i < 512; i++)
-                            {
-                                rxtxBuffer[i] = 0;
-                            }
-                            rxtxBuffer[0] = (byte)Data.EepromAddress;
-                            rxtxBuffer[1] = (byte)Data.EepromLength;
+                            AppData.EepromReadPending = false;
 
-                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_EEPROM, rxtxBuffer, 2) > 0)
+                            ControlPacket response = ReadEeprom((byte)AppData.EepromAddress, (byte)AppData.EepromLength);
+                            if (response != null)
                             {
-                                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EEPROM);
-                                if (response != null)
+                                for (i = 0; i < response.Len; i++)
                                 {
-                                    for (i = 0; i < response.Len; i++)
-                                    {
-                                        Data.EepromData[i] = response.Data[i];
-                                    }
-                                    Data.EepromReadDone = true;
+                                    //AppData.EepromData[i] = response.Data[i];
                                 }
+                                AppData.EepromReadDone = true;
                             }
                         }
 
-                        if (Data.EepromWritePending)
+                        if (AppData.EepromWritePending)
                         {
-                            Data.EepromWritePending = false;
+                            AppData.EepromWritePending = false;
                             for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
                             }
-                            rxtxBuffer[0] = (byte)Data.EepromAddress;
-                            rxtxBuffer[1] = (byte)Data.EepromLength;
+                            rxtxBuffer[0] = (byte)AppData.EepromAddress;
+                            rxtxBuffer[1] = (byte)AppData.EepromLength;
                             for (i = 0; i < rxtxBuffer[1]; i++)
                             {
-                                rxtxBuffer[i + 2] = Data.EepromData[i];
+                                //rxtxBuffer[i + 2] = AppData.EepromData[i];
                             }
 
-                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + Data.EepromLength) > 0)
+                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + AppData.EepromLength) > 0)
                             {
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_EEPROM);
                                 if (response != null)
@@ -159,29 +101,28 @@ namespace ArchonLightingSystem
                             }
                         }
 
-                        if (Data.ReadConfigPending)
+                        if (AppData.ReadConfigPending)
                         {
-                            Data.ReadConfigPending = false;
-                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
-                            {
-                                rxtxBuffer[i] = 0;
-                            }
+                            AppData.ReadConfigPending = false;
 
-                            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_CONFIG, rxtxBuffer, 0) > 0)
+                             ControlPacket response = ReadConfig();
+                            if (response != null)
                             {
-                                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONFIG);
-                                if (response != null)
-                                {
-                                    Data.DeviceConfig.FromBuffer(response.Data);
-                                    Data.EepromReadDone = true;
-                                }
+                                //AppData.DeviceConfig.FromBuffer(response.Data);
+                                AppData.EepromReadDone = true;
                             }
                         }
 
-                        if (Data.WriteConfigPending)
+                        if(AppData.UpdateConfigPending)
                         {
-                            Data.WriteConfigPending = false;
-                            byteCnt = Data.DeviceConfig.ToBuffer(ref rxtxBuffer);
+                            AppData.UpdateConfigPending = false;
+                            UpdateConfig(AppData.DeviceControllerData.DeviceConfig);
+                        }
+
+                        if (AppData.WriteConfigPending)
+                        {
+                            AppData.WriteConfigPending = false;
+                            byteCnt = 1;// AppData.DeviceConfig.ToBuffer(ref rxtxBuffer);
                             if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
                             {
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);
@@ -192,9 +133,9 @@ namespace ArchonLightingSystem
                             }
                         }
 
-                        if (Data.ReadDebug)
+                        if (AppData.ReadDebug)
                         {
-                            Data.ReadDebug = false;
+                            AppData.ReadDebug = false;
                             for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
@@ -224,8 +165,12 @@ namespace ArchonLightingSystem
                     } 
                     else
                     {
-                        Thread.Sleep(5);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
+                        Thread.Sleep(10);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
                                             //high CPU utilization, with no particular benefit to the application.
+                    }
+                    if(!IsAttached && AppData.DeviceControllerData != null)
+                    {
+                        AppData.DeviceControllerData = null;
                     }
                 }
                 catch(Exception exc)
@@ -243,6 +188,77 @@ namespace ArchonLightingSystem
 
             }
 
+        }
+
+        private void GetDeviceInitialization(DeviceControllerData deviceData)
+        {
+            int i;
+            ControlPacket eepromResponse;
+            ControlPacket deviceAddressResponse;
+            ControlPacket deviceConfigResponse;
+
+            deviceAddressResponse = ReadControllerAddress();
+            if (deviceAddressResponse == null) throw new Exception("Couldn't read Address.");
+            eepromResponse = ReadEeprom(0, (UInt16)DeviceControllerDefinitions.EepromSize-1); // cts debug, see todo below
+            if (eepromResponse == null) throw new Exception("Couldn't read EEPROM.");
+            deviceConfigResponse = ReadConfig();
+            if (deviceConfigResponse == null) throw new Exception("Couldn't read Config.");
+
+            deviceData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data);
+        }
+
+        private ControlPacket ReadEeprom(UInt16 address, UInt16 length)
+        {
+            // todo - need to make length a word to read all 256 bytes of the eeprom
+            byte[] request = new byte[] { (byte)address, (byte)length };
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_EEPROM, request, 2) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EEPROM);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket ReadConfig()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONFIG);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket WriteConfig()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket UpdateConfig(DeviceControllerConfig config)
+        {
+            Byte[] buffer = new byte[DeviceControllerDefinitions.EepromSize];
+            uint length = config.ToBuffer(ref buffer);
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_UPDATE_CONFIG);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket ReadControllerAddress()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
+                return response;
+            }
+            return null;
         }
 
         private ControlPacket GetDeviceResponse(CONTROL_CMD cmd)
@@ -331,7 +347,7 @@ namespace ArchonLightingSystem
                 }
 
                 // Add CRC
-                crc = CalculateCrc(outBuffer, outBufferLen - packetDataCount - 2, (uint)(outBuffer[outBufferLen - packetDataCount - 1] & 0x3F));
+                crc = Util.CalculateCrc(outBuffer, outBufferLen - packetDataCount - 2, (uint)(outBuffer[outBufferLen - packetDataCount - 1] & 0x3F));
                 outBuffer[outBufferLen++] = (byte)(crc & 0xFF);
                 outBuffer[outBufferLen++] = (byte)((crc >> 8) & 0xFF);
             }
@@ -376,7 +392,7 @@ namespace ArchonLightingSystem
             }
 
             frameInfo.Multiframe |= multipacket;
-            crc = CalculateCrc(frameInfo.FrameData, 1, dataLen);
+            crc = Util.CalculateCrc(frameInfo.FrameData, 1, dataLen);
 
             if (crc != ((UInt16)frameInfo.FrameData[dataLen+1] | (UInt16)(frameInfo.FrameData[dataLen+2] << 8)))
             {
@@ -401,36 +417,7 @@ namespace ArchonLightingSystem
             return controlPacket.Len;
         }
 
-        private static UInt16[] crc_table = new UInt16[]
-        {
-            0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50a5, 0x60c6, 0x70e7,
-            0x8108, 0x9129, 0xa14a, 0xb16b, 0xc18c, 0xd1ad, 0xe1ce, 0xf1ef
-        };
-
-        /// <summary>
-        /// Calculate CRC for the given data and len
-        /// </summary>
-        /// <param name="data">data pointer</param>
-        /// <param name="start">start location in array</param>
-        /// <param name="len">data length</param>
-        /// <returns></returns>
-        UInt16 CalculateCrc(Byte[] data, uint start, uint len)
-        {
-            UInt16 i;
-            UInt16 crc = 0;
-            uint idx = start;
-
-            while (len-- > 0)
-            {
-                i = (UInt16)((crc >> 12) ^ (data[idx] >> 4));
-                crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
-                i = (UInt16)((crc >> 12) ^ (data[idx] >> 0));
-                crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
-                idx++;
-            }
-
-            return (UInt16)(crc & 0xFFFF);
-        }
+        
 
     }
 }

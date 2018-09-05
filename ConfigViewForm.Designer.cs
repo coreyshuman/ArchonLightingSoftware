@@ -53,7 +53,6 @@
             this.bindingNavigatorMoveLastItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
-            this.deviceConfigBindingSource = new System.Windows.Forms.BindingSource(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.colorsGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -64,7 +63,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.ledModeGridView)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.ledColorNavigator)).BeginInit();
             this.ledColorNavigator.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.deviceConfigBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
             // colorsGridView1
@@ -300,10 +298,6 @@
             // 
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
             // 
-            // deviceConfigBindingSource
-            // 
-            this.deviceConfigBindingSource.DataSource = typeof(ArchonLightingSystem.DeviceConfig);
-            // 
             // ConfigViewForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -329,14 +323,12 @@
             ((System.ComponentModel.ISupportInitialize)(this.ledColorNavigator)).EndInit();
             this.ledColorNavigator.ResumeLayout(false);
             this.ledColorNavigator.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.deviceConfigBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
         private System.Windows.Forms.DataGridView colorsGridView1;
-        private System.Windows.Forms.BindingSource deviceConfigBindingSource;
         private System.Windows.Forms.SplitContainer splitContainer1;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Label label2;

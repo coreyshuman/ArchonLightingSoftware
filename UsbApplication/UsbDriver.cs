@@ -3,9 +3,9 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
 
-namespace ArchonLightingSystem
+namespace ArchonLightingSystem.UsbApplication
 {
-    class UsbDriver : UsbSystemDefinitions
+    public class UsbDriver : UsbSystemDefinitions
     {
         public const uint USB_PACKET_SIZE = 64 + 1;
 

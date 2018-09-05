@@ -2,33 +2,28 @@
 using System.Drawing;
 using System.Windows.Forms;
 using System.Linq;
+using ArchonLightingSystem.Common;
+using ArchonLightingSystem.Models;
 
 namespace ArchonLightingSystem
 {
     public partial class ConfigViewForm : Form
     {
         private DataGridView[] topGrids;
-        private AppData appData = new AppData();
+        private ApplicationData appData = new ApplicationData();
         private int numberOfGrids = 3;
         private int currentDevice = 0;
-        public AppData AppDataRef
-        {
-            get
-            {
-                return appData;
-            }
-            set
-            {
-                appData = value;
-            }
-        }
 
         #region Initializers
         public ConfigViewForm()
         {
             InitializeComponent();
             topGrids = new DataGridView[] { fanSpeedGridView, ledModeGridView, ledSpeedGridView };
+        }
 
+        public void InitializeForm(ApplicationData applicationData)
+        {
+            appData = applicationData;
             InitializeGrid();
             InitializeNavigator();
         }
@@ -39,7 +34,7 @@ namespace ArchonLightingSystem
             var bindingSource = new BindingSource();
             ledColorNavigator.BindingSource = bindingSource;
 
-            for (i = 0; i < DeviceController.DeviceCount; i++)
+            for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
             {
                 bindingSource.Add(i);
             }
@@ -52,24 +47,22 @@ namespace ArchonLightingSystem
             int i, gridNum;
             DataGridView gView;
 
-            int[] cellRangeMax = new int[] { 100, 10, 10 };
-
             topGrids.Select(grid =>
             {
-                grid.ColumnCount = (int)DeviceController.DeviceCount;
+                grid.ColumnCount = (int)DeviceControllerDefinitions.DeviceCount;
                 grid.RowHeadersVisible = true;
                 grid.AllowUserToAddRows = false;
                 grid.AllowUserToDeleteRows = false;
                 grid.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(grid));
                 grid.CellEndEdit += CellEndHandler(GetDataPropertyForGrid(grid));
-                for (i = 1; i <= DeviceController.DeviceCount; i++)
+                for (i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
                 {
                     grid.Columns[i - 1].Name = $"D{i}";
                 }
                 return grid;
             }).ToArray();
 
-            for (i = 1; i <= DeviceController.DeviceCount; i++)
+            for (i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
             {
                 string name = $"D{i}";
                 fanSpeedGridView.Columns[i - 1].Name = name;
@@ -99,12 +92,12 @@ namespace ArchonLightingSystem
                 gView.AllowUserToAddRows = false;
                 gView.AllowUserToDeleteRows = false;
                 gView.GridColor = Color.Black;
-                gView.ColumnCount = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
+                gView.ColumnCount = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
                 gView.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(gView));
                 gView.CellEndEdit += ColorGridView_CellEndEdit;
 
-                int offsetStart = (int)(DeviceController.LedBytesPerDevice / numberOfGrids * (gridNum - 1));
-                for (i = 1 + offsetStart; i <= (int)(DeviceController.LedBytesPerDevice / numberOfGrids * gridNum); i++)
+                int offsetStart = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids * (gridNum - 1));
+                for (i = 1 + offsetStart; i <= (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids * gridNum); i++)
                 {
                     string color = "";
                     string number = (((byte)(i - 1) / 3) + 1).ToString("D2");
@@ -129,16 +122,16 @@ namespace ArchonLightingSystem
             topGrids.Select(grid =>
             {
                 grid.Rows.Clear();
-                grid.Rows.Add(((byte[])GetDataPropertyForGrid(grid).GetValue(appData.DeviceConfig)).ToStringArray());
+                grid.Rows.Add(((byte[])GetDataPropertyForGrid(grid).GetValue(appData.DeviceControllerData.DeviceConfig)).ToStringArray());
                 return grid;
             }).ToArray();
 
-            int dataPerGrid = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
+            int dataPerGrid = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
             for (i=1; i<=numberOfGrids; i++)
             {
                 DataGridView gView = ((DataGridView)this.splitContainer1.Panel2.Controls["colorsGridView" + i]);
                 gView.Rows.Clear();
-                gView.Rows.Add(appData.DeviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
+                gView.Rows.Add(appData.DeviceControllerData.DeviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
             }
             
 
@@ -154,7 +147,7 @@ namespace ArchonLightingSystem
                 gView.Rows[e.RowIndex].ErrorText = String.Empty;
                 var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
                 var numVal = int.Parse(value);
-                byte[] configArray = (byte[])property.GetValue(appData.DeviceConfig, null);
+                byte[] configArray = (byte[])property.GetValue(appData.DeviceControllerData.DeviceConfig, null);
                 configArray[e.ColumnIndex] = (byte)numVal;
             };
         }
@@ -163,11 +156,11 @@ namespace ArchonLightingSystem
         {
             var gView = ((DataGridView)sender);
             var gridNumber = int.Parse(gView.Name.Substring(14));
-            int dataPerGrid = (int)(DeviceController.LedBytesPerDevice / numberOfGrids);
+            int dataPerGrid = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
             gView.Rows[e.RowIndex].ErrorText = String.Empty;
             var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
             var numVal = int.Parse(value);
-            appData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
+            appData.DeviceControllerData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
         }
 
         private DataGridViewCellValidatingEventHandler DataGridValidateNumericRangeHandler(Tuple<int, int> minMax)
@@ -224,7 +217,7 @@ namespace ArchonLightingSystem
                 default: propName = "Colors"; break;
             }
 
-            return appData.DeviceConfig.GetType().GetProperty(propName);
+            return appData.DeviceControllerData.DeviceConfig.GetType().GetProperty(propName);
         }
 
         private Tuple<int, int> GetNumericValidationRangeForGrid(DataGridView grid)

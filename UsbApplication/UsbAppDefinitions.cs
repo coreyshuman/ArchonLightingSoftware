@@ -1,6 +1,6 @@
-﻿namespace ArchonLightingSystem
+﻿namespace ArchonLightingSystem.UsbApplication
 {
-    partial class UsbApp
+    public partial class UsbApp
     {
         public const uint CONTROL_BUFFER_SIZE = 960;
         public const uint USB_BUFFER_SIZE = 960 + 64;
@@ -21,7 +21,8 @@
             CMD_READ_FIRMWARE_INFO = 0x02,
             CMD_READ_CONTROLLER_ADDRESS = 0x0A,
             CMD_READ_CONFIG = 0x30,
-            CMD_WRITE_CONFIG = 0x31,
+            CMD_UPDATE_CONFIG = 0x31,
+            CMD_WRITE_CONFIG = 0x32,
             CMD_READ_FANSPEED = 0x35,
             CMD_READ_EEPROM = 0x38,
             CMD_WRITE_EEPROM = 0x39,

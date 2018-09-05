@@ -69,10 +69,35 @@ namespace ArchonLightingSystem
             this.fanPanel1 = new System.Windows.Forms.Panel();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
+            this.colorDialog1 = new System.Windows.Forms.ColorDialog();
+            this.button1 = new System.Windows.Forms.Button();
+            this.button2 = new System.Windows.Forms.Button();
+            this.button3 = new System.Windows.Forms.Button();
+            this.button4 = new System.Windows.Forms.Button();
+            this.button5 = new System.Windows.Forms.Button();
+            this.button6 = new System.Windows.Forms.Button();
+            this.button7 = new System.Windows.Forms.Button();
+            this.button8 = new System.Windows.Forms.Button();
+            this.button9 = new System.Windows.Forms.Button();
+            this.button10 = new System.Windows.Forms.Button();
+            this.button11 = new System.Windows.Forms.Button();
+            this.button12 = new System.Windows.Forms.Button();
+            this.trackBar1 = new System.Windows.Forms.TrackBar();
+            this.cbo_LightingMode = new System.Windows.Forms.ComboBox();
+            this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.label5 = new System.Windows.Forms.Label();
+            this.comboBox2 = new System.Windows.Forms.ComboBox();
+            this.label4 = new System.Windows.Forms.Label();
+            this.label6 = new System.Windows.Forms.Label();
+            this.lbl_Address = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.num_Addr)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_Len)).BeginInit();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).BeginInit();
+            this.groupBox1.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.SuspendLayout();
             // 
             // btn_readDebug
@@ -90,7 +115,7 @@ namespace ArchonLightingSystem
             // 
             this.ANxVoltage_lbl.AutoSize = true;
             this.ANxVoltage_lbl.Enabled = false;
-            this.ANxVoltage_lbl.Location = new System.Drawing.Point(12, 136);
+            this.ANxVoltage_lbl.Location = new System.Drawing.Point(751, 254);
             this.ANxVoltage_lbl.Name = "ANxVoltage_lbl";
             this.ANxVoltage_lbl.Size = new System.Drawing.Size(62, 13);
             this.ANxVoltage_lbl.TabIndex = 23;
@@ -140,7 +165,7 @@ namespace ArchonLightingSystem
             // lbl_fanSpeed
             // 
             this.lbl_fanSpeed.AutoSize = true;
-            this.lbl_fanSpeed.Location = new System.Drawing.Point(81, 136);
+            this.lbl_fanSpeed.Location = new System.Drawing.Point(820, 254);
             this.lbl_fanSpeed.Name = "lbl_fanSpeed";
             this.lbl_fanSpeed.Size = new System.Drawing.Size(13, 13);
             this.lbl_fanSpeed.TabIndex = 26;
@@ -391,16 +416,16 @@ namespace ArchonLightingSystem
             // fanPanel1
             // 
             this.fanPanel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.fanPanel1.Location = new System.Drawing.Point(93, 203);
+            this.fanPanel1.Location = new System.Drawing.Point(6, 59);
             this.fanPanel1.Name = "fanPanel1";
-            this.fanPanel1.Size = new System.Drawing.Size(58, 272);
+            this.fanPanel1.Size = new System.Drawing.Size(45, 290);
             this.fanPanel1.TabIndex = 55;
             // 
             // statusStrip1
             // 
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 557);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 616);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(965, 22);
             this.statusStrip1.TabIndex = 56;
@@ -412,13 +437,231 @@ namespace ArchonLightingSystem
             this.statusLabel.Size = new System.Drawing.Size(59, 17);
             this.statusLabel.Text = "Loading...";
             // 
+            // button1
+            // 
+            this.button1.Location = new System.Drawing.Point(16, 33);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(36, 37);
+            this.button1.TabIndex = 57;
+            this.button1.Text = "L1";
+            this.button1.UseVisualStyleBackColor = true;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
+            // button2
+            // 
+            this.button2.Location = new System.Drawing.Point(16, 75);
+            this.button2.Name = "button2";
+            this.button2.Size = new System.Drawing.Size(36, 37);
+            this.button2.TabIndex = 58;
+            this.button2.Text = "L2";
+            this.button2.UseVisualStyleBackColor = true;
+            this.button2.Click += new System.EventHandler(this.button2_Click);
+            // 
+            // button3
+            // 
+            this.button3.Location = new System.Drawing.Point(16, 117);
+            this.button3.Name = "button3";
+            this.button3.Size = new System.Drawing.Size(36, 37);
+            this.button3.TabIndex = 59;
+            this.button3.Text = "L3";
+            this.button3.UseVisualStyleBackColor = true;
+            this.button3.Click += new System.EventHandler(this.button3_Click);
+            // 
+            // button4
+            // 
+            this.button4.Location = new System.Drawing.Point(16, 159);
+            this.button4.Name = "button4";
+            this.button4.Size = new System.Drawing.Size(36, 37);
+            this.button4.TabIndex = 60;
+            this.button4.Text = "L4";
+            this.button4.UseVisualStyleBackColor = true;
+            this.button4.Click += new System.EventHandler(this.button4_Click);
+            // 
+            // button5
+            // 
+            this.button5.Location = new System.Drawing.Point(16, 330);
+            this.button5.Name = "button5";
+            this.button5.Size = new System.Drawing.Size(36, 37);
+            this.button5.TabIndex = 64;
+            this.button5.Text = "L1";
+            this.button5.UseVisualStyleBackColor = true;
+            // 
+            // button6
+            // 
+            this.button6.Location = new System.Drawing.Point(16, 285);
+            this.button6.Name = "button6";
+            this.button6.Size = new System.Drawing.Size(36, 37);
+            this.button6.TabIndex = 63;
+            this.button6.Text = "L1";
+            this.button6.UseVisualStyleBackColor = true;
+            // 
+            // button7
+            // 
+            this.button7.Location = new System.Drawing.Point(16, 243);
+            this.button7.Name = "button7";
+            this.button7.Size = new System.Drawing.Size(36, 37);
+            this.button7.TabIndex = 62;
+            this.button7.Text = "L1";
+            this.button7.UseVisualStyleBackColor = true;
+            // 
+            // button8
+            // 
+            this.button8.Location = new System.Drawing.Point(16, 201);
+            this.button8.Name = "button8";
+            this.button8.Size = new System.Drawing.Size(36, 37);
+            this.button8.TabIndex = 61;
+            this.button8.Text = "L1";
+            this.button8.UseVisualStyleBackColor = true;
+            // 
+            // button9
+            // 
+            this.button9.Location = new System.Drawing.Point(16, 501);
+            this.button9.Name = "button9";
+            this.button9.Size = new System.Drawing.Size(36, 37);
+            this.button9.TabIndex = 68;
+            this.button9.Text = "L1";
+            this.button9.UseVisualStyleBackColor = true;
+            // 
+            // button10
+            // 
+            this.button10.Location = new System.Drawing.Point(16, 456);
+            this.button10.Name = "button10";
+            this.button10.Size = new System.Drawing.Size(36, 37);
+            this.button10.TabIndex = 67;
+            this.button10.Text = "L1";
+            this.button10.UseVisualStyleBackColor = true;
+            // 
+            // button11
+            // 
+            this.button11.Location = new System.Drawing.Point(16, 414);
+            this.button11.Name = "button11";
+            this.button11.Size = new System.Drawing.Size(36, 37);
+            this.button11.TabIndex = 66;
+            this.button11.Text = "L1";
+            this.button11.UseVisualStyleBackColor = true;
+            // 
+            // button12
+            // 
+            this.button12.Location = new System.Drawing.Point(16, 372);
+            this.button12.Name = "button12";
+            this.button12.Size = new System.Drawing.Size(36, 37);
+            this.button12.TabIndex = 65;
+            this.button12.Text = "L1";
+            this.button12.UseVisualStyleBackColor = true;
+            // 
+            // trackBar1
+            // 
+            this.trackBar1.LargeChange = 10;
+            this.trackBar1.Location = new System.Drawing.Point(74, 59);
+            this.trackBar1.Maximum = 100;
+            this.trackBar1.Name = "trackBar1";
+            this.trackBar1.Orientation = System.Windows.Forms.Orientation.Vertical;
+            this.trackBar1.Size = new System.Drawing.Size(45, 290);
+            this.trackBar1.SmallChange = 5;
+            this.trackBar1.TabIndex = 69;
+            this.trackBar1.TickFrequency = 10;
+            this.trackBar1.Scroll += new System.EventHandler(this.trackBar1_Scroll);
+            // 
+            // cbo_LightingMode
+            // 
+            this.cbo_LightingMode.FormattingEnabled = true;
+            this.cbo_LightingMode.Location = new System.Drawing.Point(70, 87);
+            this.cbo_LightingMode.Name = "cbo_LightingMode";
+            this.cbo_LightingMode.Size = new System.Drawing.Size(121, 28);
+            this.cbo_LightingMode.TabIndex = 70;
+            this.cbo_LightingMode.SelectedIndexChanged += new System.EventHandler(this.cbo_LightingMode_SelectedIndexChanged);
+            // 
+            // groupBox1
+            // 
+            this.groupBox1.Controls.Add(this.lbl_Address);
+            this.groupBox1.Controls.Add(this.label6);
+            this.groupBox1.Controls.Add(this.groupBox2);
+            this.groupBox1.Controls.Add(this.label5);
+            this.groupBox1.Controls.Add(this.comboBox2);
+            this.groupBox1.Controls.Add(this.label4);
+            this.groupBox1.Controls.Add(this.button1);
+            this.groupBox1.Controls.Add(this.cbo_LightingMode);
+            this.groupBox1.Controls.Add(this.button2);
+            this.groupBox1.Controls.Add(this.button9);
+            this.groupBox1.Controls.Add(this.button3);
+            this.groupBox1.Controls.Add(this.button10);
+            this.groupBox1.Controls.Add(this.button4);
+            this.groupBox1.Controls.Add(this.button11);
+            this.groupBox1.Controls.Add(this.button8);
+            this.groupBox1.Controls.Add(this.button12);
+            this.groupBox1.Controls.Add(this.button7);
+            this.groupBox1.Controls.Add(this.button5);
+            this.groupBox1.Controls.Add(this.button6);
+            this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox1.Location = new System.Drawing.Point(29, 27);
+            this.groupBox1.Name = "groupBox1";
+            this.groupBox1.Size = new System.Drawing.Size(251, 554);
+            this.groupBox1.TabIndex = 71;
+            this.groupBox1.TabStop = false;
+            this.groupBox1.Text = "Device 1";
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.fanPanel1);
+            this.groupBox2.Controls.Add(this.trackBar1);
+            this.groupBox2.Location = new System.Drawing.Point(78, 193);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(120, 355);
+            this.groupBox2.TabIndex = 72;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Fan Speed";
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(74, 132);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(116, 20);
+            this.label5.TabIndex = 74;
+            this.label5.Text = "Lighting Speed";
+            // 
+            // comboBox2
+            // 
+            this.comboBox2.FormattingEnabled = true;
+            this.comboBox2.Location = new System.Drawing.Point(70, 155);
+            this.comboBox2.Name = "comboBox2";
+            this.comboBox2.Size = new System.Drawing.Size(121, 28);
+            this.comboBox2.TabIndex = 73;
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(74, 64);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(109, 20);
+            this.label4.TabIndex = 72;
+            this.label4.Text = "Lighting Mode";
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(74, 33);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(72, 20);
+            this.label6.TabIndex = 75;
+            this.label6.Text = "Address:";
+            // 
+            // lbl_Address
+            // 
+            this.lbl_Address.AutoSize = true;
+            this.lbl_Address.Location = new System.Drawing.Point(152, 33);
+            this.lbl_Address.Name = "lbl_Address";
+            this.lbl_Address.Size = new System.Drawing.Size(19, 20);
+            this.lbl_Address.TabIndex = 76;
+            this.lbl_Address.Text = "--";
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(965, 579);
+            this.ClientSize = new System.Drawing.Size(965, 638);
+            this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.statusStrip1);
-            this.Controls.Add(this.fanPanel1);
             this.Controls.Add(this.txt_Data_16);
             this.Controls.Add(this.txt_Data_15);
             this.Controls.Add(this.txt_Data_14);
@@ -456,6 +699,11 @@ namespace ArchonLightingSystem
             this.menuStrip1.PerformLayout();
             this.statusStrip1.ResumeLayout(false);
             this.statusStrip1.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.trackBar1)).EndInit();
+            this.groupBox1.ResumeLayout(false);
+            this.groupBox1.PerformLayout();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -500,6 +748,28 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.Panel fanPanel1;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
+        private System.Windows.Forms.ColorDialog colorDialog1;
+        private System.Windows.Forms.Button button1;
+        private System.Windows.Forms.Button button2;
+        private System.Windows.Forms.Button button3;
+        private System.Windows.Forms.Button button4;
+        private System.Windows.Forms.Button button5;
+        private System.Windows.Forms.Button button6;
+        private System.Windows.Forms.Button button7;
+        private System.Windows.Forms.Button button8;
+        private System.Windows.Forms.Button button9;
+        private System.Windows.Forms.Button button10;
+        private System.Windows.Forms.Button button11;
+        private System.Windows.Forms.Button button12;
+        private System.Windows.Forms.TrackBar trackBar1;
+        private System.Windows.Forms.ComboBox cbo_LightingMode;
+        private System.Windows.Forms.GroupBox groupBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.ComboBox comboBox2;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Label lbl_Address;
+        private System.Windows.Forms.Label label6;
     }
 }
 

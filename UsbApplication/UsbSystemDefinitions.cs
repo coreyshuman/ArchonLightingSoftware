@@ -2,11 +2,11 @@
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 
-namespace ArchonLightingSystem
+namespace ArchonLightingSystem.UsbApplication
 {
     //Need to check "Allow unsafe code" checkbox in build properties to use unsafe keyword.  Unsafe is needed to
     //properly interact with the unmanged C++ style APIs used to find and connect with the USB device.
-    class UsbSystemDefinitions
+    public class UsbSystemDefinitions
     {
         //Constant definitions from setupapi.h, which we aren't allowed to include directly since this is C#
         internal const uint DIGCF_PRESENT = 0x02;
