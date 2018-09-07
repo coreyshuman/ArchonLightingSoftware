@@ -4,10 +4,11 @@ using System.Windows.Forms;
 using System.Linq;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
+using ArchonLightingSystem.Interfaces;
 
 namespace ArchonLightingSystem
 {
-    public partial class ConfigViewForm : Form
+    public partial class ConfigEditorForm : SubformBase
     {
         private DataGridView[] topGrids;
         private ApplicationData appData = new ApplicationData();
@@ -15,7 +16,7 @@ namespace ArchonLightingSystem
         private int currentDevice = 0;
 
         #region Initializers
-        public ConfigViewForm()
+        public ConfigEditorForm()
         {
             InitializeComponent();
             topGrids = new DataGridView[] { fanSpeedGridView, ledModeGridView, ledSpeedGridView };
@@ -26,6 +27,7 @@ namespace ArchonLightingSystem
             appData = applicationData;
             InitializeGrid();
             InitializeNavigator();
+            UpdateFormData();
         }
 
         private void InitializeNavigator()
@@ -53,7 +55,7 @@ namespace ArchonLightingSystem
                 grid.RowHeadersVisible = true;
                 grid.AllowUserToAddRows = false;
                 grid.AllowUserToDeleteRows = false;
-                grid.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(grid));
+                grid.CellValidating += DataGridViewHandlers.DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(grid));
                 grid.CellEndEdit += CellEndHandler(GetDataPropertyForGrid(grid));
                 for (i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
                 {
@@ -93,7 +95,7 @@ namespace ArchonLightingSystem
                 gView.AllowUserToDeleteRows = false;
                 gView.GridColor = Color.Black;
                 gView.ColumnCount = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
-                gView.CellValidating += DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(gView));
+                gView.CellValidating += DataGridViewHandlers.DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(gView));
                 gView.CellEndEdit += ColorGridView_CellEndEdit;
 
                 int offsetStart = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids * (gridNum - 1));
@@ -163,16 +165,7 @@ namespace ArchonLightingSystem
             appData.DeviceControllerData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
         }
 
-        private DataGridViewCellValidatingEventHandler DataGridValidateNumericRangeHandler(Tuple<int, int> minMax)
-        {
-            return (object sender, DataGridViewCellValidatingEventArgs e) =>
-            {
-                if (ValidateCellNumericRange(sender, e.FormattedValue, minMax.Item1, minMax.Item2))
-                {
-                    e.Cancel = true;
-                }
-            };
-        }
+        
 
         private void BindingSource_PositionChanged(object sender, EventArgs e)
         {
@@ -200,7 +193,8 @@ namespace ArchonLightingSystem
 
         private void btn_ResetConfig_Click(object sender, EventArgs e)
         {
-
+            appData.DefaultConfigPending = true;
+            updateTimer.Enabled = true;
         }
         #endregion
 
@@ -235,32 +229,12 @@ namespace ArchonLightingSystem
             return minMax;
         }
 
-        private bool ValidateCellNumericRange(object sender, object value, int min, int max)
-        {
-            var gView = ((DataGridView)sender);
-            string valStr = value.ToString();
-            int number = 0;
-            // Confirm that the cell is not empty.
-            if (string.IsNullOrEmpty(valStr))
-            {
-                gView.Rows[0].ErrorText = "Value can not be empty";
-                return true;
-            }
-
-            if (!int.TryParse(valStr, out number))
-            {
-                gView.Rows[0].ErrorText = "Value must be a number";
-                return true;
-            }
-
-            if (number < min || number > max)
-            {
-                gView.Rows[0].ErrorText = $"Value must be between {min} and {max}";
-                return true;
-            }
-
-            return false;
-        }
+        
         #endregion
+
+        private void btn_UpdateConfig_Click(object sender, EventArgs e)
+        {
+            appData.UpdateConfigPending = true;
+        }
     }
 }

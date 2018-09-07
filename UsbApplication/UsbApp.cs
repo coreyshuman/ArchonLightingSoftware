@@ -67,14 +67,8 @@ namespace ArchonLightingSystem.UsbApplication
                             AppData.EepromReadPending = false;
 
                             ControlPacket response = ReadEeprom((byte)AppData.EepromAddress, (byte)AppData.EepromLength);
-                            if (response != null)
-                            {
-                                for (i = 0; i < response.Len; i++)
-                                {
-                                    //AppData.EepromData[i] = response.Data[i];
-                                }
-                                AppData.EepromReadDone = true;
-                            }
+                            AppData.DeviceControllerData.UpdateEepromData(response.Data);
+                            AppData.EepromReadDone = true;
                         }
 
                         if (AppData.EepromWritePending)
@@ -86,9 +80,9 @@ namespace ArchonLightingSystem.UsbApplication
                             }
                             rxtxBuffer[0] = (byte)AppData.EepromAddress;
                             rxtxBuffer[1] = (byte)AppData.EepromLength;
-                            for (i = 0; i < rxtxBuffer[1]; i++)
+                            for (i = 0; i < AppData.EepromLength; i++)
                             {
-                                //rxtxBuffer[i + 2] = AppData.EepromData[i];
+                                rxtxBuffer[i + 2] = AppData.DeviceControllerData.EepromData[i];
                             }
 
                             if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + AppData.EepromLength) > 0)
@@ -108,12 +102,23 @@ namespace ArchonLightingSystem.UsbApplication
                              ControlPacket response = ReadConfig();
                             if (response != null)
                             {
-                                //AppData.DeviceConfig.FromBuffer(response.Data);
+                                AppData.DeviceControllerData.DeviceConfig.FromBuffer(response.Data);
                                 AppData.EepromReadDone = true;
                             }
                         }
 
-                        if(AppData.UpdateConfigPending)
+                        if (AppData.DefaultConfigPending)
+                        {
+                            AppData.DefaultConfigPending = false;
+
+                            ControlPacket response = DefaultConfig();
+                            if (response != null)
+                            {
+                                AppData.ReadConfigPending = true;
+                            }
+                        }
+
+                        if (AppData.UpdateConfigPending)
                         {
                             AppData.UpdateConfigPending = false;
                             UpdateConfig(AppData.DeviceControllerData.DeviceConfig);
@@ -133,9 +138,9 @@ namespace ArchonLightingSystem.UsbApplication
                             }
                         }
 
-                        if (AppData.ReadDebug)
+                        if (AppData.ReadDebugPending)
                         {
-                            AppData.ReadDebug = false;
+                            AppData.ReadDebugPending = false;
                             for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
@@ -146,17 +151,17 @@ namespace ArchonLightingSystem.UsbApplication
                                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EE_DEBUG);
                                 if (response != null)
                                 {
-                                    System.Diagnostics.Debug.WriteLine($"Debug Len: {response.Len}");
+                                    AppData.Debug = ($"Debug Len: {response.Len}\r\n");
                                     for (i = 0; i < response.Len; )
                                     {
                                         var dat = response.Data[i];
-                                        System.Diagnostics.Debug.Write($"{dat.ToString("X2")} ");
+                                        AppData.Debug += ($"{dat.ToString("X2")} ");
                                         if(++i % 20 == 0)
                                         {
-                                            System.Diagnostics.Debug.Write("\r\n");
+                                            AppData.Debug += ("\r\n");
                                         }
                                     }
-                                    System.Diagnostics.Debug.WriteLine("\r\n_________________________");
+                                    AppData.Debug += ("\r\n_________________________");
                                 }
                             }
                         }
@@ -168,9 +173,9 @@ namespace ArchonLightingSystem.UsbApplication
                         Thread.Sleep(10);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
                                             //high CPU utilization, with no particular benefit to the application.
                     }
-                    if(!IsAttached && AppData.DeviceControllerData != null)
+                    if(!IsAttached && AppData.DeviceControllerData.IsInitialized)
                     {
-                        AppData.DeviceControllerData = null;
+                        AppData.DeviceControllerData = new DeviceControllerData();
                     }
                 }
                 catch(Exception exc)
@@ -214,6 +219,16 @@ namespace ArchonLightingSystem.UsbApplication
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_EEPROM, request, 2) > 0)
             {
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EEPROM);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket DefaultConfig()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_DEFAULT_CONFIG);
                 return response;
             }
             return null;

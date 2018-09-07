@@ -48,7 +48,7 @@ namespace ArchonLightingSystem.Models
             {
                 for(j=0; j < DeviceControllerDefinitions.LedBytesPerDevice; j++)
                 {
-                    Colors[i, j] = buffer[LedColorOffset + i * DeviceControllerDefinitions.DeviceCount + j];
+                    Colors[i, j] = buffer[LedColorOffset + i * DeviceControllerDefinitions.LedBytesPerDevice + j];
                 }
             }
         }
@@ -56,7 +56,13 @@ namespace ArchonLightingSystem.Models
         public override uint ToBuffer(ref byte[] buffer)
         {
             int i, j;
-            // todo - length and crc. for now discarded by firmware.
+
+            // crc ignored for now
+
+            // update length
+            var lengthBytes = Util.BytesFromUInt16(this.Length);
+            buffer[2] = lengthBytes.Item1;
+            buffer[3] = lengthBytes.Item2;
 
             for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
             {

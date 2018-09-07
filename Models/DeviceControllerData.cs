@@ -29,14 +29,18 @@ namespace ArchonLightingSystem.Models
 
         public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig)
         {
-            int i;
             DeviceAddress = deviceAddress;
-            for(i=0; i < DeviceControllerDefinitions.EepromSize; i++)
-            {
-                EepromData[i] = eepromData[i];
-            }
+            UpdateEepromData(eepromData);
             DeviceConfig.FromBuffer(deviceConfig);
             isInitialized = true;
+        }
+
+        public void UpdateEepromData(Byte[] eeprom)
+        {
+            for (int i = 0; i < DeviceControllerDefinitions.EepromSize; i++)
+            {
+                EepromData[i] = eeprom[i];
+            }
         }
     }
 

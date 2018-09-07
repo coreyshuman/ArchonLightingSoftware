@@ -1,6 +1,6 @@
 ﻿namespace ArchonLightingSystem
 {
-    partial class ConfigViewForm
+    partial class ConfigEditorForm
     {
         /// <summary>
         /// Required designer variable.
@@ -29,7 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConfigViewForm));
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConfigEditorForm));
             this.colorsGridView1 = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.btn_ResetConfig = new System.Windows.Forms.Button();
@@ -53,6 +53,7 @@
             this.bindingNavigatorMoveLastItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.updateTimer = new System.Windows.Forms.Timer(this.components);
+            this.btn_UpdateConfig = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.colorsGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -85,6 +86,7 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.btn_UpdateConfig);
             this.splitContainer1.Panel1.Controls.Add(this.btn_ResetConfig);
             this.splitContainer1.Panel1.Controls.Add(this.ledSpeedGridView);
             this.splitContainer1.Panel1.Controls.Add(this.label4);
@@ -107,7 +109,7 @@
             // btn_ResetConfig
             // 
             this.btn_ResetConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_ResetConfig.Location = new System.Drawing.Point(409, 12);
+            this.btn_ResetConfig.Location = new System.Drawing.Point(518, 13);
             this.btn_ResetConfig.Name = "btn_ResetConfig";
             this.btn_ResetConfig.Size = new System.Drawing.Size(98, 35);
             this.btn_ResetConfig.TabIndex = 8;
@@ -136,7 +138,7 @@
             // btn_WriteConfig
             // 
             this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_WriteConfig.Location = new System.Drawing.Point(305, 12);
+            this.btn_WriteConfig.Location = new System.Drawing.Point(414, 13);
             this.btn_WriteConfig.Name = "btn_WriteConfig";
             this.btn_WriteConfig.Size = new System.Drawing.Size(98, 35);
             this.btn_WriteConfig.TabIndex = 5;
@@ -298,6 +300,17 @@
             // 
             this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
             // 
+            // btn_UpdateConfig
+            // 
+            this.btn_UpdateConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_UpdateConfig.Location = new System.Drawing.Point(305, 13);
+            this.btn_UpdateConfig.Name = "btn_UpdateConfig";
+            this.btn_UpdateConfig.Size = new System.Drawing.Size(103, 35);
+            this.btn_UpdateConfig.TabIndex = 9;
+            this.btn_UpdateConfig.Text = "Update Config";
+            this.btn_UpdateConfig.UseVisualStyleBackColor = true;
+            this.btn_UpdateConfig.Click += new System.EventHandler(this.btn_UpdateConfig_Click);
+            // 
             // ConfigViewForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -351,5 +364,6 @@
         private System.Windows.Forms.Button btn_ResetConfig;
         private System.Windows.Forms.DataGridView ledSpeedGridView;
         private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.Button btn_UpdateConfig;
     }
 }

@@ -23,6 +23,7 @@
             CMD_READ_CONFIG = 0x30,
             CMD_UPDATE_CONFIG = 0x31,
             CMD_WRITE_CONFIG = 0x32,
+            CMD_DEFAULT_CONFIG = 0x33,
             CMD_READ_FANSPEED = 0x35,
             CMD_READ_EEPROM = 0x38,
             CMD_WRITE_EEPROM = 0x39,

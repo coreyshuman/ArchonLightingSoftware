@@ -85,6 +85,7 @@
     <ApplicationIcon>archon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Microsoft.CSharp" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
@@ -94,14 +95,26 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Components\VerticalProgressBar.cs">
-      <SubType>Component</SubType>
-    </Compile>
-    <Compile Include="ConfigViewForm.cs">
+    <Compile Include="Common\DataGridViewHandlers.cs" />
+    <Compile Include="Components\DeviceComponent.cs" />
+    <Compile Include="Components\FanSpeedBar.cs" />
+    <Compile Include="ConfigEditorForm.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="ConfigViewForm.Designer.cs">
-      <DependentUpon>ConfigViewForm.cs</DependentUpon>
+    <Compile Include="ConfigEditorForm.Designer.cs">
+      <DependentUpon>ConfigEditorForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="DebugForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="DebugForm.Designer.cs">
+      <DependentUpon>DebugForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="EepromEditorForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="EepromEditorForm.Designer.cs">
+      <DependentUpon>EepromEditorForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Models\DeviceControllerConfig.cs" />
     <Compile Include="Models\DeviceControllerDefinitions.cs" />
@@ -115,9 +128,17 @@
     <Compile Include="Models\ApplicationData.cs" />
     <Compile Include="Models\ControlPacket.cs" />
     <Compile Include="Models\DeviceControllerData.cs" />
+    <Compile Include="Interfaces\ISubform.cs" />
     <Compile Include="Models\FrameInfo.cs" />
+    <Compile Include="Models\LightingModes.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SubformBase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="SubformBase.Designer.cs">
+      <DependentUpon>SubformBase.cs</DependentUpon>
+    </Compile>
     <Compile Include="UsbApplication\UsbApp.cs" />
     <Compile Include="UsbApplication\UsbAppDefinitions.cs" />
     <Compile Include="UsbApplication\UsbDriver.cs" />
@@ -127,8 +148,14 @@
       <SubType>Designer</SubType>
       <DependentUpon>AppForm.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="ConfigViewForm.resx">
-      <DependentUpon>ConfigViewForm.cs</DependentUpon>
+    <EmbeddedResource Include="ConfigEditorForm.resx">
+      <DependentUpon>ConfigEditorForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="DebugForm.resx">
+      <DependentUpon>DebugForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="EepromEditorForm.resx">
+      <DependentUpon>EepromEditorForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

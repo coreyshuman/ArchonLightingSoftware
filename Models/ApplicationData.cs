@@ -13,11 +13,13 @@ namespace ArchonLightingSystem.Models
         public bool EepromReadDone;
         public bool EepromWritePending;
         public bool ReadConfigPending;
+        public bool DefaultConfigPending;
         public bool UpdateConfigPending;
         public bool WriteConfigPending;
-        public bool ReadDebug;
+        public bool ReadDebugPending;
         public uint EepromAddress;
         public uint EepromLength;
+        public string Debug;
 
         public DeviceControllerData DeviceControllerData { get; set; }
         
@@ -27,10 +29,11 @@ namespace ArchonLightingSystem.Models
             EepromReadPending = false;
             EepromReadDone = false;
             EepromWritePending = false;
-            ReadDebug = false;
+            ReadDebugPending = false;
             EepromAddress = 1;
             EepromLength = 1;
-            DeviceControllerData = null;
+            Debug = "";
+            DeviceControllerData = new DeviceControllerData();
         }
     }
 }
