@@ -15,6 +15,8 @@ namespace ArchonLightingSystem.Models
         public Byte[] EepromData { get; set; }
         public DeviceControllerConfig DeviceConfig { get; set; }
         public bool IsInitialized { get { return isInitialized; } }
+        public Version BootloaderVersion { get; set; }
+        public Version ApplicationVersion { get; set; }
 
         private bool isInitialized;
 
@@ -27,8 +29,10 @@ namespace ArchonLightingSystem.Models
             isInitialized = false;
         }
 
-        public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig)
+        public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig, Byte[] bootVer, Byte[] appVer)
         {
+            BootloaderVersion = new Version(bootVer[0], bootVer[1]);
+            ApplicationVersion = new Version(appVer[0], appVer[1]);
             DeviceAddress = deviceAddress;
             UpdateEepromData(eepromData);
             DeviceConfig.FromBuffer(deviceConfig);

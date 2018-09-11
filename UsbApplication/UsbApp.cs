@@ -198,10 +198,16 @@ namespace ArchonLightingSystem.UsbApplication
         private void GetDeviceInitialization(DeviceControllerData deviceData)
         {
             int i;
+            ControlPacket bootResponse;
+            ControlPacket appResponse;
             ControlPacket eepromResponse;
             ControlPacket deviceAddressResponse;
             ControlPacket deviceConfigResponse;
 
+            bootResponse = ReadBootloaderInfo();
+            if (bootResponse == null) throw new Exception("Couldn't read Bootloader info.");
+            appResponse = ReadApplicationInfo();
+            if (appResponse == null) throw new Exception("Couldn't read Application info.");
             deviceAddressResponse = ReadControllerAddress();
             if (deviceAddressResponse == null) throw new Exception("Couldn't read Address.");
             eepromResponse = ReadEeprom(0, (UInt16)DeviceControllerDefinitions.EepromSize-1); // cts debug, see todo below
@@ -209,7 +215,27 @@ namespace ArchonLightingSystem.UsbApplication
             deviceConfigResponse = ReadConfig();
             if (deviceConfigResponse == null) throw new Exception("Couldn't read Config.");
 
-            deviceData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data);
+            deviceData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data, bootResponse.Data, appResponse.Data);
+        }
+
+        private ControlPacket ReadBootloaderInfo()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
+                return response;
+            }
+            return null;
+        }
+
+        private ControlPacket ReadApplicationInfo()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
+                return response;
+            }
+            return null;
         }
 
         private ControlPacket ReadEeprom(UInt16 address, UInt16 length)

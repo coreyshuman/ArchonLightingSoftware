@@ -18,6 +18,7 @@
         public enum CONTROL_CMD
         {
             CMD_READ_EE_DEBUG = 0x10,
+            CMD_READ_BOOTLOADER_INFO = 0x01,
             CMD_READ_FIRMWARE_INFO = 0x02,
             CMD_READ_CONTROLLER_ADDRESS = 0x0A,
             CMD_READ_CONFIG = 0x30,

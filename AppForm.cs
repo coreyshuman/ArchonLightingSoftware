@@ -25,15 +25,6 @@ namespace ArchonLightingSystem
 
             usbApp.RegisterEventHandler(this.Handle);
             usbApp.InitializeDevice("04D8", "0033");
-
-            if (usbApp.IsAttached == true)
-            {
-                statusLabel.Text = "Device Found, AttachedState = TRUE";
-            }
-            else
-            {
-                statusLabel.Text = "Device not found, verify connect/correct firmware";
-            }
         }
 
         void InitializeForm()
@@ -72,7 +63,9 @@ namespace ArchonLightingSystem
             if (usbApp.IsAttached == true)
             {
                 //Device is connected and ready to communicate, enable user interface on the form 
-                statusLabel.Text = "Device Found: AttachedState = TRUE";
+                string bootVer = usbApp.AppData.DeviceControllerData.BootloaderVersion?.ToString();
+                string AppVer = usbApp.AppData.DeviceControllerData.ApplicationVersion?.ToString();
+                statusLabel.Text = $"Device Found: AttachedState = TRUE   BootVer: {bootVer}   AppVer: {AppVer}";
             }
             if ((usbApp.IsAttached == false) || (usbApp.IsAttachedButBroken == true))
             {
