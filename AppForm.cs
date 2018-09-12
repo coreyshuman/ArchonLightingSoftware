@@ -14,6 +14,7 @@ namespace ArchonLightingSystem
         private ConfigEditorForm configForm = null;
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
+        private FirmwareUpdateForm firmwareForm = null;
         private bool formIsInitialized = false;
 
         public unsafe AppForm()
@@ -153,9 +154,31 @@ namespace ArchonLightingSystem
             debugForm.Focus();
         }
 
+        private void updateFirmwareToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (firmwareForm == null || firmwareForm.IsDisposed)
+            {
+                firmwareForm = new FirmwareUpdateForm();
+                firmwareForm.InitializeForm(usbApp.AppData);
+                firmwareForm.Show();
+            }
+            if (firmwareForm.WindowState == FormWindowState.Minimized)
+            {
+                firmwareForm.WindowState = FormWindowState.Normal;
+            }
+            firmwareForm.Focus();
+        }
+
         private void btn_SaveConfig_Click(object sender, EventArgs e)
         {
             usbApp.AppData.WriteConfigPending = true;
         }
+
+        private void btn_ResetToBoot_Click(object sender, EventArgs e)
+        {
+            usbApp.AppData.ResetToBootloaderPending = true;
+        }
+
+        
     } 
 } 

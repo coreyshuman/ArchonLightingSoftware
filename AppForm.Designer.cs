@@ -63,6 +63,8 @@ namespace ArchonLightingSystem
             this.lbl_Address = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.btn_SaveConfig = new System.Windows.Forms.Button();
+            this.btn_ResetToBoot = new System.Windows.Forms.Button();
+            this.updateFirmwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -91,7 +93,8 @@ namespace ArchonLightingSystem
             this.optionsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.editConfigToolStripMenuItem,
             this.editEEPROMToolStripMenuItem,
-            this.debugToolStripMenuItem});
+            this.debugToolStripMenuItem,
+            this.updateFirmwareToolStripMenuItem});
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
@@ -99,21 +102,21 @@ namespace ArchonLightingSystem
             // editConfigToolStripMenuItem
             // 
             this.editConfigToolStripMenuItem.Name = "editConfigToolStripMenuItem";
-            this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editConfigToolStripMenuItem.Text = "Edit Config";
             this.editConfigToolStripMenuItem.Click += new System.EventHandler(this.editConfigToolStripMenuItem_Click);
             // 
             // editEEPROMToolStripMenuItem
             // 
             this.editEEPROMToolStripMenuItem.Name = "editEEPROMToolStripMenuItem";
-            this.editEEPROMToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.editEEPROMToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editEEPROMToolStripMenuItem.Text = "Edit EEPROM";
             this.editEEPROMToolStripMenuItem.Click += new System.EventHandler(this.editEEPROMToolStripMenuItem_Click);
             // 
             // debugToolStripMenuItem
             // 
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -362,11 +365,29 @@ namespace ArchonLightingSystem
             this.btn_SaveConfig.UseVisualStyleBackColor = true;
             this.btn_SaveConfig.Click += new System.EventHandler(this.btn_SaveConfig_Click);
             // 
+            // btn_ResetToBoot
+            // 
+            this.btn_ResetToBoot.Location = new System.Drawing.Point(462, 28);
+            this.btn_ResetToBoot.Name = "btn_ResetToBoot";
+            this.btn_ResetToBoot.Size = new System.Drawing.Size(105, 37);
+            this.btn_ResetToBoot.TabIndex = 77;
+            this.btn_ResetToBoot.Text = "Reset To Bootloader";
+            this.btn_ResetToBoot.UseVisualStyleBackColor = true;
+            this.btn_ResetToBoot.Click += new System.EventHandler(this.btn_ResetToBoot_Click);
+            // 
+            // updateFirmwareToolStripMenuItem
+            // 
+            this.updateFirmwareToolStripMenuItem.Name = "updateFirmwareToolStripMenuItem";
+            this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.updateFirmwareToolStripMenuItem.Text = "Update Firmware";
+            this.updateFirmwareToolStripMenuItem.Click += new System.EventHandler(this.updateFirmwareToolStripMenuItem_Click);
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1331, 666);
+            this.Controls.Add(this.btn_ResetToBoot);
             this.Controls.Add(this.btn_SaveConfig);
             this.Controls.Add(this.lbl_Address);
             this.Controls.Add(this.grp_Device1);
@@ -424,6 +445,8 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.ToolStripMenuItem editEEPROMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.Button btn_SaveConfig;
+        private System.Windows.Forms.Button btn_ResetToBoot;
+        private System.Windows.Forms.ToolStripMenuItem updateFirmwareToolStripMenuItem;
     }
 }
 

@@ -61,6 +61,12 @@ namespace ArchonLightingSystem.UsbApplication
                                 }
                             }
                         }
+
+                        if(AppData.ResetToBootloaderPending)
+                        {
+                            AppData.ResetToBootloaderPending = false;
+                            ResetDeviceToBootloader();
+                        }
                         
                         if (AppData.EepromReadPending)
                         {
@@ -198,24 +204,29 @@ namespace ArchonLightingSystem.UsbApplication
         private void GetDeviceInitialization(DeviceControllerData deviceData)
         {
             int i;
-            ControlPacket bootResponse;
-            ControlPacket appResponse;
+            ControlPacket bootResponse = new ControlPacket();
+            ControlPacket appResponse = new ControlPacket();
+            ControlPacket bootStatusResponse;
             ControlPacket eepromResponse;
             ControlPacket deviceAddressResponse;
             ControlPacket deviceConfigResponse;
 
+            
             bootResponse = ReadBootloaderInfo();
             if (bootResponse == null) throw new Exception("Couldn't read Bootloader info.");
             appResponse = ReadApplicationInfo();
             if (appResponse == null) throw new Exception("Couldn't read Application info.");
+            
             deviceAddressResponse = ReadControllerAddress();
             if (deviceAddressResponse == null) throw new Exception("Couldn't read Address.");
+            bootStatusResponse = ReadBootloaderInfo();
+            if (bootStatusResponse == null) throw new Exception("Couldn't read boot status.");
             eepromResponse = ReadEeprom(0, (UInt16)DeviceControllerDefinitions.EepromSize-1); // cts debug, see todo below
             if (eepromResponse == null) throw new Exception("Couldn't read EEPROM.");
             deviceConfigResponse = ReadConfig();
             if (deviceConfigResponse == null) throw new Exception("Couldn't read Config.");
 
-            deviceData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data, bootResponse.Data, appResponse.Data);
+            deviceData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data, bootResponse.Data, appResponse.Data, bootStatusResponse.Data);
         }
 
         private ControlPacket ReadBootloaderInfo()
@@ -237,6 +248,22 @@ namespace ArchonLightingSystem.UsbApplication
             }
             return null;
         }
+
+        private bool ResetDeviceToBootloader()
+        {
+            return GenerateAndSendFrames(CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
+        }
+
+        private ControlPacket ReadBootStatus()
+        {
+            if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_BOOT_STATUS);
+                return response;
+            }
+            return null;
+        }
+
 
         private ControlPacket ReadEeprom(UInt16 address, UInt16 length)
         {

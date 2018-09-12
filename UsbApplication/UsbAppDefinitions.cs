@@ -20,6 +20,8 @@
             CMD_READ_EE_DEBUG = 0x10,
             CMD_READ_BOOTLOADER_INFO = 0x01,
             CMD_READ_FIRMWARE_INFO = 0x02,
+            CMD_RESET_TO_BOOTLOADER = 0x03,
+            CMD_READ_BOOT_STATUS = 0x04,
             CMD_READ_CONTROLLER_ADDRESS = 0x0A,
             CMD_READ_CONFIG = 0x30,
             CMD_UPDATE_CONFIG = 0x31,

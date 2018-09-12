@@ -17,6 +17,7 @@ namespace ArchonLightingSystem.Models
         public bool UpdateConfigPending;
         public bool WriteConfigPending;
         public bool ReadDebugPending;
+        public bool ResetToBootloaderPending;
         public uint EepromAddress;
         public uint EepromLength;
         public string Debug;

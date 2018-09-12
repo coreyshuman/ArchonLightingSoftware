@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ArchonLightingSystem.Models;
+using ArchonLightingSystem.Common;
 
 
 namespace ArchonLightingSystem.Models
@@ -17,6 +18,7 @@ namespace ArchonLightingSystem.Models
         public bool IsInitialized { get { return isInitialized; } }
         public Version BootloaderVersion { get; set; }
         public Version ApplicationVersion { get; set; }
+        public UInt32 BootStatusFlag { get; set; }
 
         private bool isInitialized;
 
@@ -29,13 +31,14 @@ namespace ArchonLightingSystem.Models
             isInitialized = false;
         }
 
-        public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig, Byte[] bootVer, Byte[] appVer)
+        public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig, Byte[] bootVer, Byte[] appVer, Byte[] bootStatus)
         {
             BootloaderVersion = new Version(bootVer[0], bootVer[1]);
             ApplicationVersion = new Version(appVer[0], appVer[1]);
             DeviceAddress = deviceAddress;
             UpdateEepromData(eepromData);
             DeviceConfig.FromBuffer(deviceConfig);
+            BootStatusFlag = Util.UInt32FromBytes(bootStatus[0], bootStatus[1], bootStatus[2], bootStatus[4]);
             isInitialized = true;
         }
 
