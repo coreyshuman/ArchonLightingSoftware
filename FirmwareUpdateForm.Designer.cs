@@ -38,13 +38,14 @@
             this.label3 = new System.Windows.Forms.Label();
             this.btn_Cancel = new System.Windows.Forms.Button();
             this.formUpdateTimer = new System.Windows.Forms.Timer(this.components);
+            this.btn_OpenHexFile = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // listView1
             // 
             this.listView1.GridLines = true;
             this.listView1.Location = new System.Drawing.Point(35, 64);
-            this.listView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(508, 571);
             this.listView1.TabIndex = 0;
@@ -113,11 +114,22 @@
             this.btn_Cancel.UseVisualStyleBackColor = true;
             this.btn_Cancel.Click += new System.EventHandler(this.btn_Cancel_Click);
             // 
+            // btn_OpenHexFile
+            // 
+            this.btn_OpenHexFile.Location = new System.Drawing.Point(238, 12);
+            this.btn_OpenHexFile.Name = "btn_OpenHexFile";
+            this.btn_OpenHexFile.Size = new System.Drawing.Size(86, 33);
+            this.btn_OpenHexFile.TabIndex = 7;
+            this.btn_OpenHexFile.Text = "Open Hex";
+            this.btn_OpenHexFile.UseVisualStyleBackColor = true;
+            this.btn_OpenHexFile.Click += new System.EventHandler(this.btn_OpenHexFile_Click);
+            // 
             // FirmwareUpdateForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(574, 662);
+            this.Controls.Add(this.btn_OpenHexFile);
             this.Controls.Add(this.btn_Cancel);
             this.Controls.Add(this.lbl_Status);
             this.Controls.Add(this.label3);
@@ -127,7 +139,7 @@
             this.Controls.Add(this.listView1);
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "FirmwareUpdateForm";
             this.Text = "Firmware Updater";
@@ -146,5 +158,6 @@
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button btn_Cancel;
         private System.Windows.Forms.Timer formUpdateTimer;
+        private System.Windows.Forms.Button btn_OpenHexFile;
     }
 }

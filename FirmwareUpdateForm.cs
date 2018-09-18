@@ -9,6 +9,8 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.Models;
+using ArchonLightingSystem.Bootloader;
+using System.IO;
 
 namespace ArchonLightingSystem
 {
@@ -85,6 +87,39 @@ namespace ArchonLightingSystem
             }
             
             
+        }
+
+        private void btn_OpenHexFile_Click(object sender, EventArgs e)
+        {
+            OpenFileDialog openFileDialog = new OpenFileDialog();
+            openFileDialog.Filter = "Hex File (*.hex)|*.hex";
+            try
+            {
+                openFileDialog.InitialDirectory = Path.GetDirectoryName(Settings.Default.HexFileLocation);
+            } 
+            catch(Exception)
+            {
+                // do nothing
+            }
+            if (openFileDialog.ShowDialog() == DialogResult.OK)
+            {
+                Settings.Default.HexFileLocation = openFileDialog.FileName;
+                Settings.Default.Save();
+
+                try
+                {
+                    Hex hex = new Hex();
+                    hex.LoadHexFile(openFileDialog.FileName);
+                    UInt32 startAddress = 0, progLen = 0;
+                    UInt16 crc = 0;
+                    hex.VerifyFlash(ref startAddress, ref progLen, ref crc);
+                    crc = crc;
+                }
+                catch(Exception ex)
+                {
+                    Console.WriteLine(ex.Message);
+                }
+            }
         }
     }
 }

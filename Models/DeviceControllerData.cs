@@ -28,6 +28,8 @@ namespace ArchonLightingSystem.Models
             MeasuredFanRpm = new UInt16[DeviceControllerDefinitions.DeviceCount];
             EepromData = new byte[DeviceControllerDefinitions.EepromSize];
             DeviceConfig = new DeviceControllerConfig();
+            BootloaderVersion = new Version();
+            ApplicationVersion = new Version();
             isInitialized = false;
         }
 

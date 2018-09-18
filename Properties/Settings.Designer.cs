@@ -22,5 +22,17 @@ namespace ArchonLightingSystem.Properties {
                 return defaultInstance;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("")]
+        public string HexFileLocation {
+            get {
+                return ((string)(this["HexFileLocation"]));
+            }
+            set {
+                this["HexFileLocation"] = value;
+            }
+        }
     }
 }

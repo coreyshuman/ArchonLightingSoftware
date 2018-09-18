@@ -95,6 +95,8 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Bootloader\Bootloader.cs" />
+    <Compile Include="Bootloader\Hex.cs" />
     <Compile Include="Common\DataGridViewHandlers.cs" />
     <Compile Include="Components\DeviceComponent.cs" />
     <Compile Include="Components\FanSpeedBar.cs" />
