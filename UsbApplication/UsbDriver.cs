@@ -10,18 +10,13 @@ namespace ArchonLightingSystem.UsbApplication
         public const uint USB_PACKET_SIZE = 64 + 1;
 
         public bool IsAttached = false;                     //Need to keep track of the USB device attachment status for proper plug and play operation.
-        public bool IsAttachedButBroken = false;
-        
+        public bool IsAttachedButBroken = false;     
 
         private SafeFileHandle WriteHandleToUSBDevice = null;
         private SafeFileHandle ReadHandleToUSBDevice = null;
         private string DevicePath = null;   //Need the find the proper device path before you can open file handles.
         //Globally Unique Identifier (GUID) for HID class devices.  Windows uses GUIDs to identify things.
         private Guid InterfaceClassGuid = new Guid(0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
-        
-
-        
-
         private string devicePid = "0000";
         private string deviceVid = "0000";
 
@@ -111,9 +106,9 @@ namespace ArchonLightingSystem.UsbApplication
 
                     //We obtained the proper device path (from CheckIfPresentAndGetUSBDevicePath() function call), and it
                     //is now possible to open read and write handles to the device.
-                    WriteHandleToUSBDevice = CreateFile(DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+                    WriteHandleToUSBDevice = CreateFile(DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
                     ErrorStatusWrite = (uint)Marshal.GetLastWin32Error();
-                    ReadHandleToUSBDevice = CreateFile(DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, 0, IntPtr.Zero);
+                    ReadHandleToUSBDevice = CreateFile(DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
                     ErrorStatusRead = (uint)Marshal.GetLastWin32Error();
 
                     if ((ErrorStatusWrite == ERROR_SUCCESS) && (ErrorStatusRead == ERROR_SUCCESS))
@@ -186,7 +181,7 @@ namespace ArchonLightingSystem.UsbApplication
         /// <param name="lpNumberOfBytesRead"></param>
         /// <param name="lpOverlapped"></param>
         /// <returns>Returns boolean indicating if the function call was successful or not. Also returns data in the byte[] INBuffer, and the number of bytes read.</returns>
-        private unsafe bool ReadFileManagedBuffer(SafeFileHandle hFile, byte[] INBuffer, uint nNumberOfBytesToRead, ref uint lpNumberOfBytesRead, IntPtr lpOverlapped)
+        private unsafe bool ReadFileManagedBuffer(SafeFileHandle hFile, byte[] INBuffer, uint nNumberOfBytesToRead, ref uint lpNumberOfBytesRead, ref OVERLAPPED lpOverlapped)
         {
             IntPtr pINBuffer = IntPtr.Zero;
 
@@ -194,7 +189,7 @@ namespace ArchonLightingSystem.UsbApplication
             {
                 pINBuffer = Marshal.AllocHGlobal((int)nNumberOfBytesToRead);    //Allocate some unmanged RAM for the receive data buffer.
 
-                if (ReadFile(hFile, pINBuffer, nNumberOfBytesToRead, ref lpNumberOfBytesRead, lpOverlapped))
+                if (ReadFile(hFile, pINBuffer, nNumberOfBytesToRead, ref lpNumberOfBytesRead, ref lpOverlapped))
                 {
                     Marshal.Copy(pINBuffer, INBuffer, 0, (int)lpNumberOfBytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
                     Marshal.FreeHGlobal(pINBuffer);
@@ -226,7 +221,10 @@ namespace ArchonLightingSystem.UsbApplication
          /// <returns>Number of bytes written</returns>
         internal uint WriteUSBDevice(Byte[] buffer, uint bufflen)
         {
-            bool result = false;
+            OVERLAPPED HIDOverlapped = new OVERLAPPED();
+            SafeFileHandle hEventObject;
+
+            uint result = 0;
             uint bytesWritten = 0;
             Byte[] usbReport = new Byte[USB_PACKET_SIZE];
             int i;
@@ -251,28 +249,64 @@ namespace ArchonLightingSystem.UsbApplication
                         usbReport[i + 1] = buffer[i];
                     }
 
-                    // WriteFile is a blocking call. It will be a good design if made a non-blocking.
-                    result = WriteFile(this.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, IntPtr.Zero);
+                    // use overlapped structure
+                    hEventObject = CreateEvent(IntPtr.Zero, false, true, IntPtr.Zero);
+                    HIDOverlapped.hEvent = hEventObject.DangerousGetHandle();
+                    HIDOverlapped.Offset = 0;
+                    HIDOverlapped.OffsetHigh = 0;
+
+                    WriteFile(this.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, ref HIDOverlapped);
+                    result = WaitForSingleObject(hEventObject, 200); //200ms timeout period
                     uint error = (uint)Marshal.GetLastWin32Error();
+
+                    switch (result)
+                    {
+                        case 0: // WAIT_OBJECT_0
+                                // Success;
+                            if (GetOverlappedResult(this.WriteHandleToUSBDevice, ref HIDOverlapped, ref bytesWritten, false))
+                            {
+                                return bytesWritten;
+                            }
+                            CancelIo(this.WriteHandleToUSBDevice);
+                            break;
+
+                        case 258u: // WAIT_TIMEOUT
+                                   // Timeout error;
+                                   //Cancel the read operation.
+                            CancelIo(this.WriteHandleToUSBDevice);
+                            break;
+
+                        default:
+                            // Undefined error;
+                            //Cancel the read operation.
+                            CancelIo(this.WriteHandleToUSBDevice);
+                            break;
+
+                    }
+
+                    hEventObject.Dispose();
                 }
 
             }
 
-            return result ? bytesWritten : 0;
+            
+            return 0;
 
         }
 
-         /// <summary>
-         /// Read from USB device
-         /// </summary>
-         /// <param name="buffer">buffer array</param>
-         /// <param name="bufflen">buffer length</param>
-         /// <returns></returns>
-        internal uint ReadUSBDevice(ref Byte[] buffer, uint bufflen)
+        /// <summary>
+        /// Read from USB device
+        /// </summary>
+        /// <param name="buffer">buffer array</param>
+        /// <param name="bufflen">buffer length</param>
+        /// <param name="readTimeout">timeout for read operation</param>
+        /// <returns></returns>
+        internal uint ReadUSBDevice(ref Byte[] buffer, uint bufflen, uint readTimeout = 200)
         {
-
+            OVERLAPPED HIDOverlapped = new OVERLAPPED();
+            SafeFileHandle hEventObject;
             uint bytesRead = 0;
-            bool result;
+            UInt32 result;
 
             if (this.IsAttached == false)
             {
@@ -287,10 +321,42 @@ namespace ArchonLightingSystem.UsbApplication
             // Set the first byte in the buffer to the Report ID.
             buffer[0] = 0;
 
+            // use overlapped structure
+            hEventObject = CreateEvent(IntPtr.Zero, false, true, IntPtr.Zero);
+            HIDOverlapped.hEvent = hEventObject.DangerousGetHandle();
+            HIDOverlapped.Offset = 0;
+            HIDOverlapped.OffsetHigh = 0;
 
-            result = ReadFileManagedBuffer(this.ReadHandleToUSBDevice, buffer, bufflen, ref bytesRead, IntPtr.Zero);
+            ReadFileManagedBuffer(this.ReadHandleToUSBDevice, buffer, bufflen, ref bytesRead, ref HIDOverlapped);
+            result = WaitForSingleObject(hEventObject,	readTimeout);
 
-            return result ? bytesRead : 0;
+            switch (result)
+            {
+                case 0: // WAIT_OBJECT_0
+                    // Success;
+                    if(GetOverlappedResult(this.ReadHandleToUSBDevice, ref HIDOverlapped, ref bytesRead, false))
+                    {
+                        return bytesRead;
+                    }
+                    CancelIo(this.ReadHandleToUSBDevice);
+                    break;
+
+                case 258u: // WAIT_TIMEOUT
+                    // Timeout error;
+                    //Cancel the read operation.
+                    CancelIo(this.ReadHandleToUSBDevice);
+                    break;
+
+                default:
+                    // Undefined error;
+                    //Cancel the read operation.
+                    CancelIo(this.ReadHandleToUSBDevice);
+                    break;
+
+            }
+
+            hEventObject.Dispose();
+            return 0;
         }
 
         /// <summary>

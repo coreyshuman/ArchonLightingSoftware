@@ -39,12 +39,16 @@
             this.btn_Cancel = new System.Windows.Forms.Button();
             this.formUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.btn_OpenHexFile = new System.Windows.Forms.Button();
+            this.progressBar1 = new System.Windows.Forms.ProgressBar();
+            this.btn_StartApp = new System.Windows.Forms.Button();
+            this.timer_ResetHardware = new System.Windows.Forms.Timer(this.components);
+            this.timer_EnableUsb = new System.Windows.Forms.Timer(this.components);
             this.SuspendLayout();
             // 
             // listView1
             // 
             this.listView1.GridLines = true;
-            this.listView1.Location = new System.Drawing.Point(35, 64);
+            this.listView1.Location = new System.Drawing.Point(35, 87);
             this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(508, 571);
@@ -116,7 +120,7 @@
             // 
             // btn_OpenHexFile
             // 
-            this.btn_OpenHexFile.Location = new System.Drawing.Point(238, 12);
+            this.btn_OpenHexFile.Location = new System.Drawing.Point(253, 14);
             this.btn_OpenHexFile.Name = "btn_OpenHexFile";
             this.btn_OpenHexFile.Size = new System.Drawing.Size(86, 33);
             this.btn_OpenHexFile.TabIndex = 7;
@@ -124,11 +128,40 @@
             this.btn_OpenHexFile.UseVisualStyleBackColor = true;
             this.btn_OpenHexFile.Click += new System.EventHandler(this.btn_OpenHexFile_Click);
             // 
+            // progressBar1
+            // 
+            this.progressBar1.Location = new System.Drawing.Point(35, 57);
+            this.progressBar1.Name = "progressBar1";
+            this.progressBar1.Size = new System.Drawing.Size(508, 23);
+            this.progressBar1.TabIndex = 8;
+            // 
+            // btn_StartApp
+            // 
+            this.btn_StartApp.Location = new System.Drawing.Point(558, 14);
+            this.btn_StartApp.Name = "btn_StartApp";
+            this.btn_StartApp.Size = new System.Drawing.Size(86, 33);
+            this.btn_StartApp.TabIndex = 9;
+            this.btn_StartApp.Text = "Start App";
+            this.btn_StartApp.UseVisualStyleBackColor = true;
+            this.btn_StartApp.Click += new System.EventHandler(this.btn_StartApp_Click);
+            // 
+            // timer_ResetHardware
+            // 
+            this.timer_ResetHardware.Interval = 500;
+            this.timer_ResetHardware.Tick += new System.EventHandler(this.timer_ResetHardware_Tick);
+            // 
+            // timer_EnableUsb
+            // 
+            this.timer_EnableUsb.Interval = 1000;
+            this.timer_EnableUsb.Tick += new System.EventHandler(this.timer_EnableUsb_Tick);
+            // 
             // FirmwareUpdateForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(574, 662);
+            this.ClientSize = new System.Drawing.Size(685, 662);
+            this.Controls.Add(this.btn_StartApp);
+            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btn_OpenHexFile);
             this.Controls.Add(this.btn_Cancel);
             this.Controls.Add(this.lbl_Status);
@@ -143,6 +176,7 @@
             this.MaximizeBox = false;
             this.Name = "FirmwareUpdateForm";
             this.Text = "Firmware Updater";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FirmwareUpdateForm_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -159,5 +193,9 @@
         private System.Windows.Forms.Button btn_Cancel;
         private System.Windows.Forms.Timer formUpdateTimer;
         private System.Windows.Forms.Button btn_OpenHexFile;
+        private System.Windows.Forms.ProgressBar progressBar1;
+        private System.Windows.Forms.Button btn_StartApp;
+        private System.Windows.Forms.Timer timer_ResetHardware;
+        private System.Windows.Forms.Timer timer_EnableUsb;
     }
 }

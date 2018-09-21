@@ -8,8 +8,10 @@ namespace ArchonLightingSystem.UsbApplication
 {
     public partial class UsbApp : UsbDriver
     {
-        public ApplicationData AppData;
+        public ApplicationData AppData { get; set; }
+        public bool PauseUsb { get; set; }
         private BackgroundWorker ReadWriteThread;
+
 
         public UsbApp()
         {
@@ -33,7 +35,7 @@ namespace ArchonLightingSystem.UsbApplication
             {
                 try
                 {
-                    if (IsAttached == true)	//Do not try to use the read/write handles unless the USB device is attached and ready
+                    if (IsAttached == true && !PauseUsb)	//Do not try to use the read/write handles unless the USB device is attached and ready
                     {
                         if(AppData.DeviceControllerData == null)
                         {
@@ -49,8 +51,10 @@ namespace ArchonLightingSystem.UsbApplication
                             rxtxBuffer[i] = 0;
                         }
                         
+                        
                         if(GenerateAndSendFrames(CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
                         {
+                            Thread.Sleep(2);
                             ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_FANSPEED);
                             if(response != null)
                             {
@@ -61,11 +65,14 @@ namespace ArchonLightingSystem.UsbApplication
                                 }
                             }
                         }
+                        
+                        
 
                         if(AppData.ResetToBootloaderPending)
                         {
                             AppData.ResetToBootloaderPending = false;
                             ResetDeviceToBootloader();
+                            PauseUsb = true;
                         }
                         
                         if (AppData.EepromReadPending)
@@ -233,6 +240,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
             {
+                Thread.Sleep(2);
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
                 return response;
             }
@@ -243,6 +251,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
             {
+                Thread.Sleep(2);
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
                 return response;
             }
@@ -258,6 +267,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
             {
+                Thread.Sleep(2);
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_BOOT_STATUS);
                 return response;
             }
@@ -271,7 +281,8 @@ namespace ArchonLightingSystem.UsbApplication
             byte[] request = new byte[] { (byte)address, (byte)length };
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_EEPROM, request, 2) > 0)
             {
-                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EEPROM);
+                Thread.Sleep(100); // give controller time to read EEPROM
+                ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_EEPROM, 2000);
                 return response;
             }
             return null;
@@ -281,6 +292,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
             {
+                Thread.Sleep(2);
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_DEFAULT_CONFIG);
                 return response;
             }
@@ -291,6 +303,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
             {
+                Thread.Sleep(50); // larger packet
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_READ_CONFIG);
                 return response;
             }
@@ -301,6 +314,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
             {
+                Thread.Sleep(100); // writing to eeprom
                 ControlPacket response = GetDeviceResponse(CONTROL_CMD.CMD_WRITE_CONFIG);
                 return response;
             }
@@ -329,17 +343,20 @@ namespace ArchonLightingSystem.UsbApplication
             return null;
         }
 
-        private ControlPacket GetDeviceResponse(CONTROL_CMD cmd)
+        private ControlPacket GetDeviceResponse(CONTROL_CMD cmd, uint readTimeout = 200)
         {
             uint byteCnt;
+            uint frameCnt = 0;
             FrameInfo frameInfo = new FrameInfo();
             ControlPacket controlPacket = new ControlPacket();
             frameInfo.OutBufferMaxLen = 512;
+
             while (!frameInfo.FrameValid)
             {
-                byteCnt = ReadUSBDevice(ref frameInfo.FrameData, USB_PACKET_SIZE);
+                byteCnt = ReadUSBDevice(ref frameInfo.FrameData, USB_PACKET_SIZE, readTimeout);
                 if (byteCnt > 0)
                 {
+                    frameCnt++;
                     frameInfo.FrameLen = byteCnt;
                     byteCnt = ValidateFrame(frameInfo, controlPacket);
                     if (byteCnt == 0)

@@ -16,26 +16,80 @@ namespace ArchonLightingSystem
 {
     public partial class FirmwareUpdateForm : Form
     {
-        private static string[] StatusString = { "Idle", "In Progress", "Completed", "Canceling", "Canceled" };
+        private UsbApplication.UsbDriver bootUsbDriver;
+        private UsbApplication.UsbApp usbApp;
+        Bootloader.Bootloader bootloader;
+        private static string[] StatusString = { "Disconnected", "Idle", "In Progress", "Completed", "Canceling", "Canceled" };
         private enum Status
         {
-            Idle = 0,
+            Disconnected = 0,
+            Idle,
             Updating,
             Completed,
             Canceling,
             Canceled
         }
 
+        private bool fileLoaded = false;
         private bool isUpdating = false;
         private bool isCanceled = false;
+        private bool isClosing = false;
+        private bool isConnected = false;
 
         public FirmwareUpdateForm()
         {
             InitializeComponent();
+            lbl_Status.Text = StatusString[(int)Status.Disconnected];
+            btn_UpdateAll.Enabled = false;
+            bootUsbDriver = new UsbApplication.UsbDriver();
+            
+            bootloader = new Bootloader.Bootloader();
+            bootloader.InitializeBootloader(bootUsbDriver, new ProgressChangedEventHandler((object changeSender, ProgressChangedEventArgs args) =>
+            {
+                progressBar1.Value = args.ProgressPercentage;
+                BootloaderState state = (BootloaderState)args.UserState;
+                HandleBootloaderResponse(state);
+            }));
+
+            timer_ResetHardware.Enabled = true;
+            timer_EnableUsb.Enabled = true;
         }
 
-        public void InitializeForm(ApplicationData appdata)
+        private void HandleBootloaderResponse(BootloaderState state)
         {
+            BootloaderCmd cmd;
+
+            if(state.Length == 0)
+            {
+                if(state.NoResponseFromDevice)
+                {
+                    MessageBox.Show("No response from device.");
+                }
+                return;
+            }
+
+            switch((BootloaderCmd)state.Data[0])
+            {
+                case BootloaderCmd.READ_BOOT_INFO:
+                    listView1.Items[0].SubItems[2].Text = new Version(state.Data[1], state.Data[2]).ToString();
+                    listView1.Items[0].SubItems[3].Text = new Version(state.Data[3], state.Data[4]).ToString();
+                    break;
+
+                case BootloaderCmd.PROGRAM_FLASH:
+                    MessageBox.Show("Update Successful!");
+                    btn_UpdateAll.Enabled = true;
+                    break;
+
+                default:
+                    throw new Exception("Unkown command response.");
+            }
+        }
+
+        public void InitializeForm(UsbApplication.UsbApp app)
+        {
+            usbApp = app;
+            var appdata = app.AppData;
+
             ImageList imageList = new ImageList { ImageSize = new Size(32, 32) };
             listView1.View = View.Details;
             listView1.FullRowSelect = true;
@@ -66,6 +120,7 @@ namespace ArchonLightingSystem
             btn_UpdateAll.Enabled = false;
             isUpdating = true;
             this.Cursor = Cursors.AppStarting;
+            bootloader.SendCommand(BootloaderCmd.PROGRAM_FLASH, 3, 5000);
         }
 
         private void btn_Cancel_Click(object sender, EventArgs e)
@@ -79,14 +134,42 @@ namespace ArchonLightingSystem
                     isUpdating = false;
                     isCanceled = true;
                     this.Cursor = Cursors.Arrow;
+                    if(e.GetType() == typeof(FormClosingEventArgs))
+                    {
+                        CloseWindow();
+                    }
                 }
             }
             else
             {
-                this.Close();
+                CloseWindow();
             }
-            
-            
+        }
+
+        private void CloseWindow()
+        {
+            isClosing = true;
+            bootloader.ShutdownThread();
+            this.Close();
+        }
+
+        //This is a callback function that gets called when a Windows message is received by the form.
+        //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
+        protected override void WndProc(ref Message m)
+        {
+            bootUsbDriver.HandleWindowEvent(ref m);
+            base.WndProc(ref m);
+            if(bootUsbDriver.IsAttached && !isConnected)
+            {
+                isConnected = true;
+                lbl_Status.Text = StatusString[(int)Status.Disconnected];
+                bootloader.SendCommand(BootloaderCmd.READ_BOOT_INFO, 3, 500);
+            } 
+            else if(!bootUsbDriver.IsAttached && isConnected)
+            {
+                isConnected = false;
+                lbl_Status.Text = StatusString[(int)Status.Idle];
+            }
         }
 
         private void btn_OpenHexFile_Click(object sender, EventArgs e)
@@ -108,18 +191,58 @@ namespace ArchonLightingSystem
 
                 try
                 {
-                    Hex hex = new Hex();
-                    hex.LoadHexFile(openFileDialog.FileName);
-                    UInt32 startAddress = 0, progLen = 0;
-                    UInt16 crc = 0;
-                    hex.VerifyFlash(ref startAddress, ref progLen, ref crc);
-                    crc = crc;
+                    
+                    bootloader.LoadHexFile(openFileDialog.FileName);
+                    btn_UpdateAll.Enabled = true;
                 }
                 catch(Exception ex)
                 {
                     Console.WriteLine(ex.Message);
                 }
             }
+        }
+
+        private void FirmwareUpdateForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (!isClosing)
+            {
+                e.Cancel = true;
+                btn_Cancel_Click(sender, e);
+            }
+        }
+
+        private void btn_StartApp_Click(object sender, EventArgs e)
+        {
+            bootloader.SendCommand(BootloaderCmd.JMP_TO_APP, 1, 1000);
+        }
+
+        private void timer_EnableUsb_Tick(object sender, EventArgs e)
+        {
+            if (bootUsbDriver.IsAttached)
+            {
+                timer_EnableUsb.Enabled = false;
+                if (bootUsbDriver.IsAttached && !isConnected)
+                {
+                    isConnected = true;
+                    lbl_Status.Text = StatusString[(int)Status.Idle];
+                    bootloader.SendCommand(BootloaderCmd.READ_BOOT_INFO, 3, 500);
+                }
+                else if (!bootUsbDriver.IsAttached && isConnected)
+                {
+                    isConnected = false;
+                    lbl_Status.Text = StatusString[(int)Status.Disconnected];
+                }
+            }
+            else
+            {
+                bootUsbDriver.InitializeDevice("04D8", "003C");
+            }
+        }
+
+        private void timer_ResetHardware_Tick(object sender, EventArgs e)
+        {
+            timer_ResetHardware.Enabled = false;
+            usbApp.AppData.ResetToBootloaderPending = true;
         }
     }
 }

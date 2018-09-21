@@ -96,7 +96,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootloader\Bootloader.cs" />
-    <Compile Include="Bootloader\Hex.cs" />
+    <Compile Include="Bootloader\HexManager.cs" />
     <Compile Include="Common\DataGridViewHandlers.cs" />
     <Compile Include="Components\DeviceComponent.cs" />
     <Compile Include="Components\FanSpeedBar.cs" />

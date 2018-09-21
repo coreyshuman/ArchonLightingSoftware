@@ -28,7 +28,7 @@ namespace ArchonLightingSystem.Bootloader
         public UInt32 ExtLinAddress;
     }
 
-    public class Hex
+    public class HexManager
     {
         // Virtual Flash.
         const int KB = (1024);
@@ -40,6 +40,23 @@ namespace ArchonLightingSystem.Bootloader
         Byte[] VirtualFlash = new byte[5 * MB];
         string[] HexFile = null;
         UInt32 HexFileCurrentLine = 0;
+
+        public UInt32 HexCurrLineNo
+        {
+            get
+            {
+                return HexFileCurrentLine;
+            }
+        }
+
+        public UInt32 HexTotalLines
+        {
+            get
+            {
+                return HexFile == null ? 0 : (UInt32)HexFile.Length;
+            }
+        }
+           
 
         static UInt32 PA_TO_VFA(UInt32 x)
         {
@@ -80,9 +97,10 @@ namespace ArchonLightingSystem.Bootloader
         /// Gets next hex record from the hex file
         /// </summary>
         /// <param name="HexRec">Reference array to store Hex record in</param>
+        /// <param name="buffStartAddress">start address for storing record into HexRec</param>
         /// <param name="BuffLen">Buffer Length</param>
         /// <returns>Length of the hex record in bytes</returns>
-        private UInt16 GetNextHexRecord(ref byte[] HexRec, UInt32 BuffLen)
+        public UInt16 GetNextHexRecord(ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
         {
 	        UInt16 len = 0;
             string line;
@@ -99,7 +117,7 @@ namespace ArchonLightingSystem.Bootloader
 			    return 0;
 		    }
 		    // Convert rest to hex.
-		    len = ConvertAsciiToHex(line.Substring(1), ref HexRec);
+		    len = ConvertAsciiToHex(line.Substring(1), ref HexRec, buffStartAddress);
 	        return len;
         }
 
@@ -128,8 +146,9 @@ namespace ArchonLightingSystem.Bootloader
         /// </summary>
         /// <param name="AsciiRec">Hex Record in ASCII format</param>
         /// <param name="HexRec">Hex record in Hex format</param>
+        /// <param name="buffStartAddress">start address for storing record into HexRec</param>
         /// <returns>Number of bytes in Hex record (hex format)</returns>
-        private UInt16 ConvertAsciiToHex(string AsciiRec, ref Byte[] HexRec)
+        private UInt16 ConvertAsciiToHex(string AsciiRec, ref Byte[] HexRec, uint buffStartAddress)
         {
             UInt16 i;
             List<string> hexValues = new List<string>();
@@ -137,10 +156,10 @@ namespace ArchonLightingSystem.Bootloader
             for (i = 0; i < AsciiRec.Length; i += 2)
             {
                 string hexValueAscii = AsciiRec.Substring(i, Math.Min(2, AsciiRec.Length - i));
-                HexRec[i / 2] = (byte)Convert.ToInt16(hexValueAscii, 16);
+                HexRec[i / 2 + buffStartAddress] = (byte)Convert.ToInt16(hexValueAscii, 16);
             }
                 
-	        return (UInt16)(i-2); 
+	        return (UInt16)(i/2); 
         }
 
         /// <summary>
@@ -171,7 +190,7 @@ namespace ArchonLightingSystem.Bootloader
 	        HexRecordSt.MaxAddress = 0;
 	        HexRecordSt.MinAddress = 0xFFFFFFFF;
 
-            while((HexRecLen = GetNextHexRecord(ref HexRec, 255)) != 0)
+            while((HexRecLen = GetNextHexRecord(ref HexRec, 0, 255)) != 0)
 	        {
 		        HexRecordSt.RecDataLen = HexRec[0];
 		        HexRecordSt.RecType = (RecordType)HexRec[3];
@@ -208,7 +227,7 @@ namespace ArchonLightingSystem.Bootloader
 				
 					        VirtualFlashAdrs = PA_TO_VFA(ProgAddress); // Program address to local virtual flash address
 
-                            CopyArray(ref VirtualFlash, VirtualFlashAdrs, ref HexRec, 4u, HexRecordSt.RecDataLen);
+                            Util.CopyArray(ref VirtualFlash, VirtualFlashAdrs, ref HexRec, 4u, HexRecordSt.RecDataLen);
 
                         }
 				        break;
@@ -239,14 +258,6 @@ namespace ArchonLightingSystem.Bootloader
 	        StartAdress = HexRecordSt.MinAddress;
 	        VirtualFlashAdrs = PA_TO_VFA(HexRecordSt.MinAddress);
 	        crc = Util.CalculateCrc(VirtualFlash, VirtualFlashAdrs, ProgLen);	
-        }
-
-        private void CopyArray(ref byte[] dest, uint destStart, ref byte[] src, uint srcStart, int length)
-        {
-            for(int i = 0; i < length; i++)
-            {
-                dest[i + destStart] = src[i + srcStart];
-            }
         }
 
         private byte CalculatedHexRecCrc(byte[] data, uint length)

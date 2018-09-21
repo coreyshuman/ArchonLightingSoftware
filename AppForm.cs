@@ -159,7 +159,7 @@ namespace ArchonLightingSystem
             if (firmwareForm == null || firmwareForm.IsDisposed)
             {
                 firmwareForm = new FirmwareUpdateForm();
-                firmwareForm.InitializeForm(usbApp.AppData);
+                firmwareForm.InitializeForm(usbApp);
                 firmwareForm.Show();
             }
             if (firmwareForm.WindowState == FormWindowState.Minimized)

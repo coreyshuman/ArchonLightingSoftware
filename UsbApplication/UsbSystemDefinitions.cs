@@ -21,6 +21,7 @@ namespace ArchonLightingSystem.UsbApplication
         internal const uint OPEN_EXISTING = 3;
         internal const uint FILE_SHARE_READ = 0x00000001;
         internal const uint FILE_SHARE_WRITE = 0x00000002;
+        internal const uint FILE_FLAG_OVERLAPPED = 0x40000000;
         //Constant definitions for certain WM_DEVICECHANGE messages
         internal const uint WM_DEVICECHANGE = 0x0219;
         internal const uint DBT_DEVICEARRIVAL = 0x8000;
@@ -67,11 +68,20 @@ namespace ArchonLightingSystem.UsbApplication
             internal char[] dbcc_name;          //TCHAR array
         }
 
-        //DLL Imports.  Need these to access various C style unmanaged functions contained in their respective DLL files.
-        //--------------------------------------------------------------------------------------------------------------
-        //Returns a HDEVINFO type for a device information set.  We will need the 
-        //HDEVINFO as in input parameter for calling many of the other SetupDixxx() functions.
-        [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal struct OVERLAPPED
+        {
+            internal UInt32 Internal;
+            internal UInt32 InternalHigh;
+            internal uint Offset;
+            internal uint OffsetHigh;
+            internal IntPtr hEvent;
+        }
+
+//DLL Imports.  Need these to access various C style unmanaged functions contained in their respective DLL files.
+//--------------------------------------------------------------------------------------------------------------
+//Returns a HDEVINFO type for a device information set.  We will need the 
+//HDEVINFO as in input parameter for calling many of the other SetupDixxx() functions.
+[DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern IntPtr SetupDiGetClassDevs(
             ref Guid ClassGuid,     //LPGUID    Input: Need to supply the class GUID. 
             IntPtr Enumerator,      //PCTSTR    Input: Use NULL here, not important for our purposes
@@ -138,7 +148,8 @@ namespace ArchonLightingSystem.UsbApplication
         internal static extern IntPtr RegisterDeviceNotification(
             IntPtr hRecipient,
             IntPtr NotificationFilter,
-            uint Flags);
+            uint Flags
+        );
 
         //Takes in a device path and opens a handle to the device.
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -149,7 +160,8 @@ namespace ArchonLightingSystem.UsbApplication
             IntPtr lpSecurityAttributes,
             uint dwCreationDisposition,
             uint dwFlagsAndAttributes,
-            IntPtr hTemplateFile);
+            IntPtr hTemplateFile
+        );
 
         //Uses a handle (created with CreateFile()), and lets us write USB data to the device.
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -158,7 +170,8 @@ namespace ArchonLightingSystem.UsbApplication
             byte[] lpBuffer,
             uint nNumberOfBytesToWrite,
             ref uint lpNumberOfBytesWritten,
-            IntPtr lpOverlapped);
+            ref OVERLAPPED lpOverlapped
+        );
 
         //Uses a handle (created with CreateFile()), and lets us read USB data from the device.
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
@@ -167,6 +180,38 @@ namespace ArchonLightingSystem.UsbApplication
             IntPtr lpBuffer,
             uint nNumberOfBytesToRead,
             ref uint lpNumberOfBytesRead,
-            IntPtr lpOverlapped);
+            ref OVERLAPPED lpOverlapped
+        );
+
+        //Uses a handle (created with CreateFile()), and lets us create an event (used for overlapped IO)
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern SafeFileHandle CreateEvent(
+            IntPtr lpEventAttribute,
+            bool bManualReset,
+            bool bInitialState,
+            IntPtr lpName
+        );
+
+        //Uses a handle (created with CreateFile()), wait for an overlapped IO asynchronous event
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern uint WaitForSingleObject(
+            SafeFileHandle hFile,
+            uint dwMilliseconds
+        );
+
+        //Uses a handle (created with CreateFile()), and lets us cancel an overlapped IO 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern uint CancelIo(
+            SafeFileHandle hFile
+        );
+
+        //Uses a handle (created with CreateFile()), and lets us get the result from an overlapped IO event
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern bool GetOverlappedResult(
+            SafeFileHandle hFile,
+            ref OVERLAPPED lpOverlapped,
+            ref uint lpNumberOfBytesTransferred,
+            bool bWait
+        );
     }
 }

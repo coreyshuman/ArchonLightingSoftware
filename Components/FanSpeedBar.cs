@@ -167,11 +167,14 @@ namespace ArchonLightingSystem.Components
             bar = new Panel();
             fanBuffer = new UInt16[10];
 
+            maximum = 100;
+            minimum = 0;
             Top = 0;
             Left = 0;
             Width = 10;
             Height = 40;
             bar.Left = 0;
+            
             ForegroundColor = Color.Blue;
             bar.Parent = container;
         }

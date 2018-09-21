@@ -6,6 +6,8 @@ namespace ArchonLightingSystem.Common
 {
     public static class Util
     {
+        private static readonly DateTime UnixEpoch = new DateTime(1970, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+
         public static IEnumerable<T> SliceRow<T>(this T[,] array, int row)
         {
             for (var i = array.GetLowerBound(1); i <= array.GetUpperBound(1); i++)
@@ -71,6 +73,22 @@ namespace ArchonLightingSystem.Common
             }
 
             return (UInt16)(crc & 0xFFFF);
+        }
+
+        public static void CopyArray(ref byte[] dest, uint destStart, ref byte[] src, uint srcStart, int length)
+        {
+            for (int i = 0; i < length; i++)
+            {
+                dest[i + destStart] = src[i + srcStart];
+            }
+        }
+
+        public static long GetCurrentUnixTimestampMillis()
+        {
+            DateTime localDateTime, univDateTime;
+            localDateTime = DateTime.Now;
+            univDateTime = localDateTime.ToUniversalTime();
+            return (long)(univDateTime - UnixEpoch).TotalMilliseconds;
         }
     }
 }
