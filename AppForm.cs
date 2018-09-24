@@ -3,8 +3,8 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Components;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.UsbApplication;
-
-
+using System.Collections.Generic;
+using System.Linq;
 
 namespace ArchonLightingSystem
 {
@@ -16,6 +16,9 @@ namespace ArchonLightingSystem
         private DebugForm debugForm = null;
         private FirmwareUpdateForm firmwareForm = null;
         private bool formIsInitialized = false;
+        private List<string> deviceAddressList = new List<string>();
+        private int selectedAddressIdx = 0;
+        private List<DeviceComponent> deviceComponents = new List<DeviceComponent>();
 
         public unsafe AppForm()
         {
@@ -30,10 +33,14 @@ namespace ArchonLightingSystem
 
         void InitializeForm()
         {
+            cbo_DeviceAddress.DisplayMember = "Text";
+            cbo_DeviceAddress.ValueMember = "Value";
+
             for(int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
             {
                 DeviceComponent device = new DeviceComponent();
-                device.InitializeComponent(this, i, usbApp.AppData);
+                deviceComponents.Add(device);
+                //device.InitializeComponent(this, i, usbApp.GetAppData(selectedAddressIdx));
 
             }
         }
@@ -43,6 +50,12 @@ namespace ArchonLightingSystem
             FormUpdateTimer.Enabled = false;
             lbl_Address.Text = controller.DeviceAddress.ToString();
             FormUpdateTimer.Enabled = true;
+            for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+            {
+                //DeviceComponent device = new DeviceComponent();
+                deviceComponents[i-1].InitializeComponent(this, i, usbApp.GetAppData(selectedAddressIdx));
+
+            }
         }
 
         
@@ -60,15 +73,28 @@ namespace ArchonLightingSystem
             //This timer tick event handler function is used to update the user interface on the form, based on data
             //obtained asynchronously by the ReadWriteThread and the WM_DEVICECHANGE event handler functions.
 
+            if(usbApp.DeviceCount > cbo_DeviceAddress.Items.Count)
+            {
+                var activeDevices = usbApp.usbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
+                var newDevices = activeDevices.Where(dev => !deviceAddressList.Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
+                    .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.usbDevices.IndexOf(dev)})
+                    .ToList();
+                newDevices.ForEach(dev =>
+                {
+                    deviceAddressList.Add(dev.Text);
+                    cbo_DeviceAddress.Items.Add(dev);
+                });
+            }
+
             //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
-            if (usbApp.IsAttached == true)
+            if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
             {
                 //Device is connected and ready to communicate, enable user interface on the form 
-                string bootVer = usbApp.AppData.DeviceControllerData.BootloaderVersion?.ToString();
-                string AppVer = usbApp.AppData.DeviceControllerData.ApplicationVersion?.ToString();
+                string bootVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
+                string AppVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
                 statusLabel.Text = $"Device Found: AttachedState = TRUE   BootVer: {bootVer}   AppVer: {AppVer}";
             }
-            if ((usbApp.IsAttached == false) || (usbApp.IsAttachedButBroken == true))
+            if ((usbApp.GetDevice(selectedAddressIdx).IsAttached == false) || (usbApp.GetDevice(selectedAddressIdx).IsAttachedButBroken == true))
             {
                 //Device not available to communicate. Disable user interface on the form.
                 statusLabel.Text = "Device Not Detected: Verify Connection/Correct Firmware";
@@ -77,11 +103,11 @@ namespace ArchonLightingSystem
             }
 
             //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
-            if (usbApp.IsAttached == true)
+            if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
             {
-                if (!formIsInitialized && usbApp.AppData.DeviceControllerData != null && usbApp.AppData.DeviceControllerData.IsInitialized)
+                if (!formIsInitialized && usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
                 {
-                    UpdateFormSettings(usbApp.AppData.DeviceControllerData);
+                    UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
                     formIsInitialized = true;
                 }
 
@@ -112,7 +138,7 @@ namespace ArchonLightingSystem
             if (configForm == null || configForm.IsDisposed)
             {
                 configForm = new ConfigEditorForm();
-                configForm.InitializeForm(usbApp.AppData);
+                configForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
                 configForm.Show();
             }
             if (configForm.WindowState == FormWindowState.Minimized)
@@ -129,7 +155,7 @@ namespace ArchonLightingSystem
             if (eepromForm == null || eepromForm.IsDisposed)
             {
                 eepromForm = new EepromEditorForm();
-                eepromForm.InitializeForm(usbApp.AppData);
+                eepromForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
                 eepromForm.Show();
             }
             if (eepromForm.WindowState == FormWindowState.Minimized)
@@ -144,7 +170,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 debugForm = new DebugForm();
-                debugForm.InitializeForm(usbApp.AppData);
+                debugForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
                 debugForm.Show();
             }
             if (debugForm.WindowState == FormWindowState.Minimized)
@@ -171,14 +197,18 @@ namespace ArchonLightingSystem
 
         private void btn_SaveConfig_Click(object sender, EventArgs e)
         {
-            usbApp.AppData.WriteConfigPending = true;
+            usbApp.GetAppData(selectedAddressIdx).WriteConfigPending = true;
         }
 
         private void btn_ResetToBoot_Click(object sender, EventArgs e)
         {
-            usbApp.AppData.ResetToBootloaderPending = true;
+            usbApp.GetAppData(selectedAddressIdx).ResetToBootloaderPending = true;
         }
 
-        
+        private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedAddressIdx = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
+            UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
+        }
     } 
 } 

@@ -37,6 +37,7 @@ namespace ArchonLightingSystem
             this.editConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editEEPROMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.updateFirmwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pnl_FanMarker = new System.Windows.Forms.Panel();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -63,8 +64,8 @@ namespace ArchonLightingSystem
             this.lbl_Address = new System.Windows.Forms.Label();
             this.label6 = new System.Windows.Forms.Label();
             this.btn_SaveConfig = new System.Windows.Forms.Button();
-            this.btn_ResetToBoot = new System.Windows.Forms.Button();
-            this.updateFirmwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cbo_DeviceAddress = new System.Windows.Forms.ComboBox();
+            this.label1 = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -119,6 +120,13 @@ namespace ArchonLightingSystem
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
+            // 
+            // updateFirmwareToolStripMenuItem
+            // 
+            this.updateFirmwareToolStripMenuItem.Name = "updateFirmwareToolStripMenuItem";
+            this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.updateFirmwareToolStripMenuItem.Text = "Update Firmware";
+            this.updateFirmwareToolStripMenuItem.Click += new System.EventHandler(this.updateFirmwareToolStripMenuItem_Click);
             // 
             // pnl_FanMarker
             // 
@@ -340,7 +348,7 @@ namespace ArchonLightingSystem
             // lbl_Address
             // 
             this.lbl_Address.AutoSize = true;
-            this.lbl_Address.Location = new System.Drawing.Point(119, 40);
+            this.lbl_Address.Location = new System.Drawing.Point(540, 39);
             this.lbl_Address.Name = "lbl_Address";
             this.lbl_Address.Size = new System.Drawing.Size(13, 13);
             this.lbl_Address.TabIndex = 76;
@@ -349,7 +357,7 @@ namespace ArchonLightingSystem
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(41, 40);
+            this.label6.Location = new System.Drawing.Point(462, 39);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(48, 13);
             this.label6.TabIndex = 75;
@@ -365,29 +373,32 @@ namespace ArchonLightingSystem
             this.btn_SaveConfig.UseVisualStyleBackColor = true;
             this.btn_SaveConfig.Click += new System.EventHandler(this.btn_SaveConfig_Click);
             // 
-            // btn_ResetToBoot
+            // cbo_DeviceAddress
             // 
-            this.btn_ResetToBoot.Location = new System.Drawing.Point(462, 28);
-            this.btn_ResetToBoot.Name = "btn_ResetToBoot";
-            this.btn_ResetToBoot.Size = new System.Drawing.Size(105, 37);
-            this.btn_ResetToBoot.TabIndex = 77;
-            this.btn_ResetToBoot.Text = "Reset To Bootloader";
-            this.btn_ResetToBoot.UseVisualStyleBackColor = true;
-            this.btn_ResetToBoot.Click += new System.EventHandler(this.btn_ResetToBoot_Click);
+            this.cbo_DeviceAddress.FormattingEnabled = true;
+            this.cbo_DeviceAddress.Location = new System.Drawing.Point(159, 36);
+            this.cbo_DeviceAddress.Name = "cbo_DeviceAddress";
+            this.cbo_DeviceAddress.Size = new System.Drawing.Size(121, 21);
+            this.cbo_DeviceAddress.TabIndex = 77;
+            this.cbo_DeviceAddress.SelectedIndexChanged += new System.EventHandler(this.cbo_DeviceAddress_SelectedIndexChanged);
             // 
-            // updateFirmwareToolStripMenuItem
+            // label1
             // 
-            this.updateFirmwareToolStripMenuItem.Name = "updateFirmwareToolStripMenuItem";
-            this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
-            this.updateFirmwareToolStripMenuItem.Text = "Update Firmware";
-            this.updateFirmwareToolStripMenuItem.Click += new System.EventHandler(this.updateFirmwareToolStripMenuItem_Click);
+            this.label1.AutoSize = true;
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(26, 37);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(127, 16);
+            this.label1.TabIndex = 78;
+            this.label1.Text = "Controller (Address)";
             // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(1331, 666);
-            this.Controls.Add(this.btn_ResetToBoot);
+            this.Controls.Add(this.label1);
+            this.Controls.Add(this.cbo_DeviceAddress);
             this.Controls.Add(this.btn_SaveConfig);
             this.Controls.Add(this.lbl_Address);
             this.Controls.Add(this.grp_Device1);
@@ -445,8 +456,9 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.ToolStripMenuItem editEEPROMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.Button btn_SaveConfig;
-        private System.Windows.Forms.Button btn_ResetToBoot;
         private System.Windows.Forms.ToolStripMenuItem updateFirmwareToolStripMenuItem;
+        private System.Windows.Forms.ComboBox cbo_DeviceAddress;
+        private System.Windows.Forms.Label label1;
     }
 }
 

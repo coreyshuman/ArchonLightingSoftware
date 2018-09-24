@@ -41,12 +41,15 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if(!isInitialized && applicationData.DeviceControllerData.IsInitialized)
+                if(!isInitialized && applicationData?.DeviceControllerData?.IsInitialized == true)
                 {
                     isInitialized = true;
                     UpdateDeviceSettings(deviceIdx);
                 }
-                fanBar.Value = applicationData.DeviceControllerData.MeasuredFanRpm[deviceIdx];
+                if(isInitialized)
+                {
+                    fanBar.Value = applicationData.DeviceControllerData.MeasuredFanRpm[deviceIdx];
+                }
             };
         }
 

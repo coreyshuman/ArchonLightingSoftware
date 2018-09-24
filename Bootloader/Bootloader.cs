@@ -575,7 +575,7 @@ namespace ArchonLightingSystem.Bootloader
                 byte[] usbBuff = new byte[64];
                 uint sendLen = (bufflen - index) > 64 ? 64 : bufflen - index;
                 Util.CopyArray(ref usbBuff, 0, ref buffer, index, (int)sendLen);
-                usbDriver.WriteUSBDevice(usbBuff, sendLen);
+                usbDriver.WriteUSBDevice(usbDriver.GetDevice(0), usbBuff, sendLen); // TODO - multi device support
                 index += sendLen;
                 if(bufflen - index > 0)
                 {
@@ -593,7 +593,7 @@ namespace ArchonLightingSystem.Bootloader
          *****************************************************************************/
         UInt32 ReadPort(ref byte[] buffer, UInt32 bufflen)
         {
-            return usbDriver.ReadUSBDevice(ref buffer, bufflen);
+            return usbDriver.ReadUSBDevice(usbDriver.GetDevice(0), ref buffer, bufflen); // TODO - multi device support
         }
 
     }

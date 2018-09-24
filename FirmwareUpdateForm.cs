@@ -88,7 +88,7 @@ namespace ArchonLightingSystem
         public void InitializeForm(UsbApplication.UsbApp app)
         {
             usbApp = app;
-            var appdata = app.AppData;
+            var appdata = app.GetAppData(0);
 
             ImageList imageList = new ImageList { ImageSize = new Size(32, 32) };
             listView1.View = View.Details;
@@ -159,13 +159,13 @@ namespace ArchonLightingSystem
         {
             bootUsbDriver.HandleWindowEvent(ref m);
             base.WndProc(ref m);
-            if(bootUsbDriver.IsAttached && !isConnected)
+            if(bootUsbDriver.GetDevice(0).IsAttached && !isConnected)
             {
                 isConnected = true;
                 lbl_Status.Text = StatusString[(int)Status.Disconnected];
                 bootloader.SendCommand(BootloaderCmd.READ_BOOT_INFO, 3, 500);
             } 
-            else if(!bootUsbDriver.IsAttached && isConnected)
+            else if(!bootUsbDriver.GetDevice(0).IsAttached && isConnected)
             {
                 isConnected = false;
                 lbl_Status.Text = StatusString[(int)Status.Idle];
@@ -218,16 +218,16 @@ namespace ArchonLightingSystem
 
         private void timer_EnableUsb_Tick(object sender, EventArgs e)
         {
-            if (bootUsbDriver.IsAttached)
+            if (bootUsbDriver.GetDevice(0).IsAttached)
             {
                 timer_EnableUsb.Enabled = false;
-                if (bootUsbDriver.IsAttached && !isConnected)
+                if (bootUsbDriver.GetDevice(0).IsAttached && !isConnected)
                 {
                     isConnected = true;
                     lbl_Status.Text = StatusString[(int)Status.Idle];
                     bootloader.SendCommand(BootloaderCmd.READ_BOOT_INFO, 3, 500);
                 }
-                else if (!bootUsbDriver.IsAttached && isConnected)
+                else if (!bootUsbDriver.GetDevice(0).IsAttached && isConnected)
                 {
                     isConnected = false;
                     lbl_Status.Text = StatusString[(int)Status.Disconnected];
@@ -242,7 +242,7 @@ namespace ArchonLightingSystem
         private void timer_ResetHardware_Tick(object sender, EventArgs e)
         {
             timer_ResetHardware.Enabled = false;
-            usbApp.AppData.ResetToBootloaderPending = true;
+            usbApp.GetAppData(0).ResetToBootloaderPending = true;
         }
     }
 }
