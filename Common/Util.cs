@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Reflection;
 
 namespace ArchonLightingSystem.Common
 {
@@ -42,6 +43,16 @@ namespace ArchonLightingSystem.Common
         static public UInt32 UInt32FromBytes(byte low, byte midlow, byte midhigh, byte high)
         {
             return (UInt32)((UInt32)low | ((UInt32)midlow << 8) | ((UInt32)midhigh << 16) | ((UInt32)high << 24));
+        }
+
+        static public void CopyObjectProperties<T>(T destination, T source, string[] propertyNames = null)
+        {
+            PropertyInfo[] properties = typeof(T).GetProperties();
+            var propertiesToUpdate = properties.Where(p => p.CanWrite && (propertyNames == null || propertyNames.Contains(p.Name)));
+            foreach (PropertyInfo property in propertiesToUpdate)
+            {
+                property.SetValue(destination, property.GetValue(source));
+            }
         }
 
         private static UInt16[] crc_table = new UInt16[]

@@ -15,9 +15,11 @@ namespace ArchonLightingSystem.Components
         private UInt16[] fanBuffer;
         private Panel container;
         private Panel bar;
+        private Label lblValue;
         private int maximum;
         private int minimum;
         private int value;
+        private bool useAverage;
 
         public int Top
         {
@@ -53,6 +55,7 @@ namespace ArchonLightingSystem.Components
             {
                 container.Width = value;
                 bar.Width = value;
+                lblValue.Width = value;
             }
         }
 
@@ -81,7 +84,7 @@ namespace ArchonLightingSystem.Components
             }
         }
 
-        public Color ForegroundColor
+        public Color BarColor
         {
             get
             {
@@ -90,6 +93,18 @@ namespace ArchonLightingSystem.Components
             set
             {
                 bar.BackColor = value;
+            }
+        }
+
+        public Color ForeColor
+        {
+            get
+            {
+                return lblValue.ForeColor;
+            }
+            set
+            {
+                lblValue.ForeColor = value;
             }
         }
 
@@ -118,6 +133,7 @@ namespace ArchonLightingSystem.Components
                 {
                     throw new Exception("Maximum cannot be smaller than minimum.");
                 }
+                SetFanSpeedValue(this.value);
             }
         }
 
@@ -134,6 +150,7 @@ namespace ArchonLightingSystem.Components
                 {
                     throw new Exception("Minimum cannot be greater than maximum.");
                 }
+                SetFanSpeedValue(this.value);
             }
         }
 
@@ -161,10 +178,24 @@ namespace ArchonLightingSystem.Components
             }
         }
 
+        public bool UseAverage
+        {
+            get
+            {
+                return useAverage;
+            }
+            set
+            {
+                useAverage = value;
+                SetFanSpeedValue(this.value);
+            }
+        }
+
         public FanSpeedBar()
         {
             container = new Panel();
             bar = new Panel();
+            lblValue = new Label();
             fanBuffer = new UInt16[10];
 
             maximum = 100;
@@ -174,8 +205,17 @@ namespace ArchonLightingSystem.Components
             Width = 10;
             Height = 40;
             bar.Left = 0;
+            lblValue.Left = 0;
+            lblValue.Top = 0;
+            lblValue.Height = 20;
+            lblValue.Font = new Font("Microsoft San Serif", 7);
+            lblValue.Text = maximum.ToString();
+            lblValue.TextAlign = ContentAlignment.MiddleCenter;
+            lblValue.Parent = container;
+            lblValue.BackColor = Color.Transparent;
+            lblValue.Parent = bar;
             
-            ForegroundColor = Color.Blue;
+            BarColor = Color.Blue;
             bar.Parent = container;
         }
 
@@ -198,21 +238,25 @@ namespace ArchonLightingSystem.Components
             if (value > maximum) v = maximum;
             value = v;
 
-            for (i = 9; i > 0; i--)
+            if (useAverage)
             {
-                fanBuffer[i] = fanBuffer[i - 1];
+                for (i = 9; i > 0; i--)
+                {
+                    fanBuffer[i] = fanBuffer[i - 1];
+                }
+                fanBuffer[0] = (UInt16)value;
+                for (i = 0; i < 10; i++)
+                {
+                    total += fanBuffer[i];
+                }
+                value = total / 10;
             }
-            fanBuffer[0] = (UInt16)value;
-            for (i = 0; i < 10; i++)
-            {
-                total += fanBuffer[i];
-            }
-            value = total / 10;
 
-            int size = (int)(container.Height * (((double)value - (double)minimum) / ((double)maximum - (double)minimum)));
+            int size = (int)((double)container.Height * (((double)value - (double)minimum) / ((double)maximum - (double)minimum)));
             int top = container.Height - size;
             bar.Height = size;
             bar.Top = top;
+            lblValue.Text = value.ToString();
         }
     }
 }

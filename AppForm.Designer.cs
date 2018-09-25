@@ -38,7 +38,8 @@ namespace ArchonLightingSystem
             this.editEEPROMToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.debugToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.updateFirmwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.pnl_FanMarker = new System.Windows.Forms.Panel();
+            this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.pnl_TemperatureMarker = new System.Windows.Forms.Panel();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
             this.colorDialog1 = new System.Windows.Forms.ColorDialog();
@@ -58,19 +59,25 @@ namespace ArchonLightingSystem
             this.cbo_LightMode = new System.Windows.Forms.ComboBox();
             this.grp_Device1 = new System.Windows.Forms.GroupBox();
             this.grp_FanSpeed1 = new System.Windows.Forms.GroupBox();
+            this.btn_FanConfig = new System.Windows.Forms.Button();
+            this.lbl_FanControls = new System.Windows.Forms.Label();
+            this.pnl_FanMarker = new System.Windows.Forms.Panel();
             this.lbl_LightingSpeed = new System.Windows.Forms.Label();
             this.cbo_LightSpeed = new System.Windows.Forms.ComboBox();
             this.lbl_LightingMode = new System.Windows.Forms.Label();
-            this.lbl_Address = new System.Windows.Forms.Label();
-            this.label6 = new System.Windows.Forms.Label();
             this.btn_SaveConfig = new System.Windows.Forms.Button();
             this.cbo_DeviceAddress = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
+            this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
+            this.notifiyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
+            this.closeToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.lbl_FanUnits = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
             this.grp_Device1.SuspendLayout();
             this.grp_FanSpeed1.SuspendLayout();
+            this.notifiyIconContextMenu.SuspendLayout();
             this.SuspendLayout();
             // 
             // FormUpdateTimer
@@ -81,8 +88,10 @@ namespace ArchonLightingSystem
             // 
             // menuStrip1
             // 
+            this.menuStrip1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.optionsToolStripMenuItem});
+            this.optionsToolStripMenuItem,
+            this.closeToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
             this.menuStrip1.Size = new System.Drawing.Size(1331, 24);
@@ -96,12 +105,15 @@ namespace ArchonLightingSystem
             this.editEEPROMToolStripMenuItem,
             this.debugToolStripMenuItem,
             this.updateFirmwareToolStripMenuItem});
+            this.optionsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.optionsToolStripMenuItem.Name = "optionsToolStripMenuItem";
             this.optionsToolStripMenuItem.Size = new System.Drawing.Size(61, 20);
             this.optionsToolStripMenuItem.Text = "Options";
             // 
             // editConfigToolStripMenuItem
             // 
+            this.editConfigToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.editConfigToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.editConfigToolStripMenuItem.Name = "editConfigToolStripMenuItem";
             this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editConfigToolStripMenuItem.Text = "Edit Config";
@@ -109,6 +121,8 @@ namespace ArchonLightingSystem
             // 
             // editEEPROMToolStripMenuItem
             // 
+            this.editEEPROMToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.editEEPROMToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.editEEPROMToolStripMenuItem.Name = "editEEPROMToolStripMenuItem";
             this.editEEPROMToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editEEPROMToolStripMenuItem.Text = "Edit EEPROM";
@@ -116,6 +130,8 @@ namespace ArchonLightingSystem
             // 
             // debugToolStripMenuItem
             // 
+            this.debugToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.debugToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
             this.debugToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.debugToolStripMenuItem.Text = "Debug";
@@ -123,21 +139,35 @@ namespace ArchonLightingSystem
             // 
             // updateFirmwareToolStripMenuItem
             // 
+            this.updateFirmwareToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.updateFirmwareToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.updateFirmwareToolStripMenuItem.Name = "updateFirmwareToolStripMenuItem";
             this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.updateFirmwareToolStripMenuItem.Text = "Update Firmware";
             this.updateFirmwareToolStripMenuItem.Click += new System.EventHandler(this.updateFirmwareToolStripMenuItem_Click);
             // 
-            // pnl_FanMarker
+            // closeToolStripMenuItem
             // 
-            this.pnl_FanMarker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.pnl_FanMarker.Location = new System.Drawing.Point(6, 59);
-            this.pnl_FanMarker.Name = "pnl_FanMarker";
-            this.pnl_FanMarker.Size = new System.Drawing.Size(45, 290);
-            this.pnl_FanMarker.TabIndex = 55;
+            this.closeToolStripMenuItem.Alignment = System.Windows.Forms.ToolStripItemAlignment.Right;
+            this.closeToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.closeToolStripMenuItem.Name = "closeToolStripMenuItem";
+            this.closeToolStripMenuItem.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.closeToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.closeToolStripMenuItem.Text = "Close";
+            this.closeToolStripMenuItem.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.closeToolStripMenuItem.Click += new System.EventHandler(this.closeToolStripMenuItem_Click);
+            // 
+            // pnl_TemperatureMarker
+            // 
+            this.pnl_TemperatureMarker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnl_TemperatureMarker.Location = new System.Drawing.Point(12, 125);
+            this.pnl_TemperatureMarker.Name = "pnl_TemperatureMarker";
+            this.pnl_TemperatureMarker.Size = new System.Drawing.Size(40, 255);
+            this.pnl_TemperatureMarker.TabIndex = 55;
             // 
             // statusStrip1
             // 
+            this.statusStrip1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
             this.statusStrip1.Location = new System.Drawing.Point(0, 644);
@@ -154,12 +184,15 @@ namespace ArchonLightingSystem
             // 
             // btn_1_1
             // 
+            this.btn_1_1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_1_1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_1_1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.btn_1_1.Location = new System.Drawing.Point(16, 33);
             this.btn_1_1.Name = "btn_1_1";
             this.btn_1_1.Size = new System.Drawing.Size(44, 37);
             this.btn_1_1.TabIndex = 57;
             this.btn_1_1.Text = "L12";
-            this.btn_1_1.UseVisualStyleBackColor = true;
+            this.btn_1_1.UseVisualStyleBackColor = false;
             // 
             // button2
             // 
@@ -263,19 +296,22 @@ namespace ArchonLightingSystem
             // trk_FanSpeed1
             // 
             this.trk_FanSpeed1.LargeChange = 10;
-            this.trk_FanSpeed1.Location = new System.Drawing.Point(74, 59);
+            this.trk_FanSpeed1.Location = new System.Drawing.Point(103, 125);
             this.trk_FanSpeed1.Maximum = 100;
             this.trk_FanSpeed1.Name = "trk_FanSpeed1";
             this.trk_FanSpeed1.Orientation = System.Windows.Forms.Orientation.Vertical;
-            this.trk_FanSpeed1.Size = new System.Drawing.Size(45, 290);
+            this.trk_FanSpeed1.Size = new System.Drawing.Size(45, 255);
             this.trk_FanSpeed1.SmallChange = 5;
             this.trk_FanSpeed1.TabIndex = 69;
             this.trk_FanSpeed1.TickFrequency = 10;
             // 
             // cbo_LightMode
             // 
+            this.cbo_LightMode.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.cbo_LightMode.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.cbo_LightMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightMode.FormattingEnabled = true;
-            this.cbo_LightMode.Location = new System.Drawing.Point(70, 87);
+            this.cbo_LightMode.Location = new System.Drawing.Point(97, 58);
             this.cbo_LightMode.Name = "cbo_LightMode";
             this.cbo_LightMode.Size = new System.Drawing.Size(121, 28);
             this.cbo_LightMode.TabIndex = 70;
@@ -300,6 +336,7 @@ namespace ArchonLightingSystem
             this.grp_Device1.Controls.Add(this.button5);
             this.grp_Device1.Controls.Add(this.button6);
             this.grp_Device1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grp_Device1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.grp_Device1.Location = new System.Drawing.Point(29, 74);
             this.grp_Device1.Name = "grp_Device1";
             this.grp_Device1.Size = new System.Drawing.Size(251, 554);
@@ -310,19 +347,53 @@ namespace ArchonLightingSystem
             // 
             // grp_FanSpeed1
             // 
+            this.grp_FanSpeed1.Controls.Add(this.lbl_FanUnits);
+            this.grp_FanSpeed1.Controls.Add(this.btn_FanConfig);
+            this.grp_FanSpeed1.Controls.Add(this.lbl_FanControls);
             this.grp_FanSpeed1.Controls.Add(this.pnl_FanMarker);
+            this.grp_FanSpeed1.Controls.Add(this.pnl_TemperatureMarker);
             this.grp_FanSpeed1.Controls.Add(this.trk_FanSpeed1);
-            this.grp_FanSpeed1.Location = new System.Drawing.Point(78, 193);
+            this.grp_FanSpeed1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.grp_FanSpeed1.Location = new System.Drawing.Point(78, 160);
             this.grp_FanSpeed1.Name = "grp_FanSpeed1";
-            this.grp_FanSpeed1.Size = new System.Drawing.Size(120, 355);
+            this.grp_FanSpeed1.Size = new System.Drawing.Size(155, 388);
             this.grp_FanSpeed1.TabIndex = 72;
             this.grp_FanSpeed1.TabStop = false;
             this.grp_FanSpeed1.Text = "Fan Speed";
             // 
+            // btn_FanConfig
+            // 
+            this.btn_FanConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_FanConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_FanConfig.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.btn_FanConfig.Location = new System.Drawing.Point(9, 25);
+            this.btn_FanConfig.Name = "btn_FanConfig";
+            this.btn_FanConfig.Size = new System.Drawing.Size(136, 37);
+            this.btn_FanConfig.TabIndex = 75;
+            this.btn_FanConfig.Text = "Configure";
+            this.btn_FanConfig.UseVisualStyleBackColor = false;
+            // 
+            // lbl_FanControls
+            // 
+            this.lbl_FanControls.AutoSize = true;
+            this.lbl_FanControls.Location = new System.Drawing.Point(4, 80);
+            this.lbl_FanControls.Name = "lbl_FanControls";
+            this.lbl_FanControls.Size = new System.Drawing.Size(146, 20);
+            this.lbl_FanControls.TabIndex = 70;
+            this.lbl_FanControls.Text = "Temp / Fan / Adjust";
+            // 
+            // pnl_FanMarker
+            // 
+            this.pnl_FanMarker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.pnl_FanMarker.Location = new System.Drawing.Point(58, 125);
+            this.pnl_FanMarker.Name = "pnl_FanMarker";
+            this.pnl_FanMarker.Size = new System.Drawing.Size(39, 255);
+            this.pnl_FanMarker.TabIndex = 56;
+            // 
             // lbl_LightingSpeed
             // 
             this.lbl_LightingSpeed.AutoSize = true;
-            this.lbl_LightingSpeed.Location = new System.Drawing.Point(74, 132);
+            this.lbl_LightingSpeed.Location = new System.Drawing.Point(101, 103);
             this.lbl_LightingSpeed.Name = "lbl_LightingSpeed";
             this.lbl_LightingSpeed.Size = new System.Drawing.Size(116, 20);
             this.lbl_LightingSpeed.TabIndex = 74;
@@ -330,8 +401,11 @@ namespace ArchonLightingSystem
             // 
             // cbo_LightSpeed
             // 
+            this.cbo_LightSpeed.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.cbo_LightSpeed.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.cbo_LightSpeed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightSpeed.FormattingEnabled = true;
-            this.cbo_LightSpeed.Location = new System.Drawing.Point(70, 155);
+            this.cbo_LightSpeed.Location = new System.Drawing.Point(97, 126);
             this.cbo_LightSpeed.Name = "cbo_LightSpeed";
             this.cbo_LightSpeed.Size = new System.Drawing.Size(121, 28);
             this.cbo_LightSpeed.TabIndex = 73;
@@ -339,75 +413,101 @@ namespace ArchonLightingSystem
             // lbl_LightingMode
             // 
             this.lbl_LightingMode.AutoSize = true;
-            this.lbl_LightingMode.Location = new System.Drawing.Point(74, 64);
+            this.lbl_LightingMode.Location = new System.Drawing.Point(101, 35);
             this.lbl_LightingMode.Name = "lbl_LightingMode";
             this.lbl_LightingMode.Size = new System.Drawing.Size(109, 20);
             this.lbl_LightingMode.TabIndex = 72;
             this.lbl_LightingMode.Text = "Lighting Mode";
             // 
-            // lbl_Address
-            // 
-            this.lbl_Address.AutoSize = true;
-            this.lbl_Address.Location = new System.Drawing.Point(540, 39);
-            this.lbl_Address.Name = "lbl_Address";
-            this.lbl_Address.Size = new System.Drawing.Size(13, 13);
-            this.lbl_Address.TabIndex = 76;
-            this.lbl_Address.Text = "--";
-            // 
-            // label6
-            // 
-            this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(462, 39);
-            this.label6.Name = "label6";
-            this.label6.Size = new System.Drawing.Size(48, 13);
-            this.label6.TabIndex = 75;
-            this.label6.Text = "Address:";
-            // 
             // btn_SaveConfig
             // 
-            this.btn_SaveConfig.Location = new System.Drawing.Point(310, 27);
+            this.btn_SaveConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_SaveConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_SaveConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_SaveConfig.Location = new System.Drawing.Point(295, 32);
             this.btn_SaveConfig.Name = "btn_SaveConfig";
-            this.btn_SaveConfig.Size = new System.Drawing.Size(105, 37);
+            this.btn_SaveConfig.Size = new System.Drawing.Size(146, 37);
             this.btn_SaveConfig.TabIndex = 75;
             this.btn_SaveConfig.Text = "Save Configuration";
-            this.btn_SaveConfig.UseVisualStyleBackColor = true;
+            this.btn_SaveConfig.UseVisualStyleBackColor = false;
             this.btn_SaveConfig.Click += new System.EventHandler(this.btn_SaveConfig_Click);
             // 
             // cbo_DeviceAddress
             // 
+            this.cbo_DeviceAddress.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.cbo_DeviceAddress.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cbo_DeviceAddress.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.cbo_DeviceAddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cbo_DeviceAddress.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
             this.cbo_DeviceAddress.FormattingEnabled = true;
-            this.cbo_DeviceAddress.Location = new System.Drawing.Point(159, 36);
+            this.cbo_DeviceAddress.Location = new System.Drawing.Point(180, 36);
             this.cbo_DeviceAddress.Name = "cbo_DeviceAddress";
-            this.cbo_DeviceAddress.Size = new System.Drawing.Size(121, 21);
+            this.cbo_DeviceAddress.Size = new System.Drawing.Size(100, 28);
             this.cbo_DeviceAddress.TabIndex = 77;
             this.cbo_DeviceAddress.SelectedIndexChanged += new System.EventHandler(this.cbo_DeviceAddress_SelectedIndexChanged);
             // 
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(26, 37);
+            this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label1.Location = new System.Drawing.Point(25, 39);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(127, 16);
+            this.label1.Size = new System.Drawing.Size(150, 20);
             this.label1.TabIndex = 78;
             this.label1.Text = "Controller (Address)";
+            // 
+            // notifyIcon1
+            // 
+            this.notifyIcon1.ContextMenuStrip = this.notifiyIconContextMenu;
+            this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
+            this.notifyIcon1.Text = "Archon Lighting Controller";
+            this.notifyIcon1.Visible = true;
+            this.notifyIcon1.MouseClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseClick);
+            this.notifyIcon1.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.notifyIcon1_MouseDoubleClick);
+            // 
+            // notifiyIconContextMenu
+            // 
+            this.notifiyIconContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.closeToolStripMenuItem1});
+            this.notifiyIconContextMenu.Name = "notifiyIconContextMenu";
+            this.notifiyIconContextMenu.Size = new System.Drawing.Size(104, 26);
+            // 
+            // closeToolStripMenuItem1
+            // 
+            this.closeToolStripMenuItem1.Name = "closeToolStripMenuItem1";
+            this.closeToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+            this.closeToolStripMenuItem1.Text = "Close";
+            this.closeToolStripMenuItem1.Click += new System.EventHandler(this.closeToolStripMenuItem1_Click);
+            // 
+            // lbl_FanUnits
+            // 
+            this.lbl_FanUnits.AutoSize = true;
+            this.lbl_FanUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_FanUnits.Location = new System.Drawing.Point(24, 106);
+            this.lbl_FanUnits.Name = "lbl_FanUnits";
+            this.lbl_FanUnits.Size = new System.Drawing.Size(75, 16);
+            this.lbl_FanUnits.TabIndex = 76;
+            this.lbl_FanUnits.Text = "°C        RPM";
             // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(1331, 666);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cbo_DeviceAddress);
             this.Controls.Add(this.btn_SaveConfig);
-            this.Controls.Add(this.lbl_Address);
             this.Controls.Add(this.grp_Device1);
-            this.Controls.Add(this.label6);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
+            this.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
+            this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "AppForm";
+            this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.Text = "Archon Lighting System";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
@@ -418,6 +518,7 @@ namespace ArchonLightingSystem
             this.grp_Device1.PerformLayout();
             this.grp_FanSpeed1.ResumeLayout(false);
             this.grp_FanSpeed1.PerformLayout();
+            this.notifiyIconContextMenu.ResumeLayout(false);
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -428,7 +529,7 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editConfigToolStripMenuItem;
-        private System.Windows.Forms.Panel pnl_FanMarker;
+        private System.Windows.Forms.Panel pnl_TemperatureMarker;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel statusLabel;
         private System.Windows.Forms.ColorDialog colorDialog1;
@@ -451,14 +552,20 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.Label lbl_LightingSpeed;
         private System.Windows.Forms.ComboBox cbo_LightSpeed;
         private System.Windows.Forms.Label lbl_LightingMode;
-        private System.Windows.Forms.Label lbl_Address;
-        private System.Windows.Forms.Label label6;
         private System.Windows.Forms.ToolStripMenuItem editEEPROMToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem debugToolStripMenuItem;
         private System.Windows.Forms.Button btn_SaveConfig;
         private System.Windows.Forms.ToolStripMenuItem updateFirmwareToolStripMenuItem;
         private System.Windows.Forms.ComboBox cbo_DeviceAddress;
         private System.Windows.Forms.Label label1;
+        private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem;
+        private System.Windows.Forms.NotifyIcon notifyIcon1;
+        private System.Windows.Forms.ContextMenuStrip notifiyIconContextMenu;
+        private System.Windows.Forms.ToolStripMenuItem closeToolStripMenuItem1;
+        private System.Windows.Forms.Panel pnl_FanMarker;
+        private System.Windows.Forms.Button btn_FanConfig;
+        private System.Windows.Forms.Label lbl_FanControls;
+        private System.Windows.Forms.Label lbl_FanUnits;
     }
 }
 

@@ -18,17 +18,22 @@ namespace ArchonLightingSystem
         private bool formIsInitialized = false;
         private List<string> deviceAddressList = new List<string>();
         private int selectedAddressIdx = 0;
-        private List<DeviceComponent> deviceComponents = new List<DeviceComponent>();
+        private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
+        private OpenHardwareMonitor.Hardware.IHardware motherboard;
+        private string temperatureString = "";
+        private DragWindowSupport dragSupport = new DragWindowSupport();
 
         public unsafe AppForm()
         {
             InitializeComponent();
+            dragSupport.Initialize(this, menuStrip1);
 
             usbApp = new UsbApp();
             InitializeForm();
 
             usbApp.RegisterEventHandler(this.Handle);
             usbApp.InitializeDevice("04D8", "0033");
+            InitializeHardwareMonitor();
         }
 
         void InitializeForm()
@@ -38,9 +43,9 @@ namespace ArchonLightingSystem
 
             for(int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
             {
-                DeviceComponent device = new DeviceComponent();
+                ControllerComponent device = new ControllerComponent();
                 deviceComponents.Add(device);
-                //device.InitializeComponent(this, i, usbApp.GetAppData(selectedAddressIdx));
+                device.InitializeComponent(this, i);
 
             }
         }
@@ -48,13 +53,10 @@ namespace ArchonLightingSystem
         void UpdateFormSettings(DeviceControllerData controller)
         {
             FormUpdateTimer.Enabled = false;
-            lbl_Address.Text = controller.DeviceAddress.ToString();
             FormUpdateTimer.Enabled = true;
             for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
             {
-                //DeviceComponent device = new DeviceComponent();
-                deviceComponents[i-1].InitializeComponent(this, i, usbApp.GetAppData(selectedAddressIdx));
-
+                deviceComponents[i - 1].AppData = usbApp.GetAppData(selectedAddressIdx);
             }
         }
 
@@ -84,20 +86,25 @@ namespace ArchonLightingSystem
                     deviceAddressList.Add(dev.Text);
                     cbo_DeviceAddress.Items.Add(dev);
                 });
+                if(cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
+                {
+                    cbo_DeviceAddress.SelectedIndex = 0;
+                }
             }
 
             //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
             if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
             {
                 //Device is connected and ready to communicate, enable user interface on the form 
+                string addr = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress.ToString();
                 string bootVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
                 string AppVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
-                statusLabel.Text = $"Device Found: AttachedState = TRUE   BootVer: {bootVer}   AppVer: {AppVer}";
+                statusLabel.Text = $"Device {addr} Found. BootVer: {bootVer}   AppVer: {AppVer}  Temp: {temperatureString}";
             }
             if ((usbApp.GetDevice(selectedAddressIdx).IsAttached == false) || (usbApp.GetDevice(selectedAddressIdx).IsAttachedButBroken == true))
             {
                 //Device not available to communicate. Disable user interface on the form.
-                statusLabel.Text = "Device Not Detected: Verify Connection/Correct Firmware";
+                statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
 
                 //SetFanSpeedValue(0);
             }
@@ -114,6 +121,48 @@ namespace ArchonLightingSystem
                 //SetFanSpeedValue((int)usbApp.AppData.DeviceControllerData.MeasuredFanRpm[0]);
 
             }
+
+            UpdateHardwareTemperature();
+        }
+
+        private void InitializeHardwareMonitor()
+        {
+            var cp = new OpenHardwareMonitor.Hardware.Computer();
+            cp.Open();
+            cp.HDDEnabled = true;
+            cp.RAMEnabled = true;
+            cp.GPUEnabled = true;
+            cp.MainboardEnabled = true;
+            cp.CPUEnabled = true;
+
+            motherboard = cp.Hardware.Where(hw => hw.HardwareType == OpenHardwareMonitor.Hardware.HardwareType.Mainboard).FirstOrDefault();
+        }
+
+        private void UpdateHardwareTemperature()
+        {
+            motherboard.Update();
+            if (motherboard.SubHardware.Count() > 0)
+            {
+                var superio = motherboard.SubHardware.ElementAt(0);
+                superio.Update();
+                var sensors = superio.Sensors.Where(sens => sens.SensorType == OpenHardwareMonitor.Hardware.SensorType.Temperature);
+                temperatureString = "";
+                foreach (var sensor in sensors)
+                {
+                    temperatureString += sensor.Name + ": " + sensor.Value + "C ";
+                }
+                for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+                {
+                    deviceComponents[i - 1].Temperature = (int)sensors.Where(s => s.Name == "CPU").FirstOrDefault()?.Value;
+                }
+            }
+        }
+
+        private void ShowTaskbarNotification(string title, string content, int duration = 5000)
+        {
+            notifyIcon1.BalloonTipTitle = title;
+            notifyIcon1.BalloonTipText = content;
+            notifyIcon1.ShowBalloonTip(duration);
         }
 
         /*
@@ -210,5 +259,25 @@ namespace ArchonLightingSystem
             selectedAddressIdx = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
             UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
         }
-    } 
+
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            this.Hide();
+        }
+
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            Show();
+        }
+
+        private void closeToolStripMenuItem1_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void notifyIcon1_MouseClick(object sender, MouseEventArgs e)
+        {
+            ShowTaskbarNotification("Hello World.", "Please don't click on me.", 3000);
+        }
+    }
 } 
