@@ -47,11 +47,13 @@
             // 
             // listView1
             // 
+            this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.listView1.GridLines = true;
             this.listView1.Location = new System.Drawing.Point(35, 87);
             this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(508, 571);
+            this.listView1.Size = new System.Drawing.Size(637, 571);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.View = System.Windows.Forms.View.Details;
@@ -79,12 +81,14 @@
             // 
             // btn_UpdateAll
             // 
+            this.btn_UpdateAll.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_UpdateAll.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_UpdateAll.Location = new System.Drawing.Point(355, 14);
             this.btn_UpdateAll.Name = "btn_UpdateAll";
             this.btn_UpdateAll.Size = new System.Drawing.Size(86, 33);
             this.btn_UpdateAll.TabIndex = 3;
             this.btn_UpdateAll.Text = "Update All";
-            this.btn_UpdateAll.UseVisualStyleBackColor = true;
+            this.btn_UpdateAll.UseVisualStyleBackColor = false;
             this.btn_UpdateAll.Click += new System.EventHandler(this.btn_UpdateAll_Click);
             // 
             // lbl_Status
@@ -110,22 +114,26 @@
             // 
             // btn_Cancel
             // 
+            this.btn_Cancel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Cancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_Cancel.Location = new System.Drawing.Point(457, 14);
             this.btn_Cancel.Name = "btn_Cancel";
             this.btn_Cancel.Size = new System.Drawing.Size(86, 33);
             this.btn_Cancel.TabIndex = 6;
             this.btn_Cancel.Text = "Cancel";
-            this.btn_Cancel.UseVisualStyleBackColor = true;
+            this.btn_Cancel.UseVisualStyleBackColor = false;
             this.btn_Cancel.Click += new System.EventHandler(this.btn_Cancel_Click);
             // 
             // btn_OpenHexFile
             // 
+            this.btn_OpenHexFile.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_OpenHexFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_OpenHexFile.Location = new System.Drawing.Point(253, 14);
             this.btn_OpenHexFile.Name = "btn_OpenHexFile";
             this.btn_OpenHexFile.Size = new System.Drawing.Size(86, 33);
             this.btn_OpenHexFile.TabIndex = 7;
             this.btn_OpenHexFile.Text = "Open Hex";
-            this.btn_OpenHexFile.UseVisualStyleBackColor = true;
+            this.btn_OpenHexFile.UseVisualStyleBackColor = false;
             this.btn_OpenHexFile.Click += new System.EventHandler(this.btn_OpenHexFile_Click);
             // 
             // progressBar1
@@ -137,12 +145,14 @@
             // 
             // btn_StartApp
             // 
+            this.btn_StartApp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_StartApp.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_StartApp.Location = new System.Drawing.Point(558, 14);
             this.btn_StartApp.Name = "btn_StartApp";
             this.btn_StartApp.Size = new System.Drawing.Size(86, 33);
             this.btn_StartApp.TabIndex = 9;
             this.btn_StartApp.Text = "Start App";
-            this.btn_StartApp.UseVisualStyleBackColor = true;
+            this.btn_StartApp.UseVisualStyleBackColor = false;
             this.btn_StartApp.Click += new System.EventHandler(this.btn_StartApp_Click);
             // 
             // timer_ResetHardware
@@ -159,6 +169,7 @@
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(685, 662);
             this.Controls.Add(this.btn_StartApp);
             this.Controls.Add(this.progressBar1);
@@ -171,6 +182,8 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.listView1);
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;

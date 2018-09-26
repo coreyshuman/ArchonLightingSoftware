@@ -19,12 +19,21 @@ namespace ArchonLightingSystem.Components
 
         }
 
-        public void Initialize(Form form, Control dragComponent)
+        public void Initialize(Form form, Control dragComponent = null)
         {
             Form = form;
-            dragComponent.MouseDown += MouseDownEventHandler;
-            dragComponent.MouseMove += MouseMoveEventHandler;
-            dragComponent.MouseUp += MouseUpEventHandler;
+            if(dragComponent != null)
+            {
+                dragComponent.MouseDown += MouseDownEventHandler;
+                dragComponent.MouseMove += MouseMoveEventHandler;
+                dragComponent.MouseUp += MouseUpEventHandler;
+            } 
+            else
+            {
+                form.MouseDown += MouseDownEventHandler;
+                form.MouseMove += MouseMoveEventHandler;
+                form.MouseUp += MouseUpEventHandler;
+            }
         }
 
         private void MouseDownEventHandler(object sender, MouseEventArgs e)

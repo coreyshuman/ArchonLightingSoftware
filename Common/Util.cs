@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 
 namespace ArchonLightingSystem.Common
 {
@@ -74,14 +76,19 @@ namespace ArchonLightingSystem.Common
             UInt16 crc = 0;
             uint idx = start;
 
-            while (len-- > 0)
+            // allow arithmetic overflow
+            unchecked
             {
-                i = (UInt16)((crc >> 12) ^ (data[idx] >> 4));
-                crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
-                i = (UInt16)((crc >> 12) ^ (data[idx] >> 0));
-                crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
-                idx++;
+                while (len-- > 0)
+                {
+                    i = (UInt16)((crc >> 12) ^ (data[idx] >> 4));
+                    crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
+                    i = (UInt16)((crc >> 12) ^ (data[idx] >> 0));
+                    crc = (UInt16)(crc_table[i & 0x0F] ^ (crc << 4));
+                    idx++;
+                }
             }
+            
 
             return (UInt16)(crc & 0xFFFF);
         }
@@ -100,6 +107,25 @@ namespace ArchonLightingSystem.Common
             localDateTime = DateTime.Now;
             univDateTime = localDateTime.ToUniversalTime();
             return (long)(univDateTime - UnixEpoch).TotalMilliseconds;
+        }
+
+        public static Task WhenAllTasks(IEnumerable<Task> tasks)
+        {
+            Task allTasks = Task.WhenAll(tasks);
+            try
+            {
+                allTasks.Wait();
+            }
+            catch (Exception ex)
+            {
+                Trace.TraceError($"WhenAllTasks Exception: {ex.ToString()}");
+            }
+
+            if (allTasks.Exception != null)
+            {
+                throw allTasks.Exception;
+            }
+            return allTasks;
         }
     }
 }

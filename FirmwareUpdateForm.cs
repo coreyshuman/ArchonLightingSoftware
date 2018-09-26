@@ -10,6 +10,7 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Bootloader;
+using ArchonLightingSystem.Components;
 using System.IO;
 
 namespace ArchonLightingSystem
@@ -19,6 +20,7 @@ namespace ArchonLightingSystem
         private UsbApplication.UsbDriver bootUsbDriver;
         private UsbApplication.UsbApp usbApp;
         Bootloader.Bootloader bootloader;
+        private DragWindowSupport dragSupport = new DragWindowSupport();
         private static string[] StatusString = { "Disconnected", "Idle", "In Progress", "Completed", "Canceling", "Canceled" };
         private enum Status
         {
@@ -35,44 +37,49 @@ namespace ArchonLightingSystem
         private bool isCanceled = false;
         private bool isClosing = false;
         private bool isConnected = false;
+        private bool isInitialized = false;
 
         public FirmwareUpdateForm()
         {
             InitializeComponent();
+            dragSupport.Initialize(this);
             lbl_Status.Text = StatusString[(int)Status.Disconnected];
             btn_UpdateAll.Enabled = false;
             bootUsbDriver = new UsbApplication.UsbDriver();
             
             bootloader = new Bootloader.Bootloader();
+            
             bootloader.InitializeBootloader(bootUsbDriver, new ProgressChangedEventHandler((object changeSender, ProgressChangedEventArgs args) =>
             {
                 progressBar1.Value = args.ProgressPercentage;
-                BootloaderState state = (BootloaderState)args.UserState;
-                HandleBootloaderResponse(state);
+                BootloaderStatus status = (BootloaderStatus)args.UserState;
+                HandleBootloaderResponse(status);
             }));
+            
 
             timer_ResetHardware.Enabled = true;
             timer_EnableUsb.Enabled = true;
         }
 
-        private void HandleBootloaderResponse(BootloaderState state)
+        private void HandleBootloaderResponse(BootloaderStatus status)
         {
             BootloaderCmd cmd;
 
-            if(state.Length == 0)
+            if(status.Length == 0)
             {
-                if(state.NoResponseFromDevice)
+                if(status.NoResponseFromDevice)
                 {
                     MessageBox.Show("No response from device.");
                 }
                 return;
             }
 
-            switch((BootloaderCmd)state.Data[0])
+            switch((BootloaderCmd)status.Data[0])
             {
                 case BootloaderCmd.READ_BOOT_INFO:
-                    listView1.Items[0].SubItems[2].Text = new Version(state.Data[1], state.Data[2]).ToString();
-                    listView1.Items[0].SubItems[3].Text = new Version(state.Data[3], state.Data[4]).ToString();
+                    listView1.Items[status.DeviceIndex].SubItems[2].Text = new Version(status.Data[1], status.Data[2]).ToString();
+                    listView1.Items[status.DeviceIndex].SubItems[3].Text = new Version(status.Data[3], status.Data[4]).ToString();
+                    listView1.Items[status.DeviceIndex].SubItems[1].Text = status.Data[9].ToString();
                     break;
 
                 case BootloaderCmd.PROGRAM_FLASH:
@@ -95,22 +102,17 @@ namespace ArchonLightingSystem
             listView1.FullRowSelect = true;
             listView1.SmallImageList = imageList;
 
-            listView1.Columns.Add("Status", 80, HorizontalAlignment.Center);
-            listView1.Columns.Add("Device Address", 140, HorizontalAlignment.Left);
-            listView1.Columns.Add("Bootloader Version", 140, HorizontalAlignment.Left);
-            listView1.Columns.Add("Firmware Version", 140, HorizontalAlignment.Left);
+            listView1.Columns.Add("Status", 60, HorizontalAlignment.Center);
+            listView1.Columns.Add("Device Address", 120, HorizontalAlignment.Left);
+            listView1.Columns.Add("Bootloader Version", 120, HorizontalAlignment.Left);
+            listView1.Columns.Add("Firmware Version", 120, HorizontalAlignment.Left);
+            listView1.Columns.Add("Progress", 180, HorizontalAlignment.Left);
 
-            listView1.Columns[0].DisplayIndex = listView1.Columns.Count - 1;
+            listView1.Columns[0].DisplayIndex = listView1.Columns.Count - 2;
 
             imageList.Images.Add(Icon.FromHandle(Resources.cancel.GetHicon()));
             imageList.Images.Add(Icon.FromHandle(Resources.checkmark.GetHicon()));
             imageList.Images.Add(Icon.FromHandle(Resources.processing.GetHicon()));
-
-            ListViewItem listItem1 = new ListViewItem("", 0);
-            listItem1.SubItems.Add(appdata.DeviceControllerData.DeviceAddress.ToString());
-            listItem1.SubItems.Add(appdata.DeviceControllerData.BootloaderVersion.ToString());
-            listItem1.SubItems.Add(appdata.DeviceControllerData.ApplicationVersion.ToString());
-            listView1.Items.Add(listItem1);
 
         }
 
@@ -120,7 +122,7 @@ namespace ArchonLightingSystem
             btn_UpdateAll.Enabled = false;
             isUpdating = true;
             this.Cursor = Cursors.AppStarting;
-            bootloader.SendCommand(BootloaderCmd.PROGRAM_FLASH, 3, 5000);
+            bootloader.SendCommand(0, BootloaderCmd.PROGRAM_FLASH, 3, 5000);
         }
 
         private void btn_Cancel_Click(object sender, EventArgs e)
@@ -159,6 +161,7 @@ namespace ArchonLightingSystem
         {
             bootUsbDriver.HandleWindowEvent(ref m);
             base.WndProc(ref m);
+            /*
             if(bootUsbDriver.GetDevice(0).IsAttached && !isConnected)
             {
                 isConnected = true;
@@ -170,6 +173,7 @@ namespace ArchonLightingSystem
                 isConnected = false;
                 lbl_Status.Text = StatusString[(int)Status.Idle];
             }
+            */
         }
 
         private void btn_OpenHexFile_Click(object sender, EventArgs e)
@@ -213,11 +217,27 @@ namespace ArchonLightingSystem
 
         private void btn_StartApp_Click(object sender, EventArgs e)
         {
-            bootloader.SendCommand(BootloaderCmd.JMP_TO_APP, 1, 1000);
+            bootloader.SendCommand(0, BootloaderCmd.JMP_TO_APP, 1, 1000);
         }
 
         private void timer_EnableUsb_Tick(object sender, EventArgs e)
         {
+            while (bootUsbDriver.DeviceCount > listView1.Items.Count)
+            {
+                bootloader.SendCommand(listView1.Items.Count, BootloaderCmd.READ_BOOT_INFO, 3, 500);
+                ListViewItem listItem1 = new ListViewItem("", 0);
+                listItem1.SubItems.Add("?");
+                listItem1.SubItems.Add("?");
+                listItem1.SubItems.Add("?");
+                listView1.Items.Add(listItem1);
+            }
+
+            if(!isInitialized)
+            {
+                isInitialized = true;
+                bootUsbDriver.InitializeDevice("04D8", "003C");
+            }
+            /*
             if (bootUsbDriver.GetDevice(0).IsAttached)
             {
                 timer_EnableUsb.Enabled = false;
@@ -237,12 +257,16 @@ namespace ArchonLightingSystem
             {
                 bootUsbDriver.InitializeDevice("04D8", "003C");
             }
+            */
         }
 
         private void timer_ResetHardware_Tick(object sender, EventArgs e)
         {
             timer_ResetHardware.Enabled = false;
-            usbApp.GetAppData(0).ResetToBootloaderPending = true;
+            foreach (var device in usbApp.UsbDevices)
+            {
+                device.AppData.ResetToBootloaderPending = true;
+            }
         }
     }
 }

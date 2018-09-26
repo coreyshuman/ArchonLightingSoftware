@@ -3,6 +3,8 @@ using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
+using System.Threading;
 
 namespace ArchonLightingSystem.UsbApplication
 {
@@ -20,18 +22,27 @@ namespace ArchonLightingSystem.UsbApplication
     {
         public const uint USB_PACKET_SIZE = 64 + 1;
 
-        internal List<UsbDevice> usbDevices = new List<UsbDevice>();
+        protected List<UsbDevice> usbDevices = new List<UsbDevice>();
         //Globally Unique Identifier (GUID) for HID class devices.  Windows uses GUIDs to identify things.
         private Guid InterfaceClassGuid = new Guid(0x4d1e55b2, 0xf16f, 0x11cf, 0x88, 0xcb, 0x00, 0x11, 0x11, 0x00, 0x00, 0x30);
         private string devicePid = "0000";
         private string deviceVid = "0000";
         private string deviceIDToFind = "Vid_0000&Pid_0000";
+        private Mutex deviceMutex = new Mutex();
 
         public int DeviceCount
         {
             get
             {
                 return usbDevices.Count;
+            }
+        }
+
+        public IList<UsbDevice> UsbDevices
+        {
+            get
+            {
+                return usbDevices;
             }
         }
 
@@ -225,8 +236,9 @@ namespace ArchonLightingSystem.UsbApplication
                 }
 
             }
-            catch
+            catch(Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 if (pINBuffer != IntPtr.Zero)
                 {
                     Marshal.FreeHGlobal(pINBuffer);
@@ -259,6 +271,7 @@ namespace ArchonLightingSystem.UsbApplication
 
             if (device.WriteHandleToUSBDevice != null)
             {
+                //Trace.WriteLine("USB Write");
                // while (bufflen > 0)
                 {
                     // Set output buffer to 0xFF.
@@ -341,6 +354,8 @@ namespace ArchonLightingSystem.UsbApplication
             {
                 return 0;
             }
+
+            //Trace.WriteLine("USB Read");
 
             // Set the first byte in the buffer to the Report ID.
             buffer[0] = 0;
@@ -443,8 +458,10 @@ namespace ArchonLightingSystem.UsbApplication
                 uint errorStatus;
                 uint loopCounter = 0;
 
+                Trace.WriteLine("USB CheckIfPresent");
+
                 // clear check flag on existing devices so we can verify they are plugged in
-                usbDevices = usbDevices.Select(dev => { dev.IsFound = false; return dev; }).ToList();
+                usbDevices.Select(dev => { return dev.IsFound = false; }).ToList();
 
                 //First populate a list of plugged in devices (by specifying "DIGCF_PRESENT"), which are of the specified class GUID. 
                 deviceInfoTable = SetupDiGetClassDevs(ref InterfaceClassGuid, IntPtr.Zero, IntPtr.Zero, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
@@ -558,13 +575,16 @@ namespace ArchonLightingSystem.UsbApplication
 
                     SetupDiDestroyDeviceInfoList(deviceInfoTable);	//Clean up the old structure we no longer need.
 
-                    return usbDevices.Where(dev => dev.IsFound == true).Count() > 0;
+                    var deviceFoundCount = usbDevices.Where(dev => dev.IsFound == true).Count();
+                    Trace.WriteLine($"USB found {deviceFoundCount}");
+                    return deviceFoundCount > 0;
                 }
                 return false;
             }//end of try
             catch(Exception ex)
             {
                 //Something went wrong if PC gets here.  Maybe a Marshal.AllocHGlobal() failed due to insufficient resources or something.
+                Trace.WriteLine($"CheckIfPresent Error: {ex.ToString()}");
                 return false;
             }
         }

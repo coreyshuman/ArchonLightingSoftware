@@ -5,6 +5,7 @@ using ArchonLightingSystem.Models;
 using ArchonLightingSystem.UsbApplication;
 using System.Collections.Generic;
 using System.Linq;
+using System.Diagnostics;
 
 namespace ArchonLightingSystem
 {
@@ -33,7 +34,8 @@ namespace ArchonLightingSystem
 
             usbApp.RegisterEventHandler(this.Handle);
             usbApp.InitializeDevice("04D8", "0033");
-            InitializeHardwareMonitor();
+            //InitializeHardwareMonitor();
+            FormUpdateTimer.Enabled = true;
         }
 
         void InitializeForm()
@@ -70,16 +72,16 @@ namespace ArchonLightingSystem
             base.WndProc(ref m);
         } 
 
-        private void FormUpdateTimer_Tick(object sender, EventArgs e)
+        private async void FormUpdateTimer_Tick(object sender, EventArgs e)
         {
             //This timer tick event handler function is used to update the user interface on the form, based on data
             //obtained asynchronously by the ReadWriteThread and the WM_DEVICECHANGE event handler functions.
 
             if(usbApp.DeviceCount > cbo_DeviceAddress.Items.Count)
             {
-                var activeDevices = usbApp.usbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
+                var activeDevices = usbApp.UsbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
                 var newDevices = activeDevices.Where(dev => !deviceAddressList.Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
-                    .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.usbDevices.IndexOf(dev)})
+                    .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.UsbDevices.IndexOf(dev)})
                     .ToList();
                 newDevices.ForEach(dev =>
                 {
@@ -92,68 +94,105 @@ namespace ArchonLightingSystem
                 }
             }
 
-            //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
-            if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
+            var usbDevice = usbApp.GetDevice(selectedAddressIdx);
+            if(usbDevice == null)
             {
-                //Device is connected and ready to communicate, enable user interface on the form 
-                string addr = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress.ToString();
-                string bootVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
-                string AppVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
-                statusLabel.Text = $"Device {addr} Found. BootVer: {bootVer}   AppVer: {AppVer}  Temp: {temperatureString}";
-            }
-            if ((usbApp.GetDevice(selectedAddressIdx).IsAttached == false) || (usbApp.GetDevice(selectedAddressIdx).IsAttachedButBroken == true))
-            {
-                //Device not available to communicate. Disable user interface on the form.
-                statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
-
-                //SetFanSpeedValue(0);
+                return;
             }
 
-            //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
-            if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
+            if (await usbDevice.semaphore.WaitAsync(200))
             {
-                if (!formIsInitialized && usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
+                try
                 {
-                    UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
-                    formIsInitialized = true;
+                    //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
+                    if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
+                    {
+                        //Device is connected and ready to communicate, enable user interface on the form 
+                        string addr = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress.ToString();
+                        string bootVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
+                        string AppVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
+                        statusLabel.Text = $"Device {addr} Found. BootVer: {bootVer}   AppVer: {AppVer}  Temp: {temperatureString}";
+                    }
+                    if ((usbApp.GetDevice(selectedAddressIdx).IsAttached == false) || (usbApp.GetDevice(selectedAddressIdx).IsAttachedButBroken == true))
+                    {
+                        //Device not available to communicate. Disable user interface on the form.
+                        statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
+
+                        //SetFanSpeedValue(0);
+                    }
+
+                    //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
+                    if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
+                    {
+                        if (!formIsInitialized && usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
+                        {
+                            UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
+                            formIsInitialized = true;
+                        }
+
+                        //SetFanSpeedValue((int)usbApp.AppData.DeviceControllerData.MeasuredFanRpm[0]);
+
+                    }
+
+                    UpdateHardwareTemperature();
                 }
-
-                //SetFanSpeedValue((int)usbApp.AppData.DeviceControllerData.MeasuredFanRpm[0]);
-
+                catch(Exception ex)
+                {
+                    Trace.WriteLine($"ForUpdateTick Error: {ex.ToString()}");
+                }
+                finally
+                {
+                    usbDevice.semaphore.Release();
+                }
             }
-
-            UpdateHardwareTemperature();
         }
 
         private void InitializeHardwareMonitor()
         {
-            var cp = new OpenHardwareMonitor.Hardware.Computer();
-            cp.Open();
-            cp.HDDEnabled = true;
-            cp.RAMEnabled = true;
-            cp.GPUEnabled = true;
-            cp.MainboardEnabled = true;
-            cp.CPUEnabled = true;
+            try
+            {
+                var cp = new OpenHardwareMonitor.Hardware.Computer();
+                cp.Open();
+                //cp.HDDEnabled = true;
+                //cp.RAMEnabled = true;
+                //cp.GPUEnabled = true;
+                cp.MainboardEnabled = true;
+                //cp.CPUEnabled = true;
 
-            motherboard = cp.Hardware.Where(hw => hw.HardwareType == OpenHardwareMonitor.Hardware.HardwareType.Mainboard).FirstOrDefault();
+                motherboard = cp.Hardware.Where(hw => hw.HardwareType == OpenHardwareMonitor.Hardware.HardwareType.Mainboard).FirstOrDefault();
+            }
+            catch(Exception ex)
+            {
+                Trace.WriteLine($"HardwareMonitor Init Error: {ex.ToString()}");
+            }
         }
 
         private void UpdateHardwareTemperature()
         {
-            motherboard.Update();
-            if (motherboard.SubHardware.Count() > 0)
+            if (motherboard != null)
             {
-                var superio = motherboard.SubHardware.ElementAt(0);
-                superio.Update();
-                var sensors = superio.Sensors.Where(sens => sens.SensorType == OpenHardwareMonitor.Hardware.SensorType.Temperature);
-                temperatureString = "";
-                foreach (var sensor in sensors)
+                try
                 {
-                    temperatureString += sensor.Name + ": " + sensor.Value + "C ";
-                }
-                for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+                    motherboard.Update();
+                    if (motherboard.SubHardware.Count() > 0)
+                    {
+                        var superio = motherboard.SubHardware.ElementAt(0);
+                        superio.Update();
+                        var sensors = superio.Sensors.Where(sens => sens.SensorType == OpenHardwareMonitor.Hardware.SensorType.Temperature);
+                        temperatureString = "";
+                        foreach (var sensor in sensors)
+                        {
+                            temperatureString += sensor.Name + ": " + sensor.Value + "C ";
+                        }
+                        for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+                        {
+                            deviceComponents[i - 1].Temperature = (int)sensors.Where(s => s.Name == "CPU").FirstOrDefault()?.Value;
+                        }
+                    }
+                } 
+                catch(Exception ex)
                 {
-                    deviceComponents[i - 1].Temperature = (int)sensors.Where(s => s.Name == "CPU").FirstOrDefault()?.Value;
+                    Trace.WriteLine($"HardwareMonitor Update Error: {ex.ToString()}");
                 }
             }
         }

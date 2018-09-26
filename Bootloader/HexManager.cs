@@ -39,15 +39,7 @@ namespace ArchonLightingSystem.Bootloader
         // 5 MB flash
         Byte[] VirtualFlash = new byte[5 * MB];
         string[] HexFile = null;
-        UInt32 HexFileCurrentLine = 0;
-
-        public UInt32 HexCurrLineNo
-        {
-            get
-            {
-                return HexFileCurrentLine;
-            }
-        }
+        UInt32[] HexFileCurrentLine = new UInt32[16]; // todo - hardcoded
 
         public UInt32 HexTotalLines
         {
@@ -55,6 +47,11 @@ namespace ArchonLightingSystem.Bootloader
             {
                 return HexFile == null ? 0 : (UInt32)HexFile.Length;
             }
+        }
+
+        public UInt32 HexCurrLineNo(int deviceIdx)
+        {
+            return HexFileCurrentLine[deviceIdx];
         }
            
 
@@ -88,7 +85,11 @@ namespace ArchonLightingSystem.Bootloader
                 return false;
             }
 
-            HexFileCurrentLine = 0;
+            for(int i = 0; i < 16; i++) // todo - hardcoded
+            {
+                HexFileCurrentLine[i] = 0;
+            }
+            
 
             return true;
         }
@@ -96,20 +97,21 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Gets next hex record from the hex file
         /// </summary>
+        /// <param name="deviceIdx">Index for device</param>
         /// <param name="HexRec">Reference array to store Hex record in</param>
         /// <param name="buffStartAddress">start address for storing record into HexRec</param>
         /// <param name="BuffLen">Buffer Length</param>
         /// <returns>Length of the hex record in bytes</returns>
-        public UInt16 GetNextHexRecord(ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
+        public UInt16 GetNextHexRecord(int deviceIdx, ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
         {
 	        UInt16 len = 0;
             string line;
-            if(HexFileCurrentLine == HexFile.Length)
+            if(HexFileCurrentLine[deviceIdx] == HexFile.Length)
             {
                 return 0;
             }
 
-            line = HexFile[HexFileCurrentLine++];
+            line = HexFile[HexFileCurrentLine[deviceIdx]++];
 
 		    if(line[0] != ':')
 		    {
@@ -126,7 +128,7 @@ namespace ArchonLightingSystem.Bootloader
          /// </summary>
          /// <param name=""></param>
          /// <returns>True if resets file pointer</returns>
-        public bool ResetHexFilePointer()
+        public bool ResetHexFilePointer(int deviceIdx)
         {
 	        // Reset file pointer.
 	        if(HexFile == null)
@@ -135,7 +137,7 @@ namespace ArchonLightingSystem.Bootloader
 	        }
 	        else
 	        {
-                HexFileCurrentLine = 0;
+                HexFileCurrentLine[deviceIdx] = 0;
 		        return true;
 	        }
         }
@@ -184,13 +186,13 @@ namespace ArchonLightingSystem.Bootloader
 
             // Start decoding the hex file and write into virtual flash
             // Reset file pointer.
-            ResetHexFilePointer();
+            ResetHexFilePointer(0);
 
 	        // Reset max address and min address.
 	        HexRecordSt.MaxAddress = 0;
 	        HexRecordSt.MinAddress = 0xFFFFFFFF;
 
-            while((HexRecLen = GetNextHexRecord(ref HexRec, 0, 255)) != 0)
+            while((HexRecLen = GetNextHexRecord(0, ref HexRec, 0, 255)) != 0)
 	        {
 		        HexRecordSt.RecDataLen = HexRec[0];
 		        HexRecordSt.RecType = (RecordType)HexRec[3];

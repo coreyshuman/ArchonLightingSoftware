@@ -59,6 +59,7 @@ namespace ArchonLightingSystem
             this.cbo_LightMode = new System.Windows.Forms.ComboBox();
             this.grp_Device1 = new System.Windows.Forms.GroupBox();
             this.grp_FanSpeed1 = new System.Windows.Forms.GroupBox();
+            this.lbl_FanUnits = new System.Windows.Forms.Label();
             this.btn_FanConfig = new System.Windows.Forms.Button();
             this.lbl_FanControls = new System.Windows.Forms.Label();
             this.pnl_FanMarker = new System.Windows.Forms.Panel();
@@ -71,7 +72,6 @@ namespace ArchonLightingSystem
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.notifiyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
-            this.lbl_FanUnits = new System.Windows.Forms.Label();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -82,7 +82,6 @@ namespace ArchonLightingSystem
             // 
             // FormUpdateTimer
             // 
-            this.FormUpdateTimer.Enabled = true;
             this.FormUpdateTimer.Interval = 6;
             this.FormUpdateTimer.Tick += new System.EventHandler(this.FormUpdateTimer_Tick);
             // 
@@ -361,6 +360,16 @@ namespace ArchonLightingSystem
             this.grp_FanSpeed1.TabStop = false;
             this.grp_FanSpeed1.Text = "Fan Speed";
             // 
+            // lbl_FanUnits
+            // 
+            this.lbl_FanUnits.AutoSize = true;
+            this.lbl_FanUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_FanUnits.Location = new System.Drawing.Point(24, 106);
+            this.lbl_FanUnits.Name = "lbl_FanUnits";
+            this.lbl_FanUnits.Size = new System.Drawing.Size(75, 16);
+            this.lbl_FanUnits.TabIndex = 76;
+            this.lbl_FanUnits.Text = "°C        RPM";
+            // 
             // btn_FanConfig
             // 
             this.btn_FanConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
@@ -479,16 +488,6 @@ namespace ArchonLightingSystem
             this.closeToolStripMenuItem1.Text = "Close";
             this.closeToolStripMenuItem1.Click += new System.EventHandler(this.closeToolStripMenuItem1_Click);
             // 
-            // lbl_FanUnits
-            // 
-            this.lbl_FanUnits.AutoSize = true;
-            this.lbl_FanUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_FanUnits.Location = new System.Drawing.Point(24, 106);
-            this.lbl_FanUnits.Name = "lbl_FanUnits";
-            this.lbl_FanUnits.Size = new System.Drawing.Size(75, 16);
-            this.lbl_FanUnits.TabIndex = 76;
-            this.lbl_FanUnits.Text = "°C        RPM";
-            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -501,6 +500,7 @@ namespace ArchonLightingSystem
             this.Controls.Add(this.grp_Device1);
             this.Controls.Add(this.statusStrip1);
             this.Controls.Add(this.menuStrip1);
+            this.DoubleBuffered = true;
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
