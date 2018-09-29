@@ -3,6 +3,7 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Components;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
@@ -33,7 +34,7 @@ namespace ArchonLightingSystem
             InitializeForm();
 
             usbApp.RegisterEventHandler(this.Handle);
-            usbApp.InitializeDevice("04D8", "0033");
+            usbApp.InitializeDevice(Consts.ApplicationVid, Consts.ApplicationPid);
             //InitializeHardwareMonitor();
             FormUpdateTimer.Enabled = true;
         }
@@ -48,7 +49,6 @@ namespace ArchonLightingSystem
                 ControllerComponent device = new ControllerComponent();
                 deviceComponents.Add(device);
                 device.InitializeComponent(this, i);
-
             }
         }
 
@@ -61,8 +61,6 @@ namespace ArchonLightingSystem
                 deviceComponents[i - 1].AppData = usbApp.GetAppData(selectedAddressIdx);
             }
         }
-
-        
 
         //This is a callback function that gets called when a Windows message is received by the form.
         //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
@@ -117,8 +115,6 @@ namespace ArchonLightingSystem
                     {
                         //Device not available to communicate. Disable user interface on the form.
                         statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
-
-                        //SetFanSpeedValue(0);
                     }
 
                     //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
@@ -129,9 +125,6 @@ namespace ArchonLightingSystem
                             UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
                             formIsInitialized = true;
                         }
-
-                        //SetFanSpeedValue((int)usbApp.AppData.DeviceControllerData.MeasuredFanRpm[0]);
-
                     }
 
                     UpdateHardwareTemperature();
@@ -258,7 +251,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 debugForm = new DebugForm();
-                debugForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
+                debugForm.InitializeForm(usbApp);
                 debugForm.Show();
             }
             if (debugForm.WindowState == FormWindowState.Minimized)
@@ -270,6 +263,10 @@ namespace ArchonLightingSystem
 
         private void updateFirmwareToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            for(int i = 0; i < usbApp.DeviceCount; i++)
+            {
+                usbApp.GetDevice(i).PauseUsb = true;
+            }
             if (firmwareForm == null || firmwareForm.IsDisposed)
             {
                 firmwareForm = new FirmwareUpdateForm();
@@ -312,11 +309,6 @@ namespace ArchonLightingSystem
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             this.Close();
-        }
-
-        private void notifyIcon1_MouseClick(object sender, MouseEventArgs e)
-        {
-            ShowTaskbarNotification("Hello World.", "Please don't click on me.", 3000);
         }
     }
 } 

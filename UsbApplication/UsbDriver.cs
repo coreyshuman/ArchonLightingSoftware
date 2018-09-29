@@ -28,7 +28,6 @@ namespace ArchonLightingSystem.UsbApplication
         private string devicePid = "0000";
         private string deviceVid = "0000";
         private string deviceIDToFind = "Vid_0000&Pid_0000";
-        private Mutex deviceMutex = new Mutex();
 
         public int DeviceCount
         {
@@ -145,6 +144,21 @@ namespace ArchonLightingSystem.UsbApplication
             }
         }
 
+        protected void DetachDevice(UsbDevice device)
+        {
+            if (device.WriteHandleToUSBDevice?.IsClosed == false)
+            {
+                device.WriteHandleToUSBDevice.Close();
+            }
+            if (device.ReadHandleToUSBDevice?.IsClosed == false)
+            {
+                device.ReadHandleToUSBDevice.Close();
+            }
+            device.IsAttached = false;
+            device.IsAttachedButBroken = false;
+            device.DevicePath = "";
+        }
+
         private void UpdateDeviceStatus()
         {
             if (CheckIfPresentAndGetUSBDevicePath())    //Check and make sure at least one device with matching VID/PID is attached
@@ -184,16 +198,7 @@ namespace ArchonLightingSystem.UsbApplication
                     //Device must not be connected (or not programmed with correct firmware)
                     else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
                     {
-                        device.IsAttached = false;
-                        device.IsAttachedButBroken = false;
-                        if (device.WriteHandleToUSBDevice?.IsClosed == false)
-                        {
-                            device.WriteHandleToUSBDevice.Close();
-                        }
-                        if (device.ReadHandleToUSBDevice?.IsClosed == false)
-                        {
-                            device.ReadHandleToUSBDevice.Close();
-                        }
+                        DetachDevice(device);
                     }
                     //else we did find the device, but IsAttached was already true.  In this case, don't do anything to the read/write handles,
                     //since the WM_DEVICECHANGE message presumably wasn't caused by our USB device.  

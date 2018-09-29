@@ -39,7 +39,18 @@ namespace ArchonLightingSystem.Bootloader
         // 5 MB flash
         Byte[] VirtualFlash = new byte[5 * MB];
         string[] HexFile = null;
-        UInt32[] HexFileCurrentLine = new UInt32[16]; // todo - hardcoded
+        UInt32[] HexFileCurrentLine = new UInt32[16];
+        private uint deviceCount = 1;
+
+        /// <summary>
+        /// Handle parsing of Intel HEX format files.
+        /// </summary>
+        /// <param name="devices">Number of devices to support simultanously</param>
+        public HexManager(uint devices)
+        {
+            deviceCount = devices;
+            HexFileCurrentLine = new UInt32[devices];
+        }
 
         public UInt32 HexTotalLines
         {
@@ -49,18 +60,31 @@ namespace ArchonLightingSystem.Bootloader
             }
         }
 
-        public UInt32 HexCurrLineNo(int deviceIdx)
+        public UInt32 HexCurrLineNo(uint deviceIdx)
         {
+            if(deviceIdx >= deviceCount)
+            {
+                return 0;
+            }
             return HexFileCurrentLine[deviceIdx];
+        }
+
+        public byte GetFlashByte(uint address)
+        {
+            if(address >= VirtualFlash.Length)
+            {
+                return 0;
+            }
+            return VirtualFlash[address];
         }
            
 
-        static UInt32 PA_TO_VFA(UInt32 x)
+        public static UInt32 PA_TO_VFA(UInt32 x)
         {
             return (x - APPLICATION_START);
         }
 
-        static UInt32 PA_TO_KVA0(UInt32 x)
+        public static UInt32 PA_TO_KVA0(UInt32 x)
         {
             return (x | 0x80000000u);
         }
@@ -82,10 +106,10 @@ namespace ArchonLightingSystem.Bootloader
             }
             catch(Exception e)
             {
-                return false;
+                throw e;
             }
 
-            for(int i = 0; i < 16; i++) // todo - hardcoded
+            for(int i = 0; i < deviceCount; i++)
             {
                 HexFileCurrentLine[i] = 0;
             }
@@ -102,7 +126,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <param name="buffStartAddress">start address for storing record into HexRec</param>
         /// <param name="BuffLen">Buffer Length</param>
         /// <returns>Length of the hex record in bytes</returns>
-        public UInt16 GetNextHexRecord(int deviceIdx, ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
+        public UInt16 GetNextHexRecord(uint deviceIdx, ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
         {
 	        UInt16 len = 0;
             string line;
@@ -128,7 +152,7 @@ namespace ArchonLightingSystem.Bootloader
          /// </summary>
          /// <param name=""></param>
          /// <returns>True if resets file pointer</returns>
-        public bool ResetHexFilePointer(int deviceIdx)
+        public bool ResetHexFilePointer(uint deviceIdx)
         {
 	        // Reset file pointer.
 	        if(HexFile == null)
@@ -266,11 +290,14 @@ namespace ArchonLightingSystem.Bootloader
         {
             byte checksum = 0;
             int i;
-            for (i = 0; i < length + 4; i++)
+            unchecked
             {
-                checksum += data[i];
+                for (i = 0; i < length + 4; i++)
+                {
+                    checksum += data[i];
+                }
+                return (byte)(~checksum + 1);
             }
-            return (byte)(~checksum + 1);
         }
     }
 }

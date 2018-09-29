@@ -9,20 +9,39 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Interfaces;
+using ArchonLightingSystem.Components;
+using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem
 {
-    public partial class DebugForm : SubformBase
+    public partial class DebugForm : Form
     {
-        ApplicationData applicationData;
+        private UsbApp usbApp;
+        private DragWindowSupport dragSupport = new DragWindowSupport();
+        private int selectedAddressIdx = -1;
         public DebugForm()
         {
             InitializeComponent();
+            cbo_DeviceAddress.DisplayMember = "Text";
+            cbo_DeviceAddress.ValueMember = "Value";
+            dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(ApplicationData appData)
+        public void InitializeForm(UsbApp usbApplication)
         {
-            applicationData = appData;
+            usbApp = usbApplication;
+            var activeDevices = usbApp.UsbDevices
+                .Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true)
+                .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.UsbDevices.IndexOf(dev) })
+                .ToList();
+            activeDevices.ForEach(dev =>
+            {
+                cbo_DeviceAddress.Items.Add(dev);
+            });
+            if (cbo_DeviceAddress.Items.Count > 0)
+            {
+                cbo_DeviceAddress.SelectedIndex = 0;
+            }
         }
 
         public void UpdateFormData()
@@ -32,19 +51,32 @@ namespace ArchonLightingSystem
 
         private void btn_ReadDebug_Click(object sender, EventArgs e)
         {
-            applicationData.ReadDebugPending = true;
-            updateFormTimer.Enabled = true;
+            if(selectedAddressIdx >= 0)
+            {
+                usbApp.GetDevice(selectedAddressIdx).AppData.ReadDebugPending = true;
+                updateFormTimer.Enabled = true;
+            }
         }
 
         private void updateFormTimer_Tick(object sender, EventArgs e)
         {
-            txt_Debug.Text += applicationData.Debug;
+            txt_Debug.Text += usbApp.GetDevice(selectedAddressIdx).AppData.Debug;
             updateFormTimer.Enabled = false;
         }
 
         private void btn_ClearScreen_Click(object sender, EventArgs e)
         {
             txt_Debug.Text = "";
+        }
+
+        private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            selectedAddressIdx = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
+        }
+
+        private void btn_Close_Click(object sender, EventArgs e)
+        {
+            this.Close();
         }
     }
 }

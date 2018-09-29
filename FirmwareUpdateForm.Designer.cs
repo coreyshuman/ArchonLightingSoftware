@@ -77,7 +77,7 @@
             this.lbl_CurrentVersion.Name = "lbl_CurrentVersion";
             this.lbl_CurrentVersion.Size = new System.Drawing.Size(32, 16);
             this.lbl_CurrentVersion.TabIndex = 2;
-            this.lbl_CurrentVersion.Text = "v9.9";
+            this.lbl_CurrentVersion.Text = "v?.?";
             // 
             // btn_UpdateAll
             // 
@@ -97,9 +97,9 @@
             this.lbl_Status.Location = new System.Drawing.Point(95, 37);
             this.lbl_Status.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lbl_Status.Name = "lbl_Status";
-            this.lbl_Status.Size = new System.Drawing.Size(30, 16);
+            this.lbl_Status.Size = new System.Drawing.Size(66, 16);
             this.lbl_Status.TabIndex = 5;
-            this.lbl_Status.Text = "Idle";
+            this.lbl_Status.Text = "Loading...";
             // 
             // label3
             // 
@@ -162,7 +162,7 @@
             // 
             // timer_EnableUsb
             // 
-            this.timer_EnableUsb.Interval = 1000;
+            this.timer_EnableUsb.Interval = 2000;
             this.timer_EnableUsb.Tick += new System.EventHandler(this.timer_EnableUsb_Tick);
             // 
             // FirmwareUpdateForm

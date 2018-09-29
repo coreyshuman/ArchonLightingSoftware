@@ -44,6 +44,24 @@ namespace ArchonLightingSystem.UsbApplication
             return device?.AppData;
         }
 
+        public void ClearDevices()
+        {
+            usbDevices.ForEach((dev) =>
+            {
+                try
+                {
+                    dev.semaphore.Wait(1000);
+                    dev.AppData = null;
+                    DetachDevice(dev);
+                    dev.PauseUsb = false;
+                }
+                finally
+                {
+                    dev.semaphore.Release();
+                }
+            });
+        }
+
         private void ReadWriteThread_DoWork(object sender, DoWorkEventArgs e)
         {
             while (true)
@@ -203,7 +221,7 @@ namespace ArchonLightingSystem.UsbApplication
                         if (device.AppData.UpdateConfigPending)
                         {
                             device.AppData.UpdateConfigPending = false;
-                            UpdateConfig(device, device.AppData.DeviceControllerData.DeviceConfig);
+                            await UpdateConfig(device, device.AppData.DeviceControllerData.DeviceConfig);
                         }
 
                         if (device.AppData.WriteConfigPending)
@@ -223,29 +241,7 @@ namespace ArchonLightingSystem.UsbApplication
                         if (device.AppData.ReadDebugPending)
                         {
                             device.AppData.ReadDebugPending = false;
-                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
-                            {
-                                rxtxBuffer[i] = 0;
-                            }
-
-                            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EE_DEBUG, rxtxBuffer, 0) > 0)
-                            {
-                                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EE_DEBUG);
-                                if (response != null)
-                                {
-                                    device.AppData.Debug = ($"Debug Len: {response.Len}\r\n");
-                                    for (i = 0; i < response.Len;)
-                                    {
-                                        var dat = response.Data[i];
-                                        device.AppData.Debug += ($"{dat.ToString("X2")} ");
-                                        if (++i % 20 == 0)
-                                        {
-                                            device.AppData.Debug += ("\r\n");
-                                        }
-                                    }
-                                    device.AppData.Debug += ("\r\n_________________________");
-                                }
-                            }
+                            await ReadDebug(device);
                         }
                     }
                 }
@@ -281,7 +277,7 @@ namespace ArchonLightingSystem.UsbApplication
             if (deviceAddressResponse == null) throw new Exception("Couldn't read Address.");
             bootStatusResponse = await ReadBootStatus(device);
             if (bootStatusResponse == null) throw new Exception("Couldn't read boot status.");
-            eepromResponse = await ReadEeprom(device, 0, (UInt16)DeviceControllerDefinitions.EepromSize-1); // cts debug, see todo below
+            eepromResponse = await ReadEeprom(device, 0, (UInt16)DeviceControllerDefinitions.EepromSize);
             if (eepromResponse == null) throw new Exception("Couldn't read EEPROM.");
             deviceConfigResponse = await ReadConfig(device);
             if (deviceConfigResponse == null) throw new Exception("Couldn't read Config.");
@@ -330,9 +326,8 @@ namespace ArchonLightingSystem.UsbApplication
 
         private async Task<ControlPacket> ReadEeprom(UsbDevice device, UInt16 address, UInt16 length)
         {
-            // todo - need to make length a word to read all 256 bytes of the eeprom
-            byte[] request = new byte[] { (byte)address, (byte)length };
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EEPROM, request, 2) > 0)
+            byte[] request = new byte[] { (byte)address, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF) };
+            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
             {
                 await Task.Delay(100); // give controller time to read EEPROM
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EEPROM, 2000);
@@ -394,6 +389,30 @@ namespace ArchonLightingSystem.UsbApplication
                 await Task.Delay(2); 
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
                 return response;
+            }
+            return null;
+        }
+
+        private async Task<ControlPacket> ReadDebug(UsbDevice device)
+        {
+            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
+            {
+                await Task.Delay(2);
+                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EE_DEBUG);
+                if (response != null)
+                {
+                    device.AppData.Debug = ($"Debug Len: {response.Len}"+Environment.NewLine);
+                    for (int i = 0; i < response.Len;)
+                    {
+                        var dat = response.Data[i];
+                        device.AppData.Debug += ($"{dat.ToString("X2")} ");
+                        if (++i % 20 == 0)
+                        {
+                            device.AppData.Debug += Environment.NewLine;
+                        }
+                    }
+                    device.AppData.Debug += (Environment.NewLine + "_________________________" + Environment.NewLine);
+                }
             }
             return null;
         }

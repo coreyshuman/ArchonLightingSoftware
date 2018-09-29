@@ -7,6 +7,7 @@ using ArchonLightingSystem.Common;
 using System.ComponentModel;
 using System.Threading;
 using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.Models;
 
 namespace ArchonLightingSystem.Bootloader
 {
@@ -44,6 +45,7 @@ namespace ArchonLightingSystem.Bootloader
         public bool IsInitialized { get; set; }
         public bool NoResponseFromDevice { get; set; }
         public bool Success { get; set; }
+        public bool Failed { get; set; }
         public byte[] Data;
         public uint Length { get; set; }
 
@@ -104,7 +106,7 @@ namespace ArchonLightingSystem.Bootloader
         {
             usbDriver = usb;
             
-            hexManager = new HexManager();
+            hexManager = new HexManager(DeviceControllerDefinitions.MaxControllers);
             CreateBootloaderThread(progressEventHandler);
         }
 
@@ -129,7 +131,7 @@ namespace ArchonLightingSystem.Bootloader
             {
                 try
                 {
-                    for(int i = 0; i < DeviceCount; i++)
+                    for(uint i = 0; i < DeviceCount; i++)
                     {
                         if (bootState[i].bootloaderStatus.IsEnabled)
                         {
@@ -182,7 +184,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Process received USB responses from bootloader firmware.
         /// </summary>
-        private void ReceiveTask(int deviceIdx)
+        private void ReceiveTask(uint deviceIdx)
         {
             UInt32 buffLen;
             uint buffSize = 255;
@@ -205,8 +207,8 @@ namespace ArchonLightingSystem.Bootloader
                 if (bootState[deviceIdx].bootloaderStatus.NoResponseFromDevice)
                 {
                     // Reset flags
-                    bootState[deviceIdx].bootloaderStatus.NoResponseFromDevice = false;
                     bootState[deviceIdx].RxFrameValid = false;
+                    bootState[deviceIdx].bootloaderStatus.NoResponseFromDevice = false;
                     // Handle no response situation.
                     HandleNoResponse(deviceIdx);
                 }
@@ -217,7 +219,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Handle situation where no response is received.
         /// </summary>
-        private void HandleNoResponse(int deviceIdx)
+        private void HandleNoResponse(uint deviceIdx)
         {
             // Handle no response situation depending on the last sent command.
             switch (bootState[deviceIdx].lastCommandSent)
@@ -227,16 +229,18 @@ namespace ArchonLightingSystem.Bootloader
                 case BootloaderCmd.PROGRAM_FLASH:
                 case BootloaderCmd.READ_CRC:
                     // Notify main window that there was no reponse.
+                    bootState[deviceIdx].bootloaderStatus.Length = 0;
+                    bootState[deviceIdx].bootloaderStatus.Failed = true;
                     bootloaderTaskWorker.ReportProgress(0, bootState[deviceIdx].bootloaderStatus);
                     break;
-
             }
+            
         }
 
         /// <summary>
         /// Handle responses packets from bootloader firmware.
         /// </summary>
-        private void HandleResponse(int deviceIdx)
+        private void HandleResponse(uint deviceIdx)
         {
             BootloaderCmd cmd = (BootloaderCmd)bootState[deviceIdx].RxPacket[0];
             bootState[deviceIdx].bootloaderStatus.Length = 0;
@@ -269,7 +273,6 @@ namespace ArchonLightingSystem.Bootloader
                     bootState[deviceIdx].resetHexFilePtr = true;
                     break;
             }
-            bootState[deviceIdx].bootloaderStatus.Success = false;
         }
 
          /// <summary>
@@ -277,7 +280,7 @@ namespace ArchonLightingSystem.Bootloader
          /// </summary>
          /// <param name="buff">Data buffer</param>
          /// <param name="buffLen">Buffer length</param>
-        private void BuildRxFrame(int deviceIdx, byte[] buff, UInt32 buffLen)
+        private void BuildRxFrame(uint deviceIdx, byte[] buff, UInt32 buffLen)
         {
             bool Escape = false;
             UInt16 crc;
@@ -367,7 +370,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Transmit frame if there is data to send.
         /// </summary>
-        private void TransmitTask(int deviceIdx)
+        private void TransmitTask(uint deviceIdx)
         {
 
             switch (bootState[deviceIdx].txState)
@@ -412,7 +415,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Stop transmission retries.
         /// </summary>
-        private void StopTxRetries(int deviceIdx)
+        private void StopTxRetries(uint deviceIdx)
         {
             // Reset state.
             bootState[deviceIdx].txState = TxStates.IDLE;
@@ -426,7 +429,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <param name="retries">Number of retries allowed</param>
         /// <param name="delayInMs">Delay between retries in milliseconds</param>
         /// <returns></returns>
-        public bool SendCommand(int deviceIdx, BootloaderCmd cmd, UInt16 retries, UInt16 delayInMs)
+        public bool SendCommand(uint deviceIdx, BootloaderCmd cmd, UInt16 retries, UInt16 delayInMs)
         {
             UInt32 buffSize = 1000;
             byte[] buff = new byte[buffSize];
@@ -437,8 +440,10 @@ namespace ArchonLightingSystem.Bootloader
             UInt32 totalRecords = 10;
 
             bootState[deviceIdx].bootloaderStatus.IsEnabled = true;
+            bootState[deviceIdx].bootloaderStatus.Success = false;
+            bootState[deviceIdx].bootloaderStatus.Failed = false;
 
-            if(bootState[deviceIdx].txState > TxStates.IDLE)
+            if (bootState[deviceIdx].txState > TxStates.IDLE)
             {
                 // transmission in progress
                 return false;
@@ -446,6 +451,7 @@ namespace ArchonLightingSystem.Bootloader
 
             bootState[deviceIdx].TxPacketLen = 0;
             bootState[deviceIdx].lastCommandSent = cmd;
+            
 
             switch ((BootloaderCmd)cmd)
 	        {
@@ -553,7 +559,7 @@ namespace ArchonLightingSystem.Bootloader
         /// </summary>
         /// <param name="currentProgress">Current value of progress.</param>
         /// <param name="maxProgress">Progress value for completed job.</param>
-        void UpdateProgress(int deviceIdx)
+        void UpdateProgress(uint deviceIdx)
         {
             bootState[deviceIdx].bootloaderStatus.Length = 0;
             switch (bootState[deviceIdx].lastCommandSent)
@@ -577,12 +583,23 @@ namespace ArchonLightingSystem.Bootloader
         /// Gets the locally calculated CRC
         /// </summary>
         /// <returns></returns>
-        UInt16 CalculateFlashCRC(int deviceIdx)
+        public UInt16 CalculateFlashCRC(uint deviceIdx)
         {
             UInt32 StartAddress = 0, Len = 0;
             UInt16 crc = 0;
             hexManager.VerifyFlash(ref StartAddress, ref Len, ref crc);
             return crc;
+        }
+
+        /// <summary>
+        /// Returns the version of the application (must run CalculateFlashCRC() first)
+        /// </summary>
+        /// <returns></returns>
+        public Version GetApplicationVersion()
+        {
+            uint versionLocation = HexManager.PA_TO_VFA(0x9D00EFF0);
+            return new Version(hexManager.GetFlashByte(versionLocation), hexManager.GetFlashByte(versionLocation + 1));
+
         }
 
         /// <summary>
@@ -601,7 +618,7 @@ namespace ArchonLightingSystem.Bootloader
          * \param Buffer, Len
          * \return 
          *****************************************************************************/
-        void WritePort(int deviceIdx, byte[] buffer, UInt32 bufflen)
+        void WritePort(uint deviceIdx, byte[] buffer, UInt32 bufflen)
         {
             uint index = 0;
             while (bufflen - index > 0)
@@ -609,11 +626,11 @@ namespace ArchonLightingSystem.Bootloader
                 byte[] usbBuff = new byte[64];
                 uint sendLen = (bufflen - index) > 64 ? 64 : bufflen - index;
                 Util.CopyArray(ref usbBuff, 0, ref buffer, index, (int)sendLen);
-                usbDriver.WriteUSBDevice(usbDriver.GetDevice(deviceIdx), usbBuff, sendLen); // TODO - multi device support
+                usbDriver.WriteUSBDevice(usbDriver.GetDevice((int)deviceIdx), usbBuff, sendLen);
                 index += sendLen;
                 if(bufflen - index > 0)
                 {
-                    Thread.Sleep(5);
+                    Thread.Sleep(1);
                 }
             }
         }
@@ -625,9 +642,9 @@ namespace ArchonLightingSystem.Bootloader
          * \param Buffer, Len
          * \return 
          *****************************************************************************/
-        UInt32 ReadPort(int deviceIdx, ref byte[] buffer, UInt32 bufflen)
+        UInt32 ReadPort(uint deviceIdx, ref byte[] buffer, UInt32 bufflen)
         {
-            return usbDriver.ReadUSBDevice(usbDriver.GetDevice(deviceIdx), ref buffer, bufflen); // TODO - multi device support
+            return usbDriver.ReadUSBDevice(usbDriver.GetDevice((int)deviceIdx), ref buffer, bufflen);
         }
 
     }

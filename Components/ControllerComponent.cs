@@ -226,8 +226,10 @@ namespace ArchonLightingSystem.Components
                 }
                 return btn;
             }).ToArray();
-            lightingMode.SelectedIndex = applicationData.DeviceControllerData.DeviceConfig.LedMode[deviceIdx];
-            lightingSpeed.SelectedIndex = applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx];
+            byte ledMode = applicationData.DeviceControllerData.DeviceConfig.LedMode[deviceIdx];
+            byte ledSpeed = applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx];
+            lightingMode.SelectedIndex = ledMode < LightingModes.GetLightingModes().Length ? ledMode : -1;
+            lightingSpeed.SelectedIndex = ledSpeed > 0 && ledSpeed < LightingModes.GetLightingSpeeds().Length ? ledSpeed - 1 : -1;
         }
 
         private EventHandler TrackScrollEvent(int deviceIdx)
@@ -254,7 +256,7 @@ namespace ArchonLightingSystem.Components
             return (object sender, EventArgs e) =>
             {
                 ComboBox cbox = (ComboBox)sender;
-                applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx] = (byte)cbox.SelectedIndex;
+                applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx] = (byte)(cbox.SelectedIndex + 1);
                 applicationData.UpdateConfigPending = true;
             };
         }
