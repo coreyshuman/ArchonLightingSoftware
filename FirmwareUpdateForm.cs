@@ -354,7 +354,8 @@ namespace ArchonLightingSystem
             timer_ResetHardware.Enabled = false;
             foreach (var device in usbApp.UsbDevices)
             {
-                device.AppData.ResetToBootloaderPending = true;
+                if(device.AppIsInitialized)
+                    device.AppData.ResetToBootloaderPending = true;
             }
         }
     }

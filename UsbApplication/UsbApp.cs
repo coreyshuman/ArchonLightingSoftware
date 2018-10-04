@@ -123,7 +123,7 @@ namespace ArchonLightingSystem.UsbApplication
                         device.AppData.DeviceControllerData = new DeviceControllerData();
                     }
 
-                    if (device.IsAttached == true && !device.PauseUsb)    //Do not try to use the read/write handles unless the USB device is attached and ready
+                    if (device.IsAttached == true)    //Do not try to use the read/write handles unless the USB device is attached and ready
                     {
                         if (device.AppData.DeviceControllerData == null)
                         {
@@ -141,16 +141,20 @@ namespace ArchonLightingSystem.UsbApplication
                             rxtxBuffer[i] = 0;
                         }
 
-                        if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
+                        // stop general tasks when paused
+                        if (!device.PauseUsb)
                         {
-                            await Task.Delay(2);
-                            ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FANSPEED);
-                            if (response != null)
+                            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
                             {
-                                for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+                                await Task.Delay(2);
+                                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FANSPEED);
+                                if (response != null)
                                 {
-                                    //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
-                                    device.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
+                                    for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+                                    {
+                                        //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
+                                        device.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
+                                    }
                                 }
                             }
                         }

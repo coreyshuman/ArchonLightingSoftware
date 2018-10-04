@@ -217,6 +217,7 @@
     <Content Include="assets\cancel.png" />
     <Content Include="assets\checkmark.png" />
     <Content Include="assets\processing.png" />
+    <Content Include="Documentation\modes.txt" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

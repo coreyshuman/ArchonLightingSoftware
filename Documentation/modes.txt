@@ -1,0 +1,62 @@
+﻿firefly
+Random illuminate then darken
+
+twinkle
+?
+
+heartbeat
+brighten then off
+
+stack
+falling bricks like single tetris column, use color of final location
+
+roundabout
+4 pixels moving back and forth, colors in fixed pixel locations
+
+swirl
+pixels individual move around the circle, random pixel color chosen, random fire timing
+
+flow
+rainbow color, one color at a time goes around the ring, filling in its color
+
+rgb spectrum
+slow fade through solid rainbow colors
+
+ripple
+4 pixel follow the leader, fading tail, forced single color
+
+blink
+on and off
+
+pulse
+gradual on and off
+
+wave
+12 pixel follow the leader
+
+sound
+movie, game, party
+
+thermal
+
+cross
+two dots moving in opposite directions
+
+shooting star
+4 pixel follow the leader, full brightness
+
+black hole
+1 off pixel moving through ring
+
+aurora
+rgb fade cycle with 4 pixel circling
+
+
+other features
+quick way to fill in colors
+brightness slider
+done, default, color button
+fan performance, silent, pwm
+50 - 100 %
+rpm reading, totally off
+5 profiles
