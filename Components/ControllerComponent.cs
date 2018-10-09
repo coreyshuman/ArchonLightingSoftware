@@ -6,11 +6,16 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
+using System.Drawing;
 
 namespace ArchonLightingSystem.Components
 {
     class ControllerComponent
     {
+        private static Color lastColor;
+        private static List<Color> lastColorsAll = new List<Color>();
+        private static ColorDialog colorDialog = new ColorDialog();
+
         private ApplicationData applicationData;
         private Control parentControl;
         private GroupBox grpDev;
@@ -94,6 +99,7 @@ namespace ArchonLightingSystem.Components
             grpDev.Parent = parent;
             grpDev.Text = $"Device {index}";
             grpDev.Font = deviceTemplate.Font;
+            grpDev.Name = $"deviceGroup_{index}";
             grpDev.Show();
 
             for(int i = 0; i < DeviceControllerDefinitions.LedCountPerDevice; i++)
@@ -103,6 +109,7 @@ namespace ArchonLightingSystem.Components
                 btn.Top = buttonTemplate.Top + (buttonTemplate.Height + 6) * i;
                 btn.Text = $"L{i + 1}";
                 btn.Parent = grpDev;
+                btn.Name = $"ledBtn_{i}";
                 btn.Show();
                 btn.Click += ColorUpdateClickEventHandler(index - 1, i);
                 buttons.Add(btn);
@@ -215,7 +222,7 @@ namespace ArchonLightingSystem.Components
         {
             fanCtrl.Value = applicationData.DeviceControllerData.DeviceConfig.FanSpeed[deviceIdx];
             buttons.Select((Button btn, int index) => {
-                btn.BackColor = GetLedColor(deviceIdx, index);
+                btn.BackColor = GetLedColor(deviceIdx, index, true);
                 if (btn.BackColor.G == 0 || btn.BackColor.R == 0)
                 {
                     btn.ForeColor = System.Drawing.Color.White;
@@ -265,14 +272,64 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                var color = lastColor;
                 Button btn = (Button)sender;
-                ColorDialog colorDialog = new ColorDialog();
-                colorDialog.ShowDialog();
-                var color = colorDialog.Color;
-                SetLedColor(color, deviceIdx, ledIdx);
-                color = GetLedColor(deviceIdx, ledIdx);
+
+                if ((Control.ModifierKeys & (Keys.Shift | Keys.Control)) == (Keys.Shift | Keys.Control))
+                {
+                    // update all leds for device from single color
+                    for (int i = 0; i < DeviceControllerDefinitions.LedCountPerDevice; i++)
+                    {
+                        UpdateLedColor(color, deviceIdx, i);
+                    }
+                    applicationData.UpdateConfigPending = true;
+                }
+                else if ((Control.ModifierKeys & (Keys.Shift | Keys.Alt)) == (Keys.Shift | Keys.Alt))
+                {
+                    if (lastColorsAll.Count == DeviceControllerDefinitions.LedCountPerDevice)
+                    {
+                        // update all leds for device copied from other device
+                        for (int i = 0; i < DeviceControllerDefinitions.LedCountPerDevice; i++)
+                        {
+                            UpdateLedColor(lastColorsAll[i], deviceIdx, i);
+                        }
+                        applicationData.UpdateConfigPending = true;
+                    }
+                }
+                else if ((Control.ModifierKeys & Keys.Shift) == Keys.Shift)
+                {
+                    // copy color from button
+                    lastColor = GetLedColor(deviceIdx, ledIdx);
+                    lastColorsAll.Clear();
+                    for (int i = 0; i < DeviceControllerDefinitions.LedCountPerDevice; i++)
+                    {
+                        lastColorsAll.Add(GetLedColor(deviceIdx, i));
+                    }
+                }
+                else if ((Control.ModifierKeys & Keys.Control) == Keys.Control)
+                {
+                    // paste last color to button
+                    UpdateLedColor(color, deviceIdx, ledIdx);
+                    applicationData.UpdateConfigPending = true;
+                }
+                else
+                {
+                    color = GetColorFromDialog(GetLedColor(deviceIdx, ledIdx));
+                    UpdateLedColor(color, deviceIdx, ledIdx);
+                    applicationData.UpdateConfigPending = true;
+                }
+            };
+        }
+
+        private void UpdateLedColor(Color color, int deviceIdx, int ledIdx)
+        {
+            SetLedColor(color, deviceIdx, ledIdx);
+            color = GetLedColor(deviceIdx, ledIdx, true);
+            Button btn = (Button)grpDev.Controls[$"ledBtn_{ledIdx}"];
+            if (btn != null)
+            {
                 btn.BackColor = color;
-                if(color.G == 0 || color.R == 0)
+                if (color.G == 0 || color.R == 0)
                 {
                     btn.ForeColor = System.Drawing.Color.White;
                 }
@@ -280,10 +337,19 @@ namespace ArchonLightingSystem.Components
                 {
                     btn.ForeColor = System.Drawing.Color.Black;
                 }
-                applicationData.UpdateConfigPending = true;
-            };
+            }
         }
 
+        private static Color GetColorFromDialog(Color? currentColor)
+        {
+            if(currentColor.HasValue)
+            {
+                colorDialog.Color = currentColor.Value;
+            }
+            colorDialog.ShowDialog();
+            lastColor = colorDialog.Color;
+            return lastColor;
+        }
 
         private void SetLedColor(System.Drawing.Color color, int deviceIdx, int ledIdx)
         {
@@ -293,24 +359,27 @@ namespace ArchonLightingSystem.Components
             applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.B;
         }
 
-        private System.Drawing.Color GetLedColor(int deviceIdx, int ledIdx)
+        private System.Drawing.Color GetLedColor(int deviceIdx, int ledIdx, bool lighterColorScale = false)
         {
             ledIdx *= 3;
             byte G = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
             byte R = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
             byte B = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
 
-            if(G > 0)
+            if (lighterColorScale)
             {
-                G = (byte)(G / 2 + 128);
-            }
-            if (R > 0)
-            {
-                R = (byte)(R / 2 + 128);
-            }
-            if (B > 0)
-            {
-                B = (byte)(B / 3 + 170);
+                if (G > 0)
+                {
+                    G = (byte)(G / 2 + 128);
+                }
+                if (R > 0)
+                {
+                    R = (byte)(R / 2 + 128);
+                }
+                if (B > 0)
+                {
+                    B = (byte)(B / 3 + 170);
+                }
             }
             return System.Drawing.Color.FromArgb(R, G, B);
         }

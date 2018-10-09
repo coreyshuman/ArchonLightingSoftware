@@ -13,13 +13,15 @@ namespace ArchonLightingSystem
 {
     public partial class AppForm : Form
     {
+        public bool FormIsInitialized { get; set; } = false;
+
         private UsbApp usbApp = null;
         private ConfigEditorForm configForm = null;
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
         private FirmwareUpdateForm firmwareForm = null;
-        private bool formIsInitialized = false;
-        private List<string> deviceAddressList = new List<string>();
+        
+        private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private OpenHardwareMonitor.Hardware.IHardware motherboard;
@@ -38,7 +40,7 @@ namespace ArchonLightingSystem
 
             usbApp.RegisterEventHandler(this.Handle);
             usbApp.InitializeDevice(Consts.ApplicationVid, Consts.ApplicationPid);
-            //InitializeHardwareMonitor();
+            InitializeHardwareMonitor();
             FormUpdateTimer.Enabled = true;
 
             if (Settings.Default.MainWindowLocation.X >= 0)
@@ -92,14 +94,20 @@ namespace ArchonLightingSystem
             if(usbApp.DeviceCount > cbo_DeviceAddress.Items.Count)
             {
                 var activeDevices = usbApp.UsbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
-                var newDevices = activeDevices.Where(dev => !deviceAddressList.Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
+                var newDevices = activeDevices.Where(dev => !deviceAddressList.Select(d => d.Text).Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
                     .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.UsbDevices.IndexOf(dev)})
                     .ToList();
                 newDevices.ForEach(dev =>
                 {
-                    deviceAddressList.Add(dev.Text);
-                    cbo_DeviceAddress.Items.Add(dev);
+                    deviceAddressList.Add(dev);
                 });
+                if(newDevices.Count > 0)
+                {
+                    var lastSelected = cbo_DeviceAddress.SelectedValue;
+                    cbo_DeviceAddress.Items.Clear();
+                    cbo_DeviceAddress.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
+                    cbo_DeviceAddress.SelectedValue = lastSelected;
+                }
                 if(cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
                 {
                     cbo_DeviceAddress.SelectedIndex = 0;
@@ -117,28 +125,25 @@ namespace ArchonLightingSystem
                 try
                 {
                     //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
-                    if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
+                    //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
+                    if (usbDevice.IsAttached == true && usbDevice.AppIsInitialized)
                     {
                         //Device is connected and ready to communicate, enable user interface on the form 
                         string addr = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress.ToString();
                         string bootVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
                         string AppVer = usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
                         statusLabel.Text = $"Device {addr} Found. BootVer: {bootVer}   AppVer: {AppVer}  Temp: {temperatureString}";
+
+                        if (!FormIsInitialized && usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
+                        {
+                            UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
+                            FormIsInitialized = true;
+                        }
                     }
-                    if ((usbApp.GetDevice(selectedAddressIdx).IsAttached == false) || (usbApp.GetDevice(selectedAddressIdx).IsAttachedButBroken == true))
+                    if ((usbDevice.IsAttached == false) || (usbDevice.IsAttachedButBroken == true))
                     {
                         //Device not available to communicate. Disable user interface on the form.
                         statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
-                    }
-
-                    //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
-                    if (usbApp.GetDevice(selectedAddressIdx).IsAttached == true)
-                    {
-                        if (!formIsInitialized && usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
-                        {
-                            UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
-                            formIsInitialized = true;
-                        }
                     }
 
                     UpdateHardwareTemperature();
@@ -279,12 +284,15 @@ namespace ArchonLightingSystem
         {
             for(int i = 0; i < usbApp.DeviceCount; i++)
             {
-                usbApp.GetDevice(i).PauseUsb = true;
+                // deinitialize devices to switch to bootloader mode.
+                // prepare form for reinitialization
+                // usbApp.GetDevice(i).PauseUsb = true;
+                // formIsInitialized = false;
             }
             if (firmwareForm == null || firmwareForm.IsDisposed)
             {
                 firmwareForm = new FirmwareUpdateForm();
-                firmwareForm.InitializeForm(usbApp);
+                firmwareForm.InitializeForm(this, usbApp);
                 firmwareForm.Show();
             }
             if (firmwareForm.WindowState == FormWindowState.Minimized)
@@ -314,11 +322,13 @@ namespace ArchonLightingSystem
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
             this.Hide();
+            FormUpdateTimer.Enabled = false;
         }
 
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             Show();
+            FormUpdateTimer.Enabled = true;
         }
 
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)

@@ -156,7 +156,6 @@ namespace ArchonLightingSystem.UsbApplication
             }
             device.IsAttached = false;
             device.IsAttachedButBroken = false;
-            device.DevicePath = "";
         }
 
         private void UpdateDeviceStatus()

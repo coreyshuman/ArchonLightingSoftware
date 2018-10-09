@@ -25,7 +25,7 @@ namespace ArchonLightingSystem
         private bool isBusy = true;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private FirmwareUpdateManager firmwareManager = new FirmwareUpdateManager();
-        
+        private AppForm parentForm;
         
 
         private enum Image
@@ -62,9 +62,10 @@ namespace ArchonLightingSystem
 
         
 
-        public void InitializeForm(UsbApplication.UsbApp app)
+        public void InitializeForm(AppForm parent, UsbApplication.UsbApp app)
         {
             usbApp = app;
+            parentForm = parent;
             var appdata = app.GetAppData(0);
 
             ImageList imageList = new ImageList { ImageSize = new Size(60, 32) };
@@ -292,6 +293,8 @@ namespace ArchonLightingSystem
             firmwareManager.StartApp();
             Thread.Sleep(1000);
             usbApp.ClearDevices();
+            // have main for redraw
+            parentForm.FormIsInitialized = false;
             CloseWindow();
         }
 

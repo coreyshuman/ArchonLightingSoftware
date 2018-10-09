@@ -14,11 +14,24 @@ namespace ArchonLightingSystem.UsbApplication
         public ApplicationData AppData { get; set; }
         public bool PauseUsb { get; set; }
         public bool AppIsInitialized { get; set; }
+        public bool IsDisconnected { get; set; }
         public SemaphoreSlim semaphore { get; set; }
 
         public UsbDevice()
         {
             semaphore = new SemaphoreSlim(1, 1);
+        }
+
+        public void Disconnect()
+        {
+            PauseUsb = true;
+            IsDisconnected = true;
+        }
+
+        public void Reinitialize()
+        {
+            PauseUsb = false;
+            IsDisconnected = false;
         }
     }
 
@@ -51,9 +64,10 @@ namespace ArchonLightingSystem.UsbApplication
                 try
                 {
                     dev.semaphore.Wait(1000);
+                    dev.AppIsInitialized = false;
                     dev.AppData = null;
                     DetachDevice(dev);
-                    dev.PauseUsb = false;
+                    dev.Reinitialize();
                 }
                 finally
                 {
@@ -110,6 +124,11 @@ namespace ArchonLightingSystem.UsbApplication
             {
                 try
                 {
+                    if(device.IsDisconnected)
+                    {
+                        return;
+                    }
+
                     if (!device.AppIsInitialized)
                     {
                         Trace.WriteLine("Initialize ApplicationData");
@@ -163,7 +182,7 @@ namespace ArchonLightingSystem.UsbApplication
                         {
                             device.AppData.ResetToBootloaderPending = false;
                             ResetDeviceToBootloader(device);
-                            device.PauseUsb = true;
+                            device.Disconnect();
                         }
 
                         if (device.AppData.EepromReadPending)
