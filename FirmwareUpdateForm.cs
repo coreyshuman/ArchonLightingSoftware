@@ -21,22 +21,12 @@ namespace ArchonLightingSystem
     {
         private UsbApplication.UsbDriver bootUsbDriver;
         private UsbApplication.UsbApp usbApp;
-        Bootloader.Bootloader bootloader;
+        private bool isClosing = false;
+        private bool isBusy = true;
         private DragWindowSupport dragSupport = new DragWindowSupport();
-        private static string[] StatusString = { "Disconnected", "No Firmware Image", "Idle", "In Progress", "Completed", "Canceling", "Canceled" };
-        private int deviceCntUpdating = 0;
-        private int deviceCntFinishedUpdating = 0;
-        private int deviceCntFailedUpdating = 0;
-        private enum Status
-        {
-            Disconnected = 0,
-            NoFile,
-            Idle,
-            Updating,
-            Completed,
-            Canceling,
-            Canceled
-        }
+        private FirmwareUpdateManager firmwareManager = new FirmwareUpdateManager();
+        
+        
 
         private enum Image
         {
@@ -45,34 +35,14 @@ namespace ArchonLightingSystem
             Processing
         }
 
-        private bool fileLoaded = false;
-        private bool isUpdating = false;
-        private bool isCanceled = false;
-        private bool isClosing = false;
-        private bool isConnected = false;
-        private bool isInitialized = false;
-
         public FirmwareUpdateForm()
         {
             InitializeComponent();
-            
             dragSupport.Initialize(this);
-            lbl_Status.Text = StatusString[(int)Status.Disconnected];
             btn_UpdateAll.Enabled = false;
             bootUsbDriver = new UsbApplication.UsbDriver();
-            
-            bootloader = new Bootloader.Bootloader();
-            
-            bootloader.InitializeBootloader(bootUsbDriver, new ProgressChangedEventHandler((object changeSender, ProgressChangedEventArgs args) =>
-            {
-                BootloaderStatus status = (BootloaderStatus)args.UserState;
-                ((ProgressBar)listView1.Controls[$"progressBar_{status.DeviceIndex}"]).Value = args.ProgressPercentage;
-                HandleBootloaderResponse(status);
-            }));
-            
-
             timer_ResetHardware.Enabled = true;
-            timer_EnableUsb.Enabled = true;
+            lbl_Status.Text = firmwareManager.GetStatus();
         }
 
         private void InitializeProgressBar(int deviceIdx)
@@ -90,47 +60,7 @@ namespace ArchonLightingSystem
                 bar.Show();
         }
 
-        private void HandleBootloaderResponse(BootloaderStatus status)
-        {
-            if(status.Failed)
-            {
-                MessageBox.Show($"No response from device {status.Address}.");
-                listView1.Items[status.DeviceIndex].ImageIndex = (int)Image.Error;
-                deviceCntFailedUpdating++;
-            }
-
-            if (status.Length > 0)
-            {
-                BootloaderCmd cmd = (BootloaderCmd)status.Data[0];
-                switch (cmd)
-                {
-                    case BootloaderCmd.READ_BOOT_INFO:
-                        listView1.Items[status.DeviceIndex].SubItems[2].Text = new Version(status.Data[1], status.Data[2]).ToString();
-                        listView1.Items[status.DeviceIndex].SubItems[3].Text = new Version(status.Data[3], status.Data[4]).ToString();
-                        listView1.Items[status.DeviceIndex].SubItems[1].Text = status.Data[9].ToString();
-                        listView1.Items[status.DeviceIndex].ImageIndex = (int)Image.Checkmark;
-                        break;
-
-                    case BootloaderCmd.PROGRAM_FLASH:
-                        deviceCntFinishedUpdating++;
-                        listView1.Items[status.DeviceIndex].ImageIndex = (int)Image.Checkmark;
-                        break;
-
-                    default:
-                        throw new Exception("Unknown command response.");
-                }
-            }
-
-            if(deviceCntFinishedUpdating + deviceCntFailedUpdating == deviceCntUpdating && deviceCntUpdating > 0)
-            {
-                deviceCntUpdating = deviceCntFailedUpdating = deviceCntFinishedUpdating = 0;
-                btn_UpdateAll.Enabled = true;
-                btn_StartApp.Enabled = true;
-                lbl_Status.Text = StatusString[(int)Status.Completed];
-                isUpdating = false;
-                MessageBox.Show("Firmware loading complete!");
-            }
-        }
+        
 
         public void InitializeForm(UsbApplication.UsbApp app)
         {
@@ -154,74 +84,123 @@ namespace ArchonLightingSystem
             imageList.Images.Add(Icon.FromHandle(Resources.checkmark.GetHicon()));
             imageList.Images.Add(Icon.FromHandle(Resources.processing.GetHicon()));
 
-            // read firmware file
-            string filepath = AppDomain.CurrentDomain.BaseDirectory;
-            try
-            {
-                bool verified = false;
-                UInt16 crc = 0;
-                if (bootloader.LoadHexFile(filepath + @"firmware\latest.hex"))
-                {
-                    crc = bootloader.CalculateFlashCRC(0);
-                    verified = true;
-                    lbl_CurrentVersion.Text = bootloader.GetApplicationVersion().ToString();
-                }
-
-                // todo - validate crc of result
-                if (verified)
-                {
-                    btn_UpdateAll.Enabled = true;
-                    fileLoaded = true;
-                    lbl_Status.Text = StatusString[(int)Status.Disconnected];
-                }
-
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Couldn't open latest firmware, an error occured: {ex.Message}");
-                lbl_Status.Text = StatusString[(int)Status.NoFile];
-            }
+            firmwareManager.FirmwareEventHandler += new FirmwareEventDelgate(HandleBootloaderUpdates);
+            firmwareManager.FirmwareLogHandler += new FirmwareLogDelegate(WriteLog);
+            firmwareManager.InitializeUsb(bootUsbDriver);
 
         }
 
-        private void btn_UpdateAll_Click(object sender, EventArgs e)
+        private void WriteLog(object sender, string log)
         {
-            lbl_Status.Text = StatusString[(int)Status.Updating];
-            btn_UpdateAll.Enabled = false;
-            btn_StartApp.Enabled = false;
-            isUpdating = true;
-            this.Cursor = Cursors.AppStarting;
-            deviceCntUpdating = listView1.Items.Count;
-            deviceCntFailedUpdating = deviceCntFinishedUpdating = 0;
-            for(uint i = 0; i < deviceCntUpdating; i++)
+            if (this.IsDisposed) return;
+
+            if (InvokeRequired)
             {
-                listView1.Items[(int)i].ImageIndex = (int)Image.Processing;
-                bootloader.SendCommand(i, BootloaderCmd.PROGRAM_FLASH, 3, 5000);
+                this.Invoke(new Action<object, string>(WriteLog), new object[] { sender, log });
+                return;
+            }
+            txt_Log.AppendText(log);
+        }
+
+        private void HandleBootloaderUpdates(object sender, FirmwareEventArgs args)
+        {
+            if (this.IsDisposed) return;
+
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<object, FirmwareEventArgs>(HandleBootloaderUpdates), new object[] { sender, args });
+                return;
+            }
+            lbl_Status.Text = firmwareManager.GetStatus();
+            lbl_CurrentVersion.Text = args.FirmwareVersion;
+            while(listView1.Items.Count < args.Devices.Count)
+            {
+                AddDeviceToList();
+            }
+            args.Devices.ForEach(device => UpdateDeviceInfo(device));
+
+            if(args.Status == FirmwareUpdateManager.ManagerStatus.Canceled || 
+                args.Status == FirmwareUpdateManager.ManagerStatus.Completed ||
+                args.Status == FirmwareUpdateManager.ManagerStatus.Idle)
+            {
+                SetFormIsIdle();
+            }
+        }
+
+        private void AddDeviceToList()
+        {
+            InitializeProgressBar(listView1.Items.Count);
+            ListViewItem listItem1 = new ListViewItem("", 0);
+            listItem1.SubItems.Add("?");
+            listItem1.SubItems.Add("?");
+            listItem1.SubItems.Add("?");
+            listView1.Items.Add(listItem1);
+        }
+
+        private void UpdateDeviceInfo(FirmwareDevice device)
+        {
+            listView1.Items[device.DeviceIndex].SubItems[2].Text = device.BootloaderVersion.ToString();
+            listView1.Items[device.DeviceIndex].SubItems[3].Text = device.ApplicationVersion.ToString();
+            listView1.Items[device.DeviceIndex].SubItems[1].Text = device.DeviceAddress.ToString();
+            ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).Value = device.Progress;
+            switch (device.DeviceStatus)
+            {
+                case FirmwareDevice.StatusCode.Canceled:
+                case FirmwareDevice.StatusCode.Failed:
+                case FirmwareDevice.StatusCode.Disconnected:
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Error;
+                    break;
+
+                case FirmwareDevice.StatusCode.Canceling:
+                case FirmwareDevice.StatusCode.Connecting:
+                case FirmwareDevice.StatusCode.Erasing:
+                case FirmwareDevice.StatusCode.Updating:
+                case FirmwareDevice.StatusCode.Verifying:
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Processing;
+                    break;
+
+                case FirmwareDevice.StatusCode.Completed:
+                case FirmwareDevice.StatusCode.Ready:
+                case FirmwareDevice.StatusCode.StartingApp:
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Checkmark;
+                    break;
+
+                default:
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Error;
+                    break;
             }
             
         }
 
+        private void SetFormIsUpdating()
+        {
+            btn_UpdateAll.Enabled = false;
+            btn_StartApp.Enabled = false;
+            isBusy = true;
+            this.Cursor = Cursors.AppStarting;
+        }
+
+        private void SetFormIsIdle()
+        {
+            btn_UpdateAll.Enabled = true;
+            btn_StartApp.Enabled = true;
+            isBusy = false;
+            this.Cursor = Cursors.Default;
+        }
+
+        private void btn_UpdateAll_Click(object sender, EventArgs e)
+        {
+            SetFormIsUpdating();
+            firmwareManager.ProgramFlash(); // start erase, update, verify
+        }
+
         private void btn_Cancel_Click(object sender, EventArgs e)
         {
-            if(isUpdating)
+            if(isBusy)
             {
-                if (MessageBox.Show("This could prevent your devices working. Are you sure?", "Cancel Update", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                if (MessageBox.Show("This could prevent your devices from working. Are you sure?", "Cancel Actions", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
-                    lbl_Status.Text = StatusString[(int)Status.Canceling];
-                    btn_UpdateAll.Enabled = true;
-                    isUpdating = false;
-                    isCanceled = true;
-                    this.Cursor = Cursors.Arrow;
-                    deviceCntUpdating = deviceCntFailedUpdating = deviceCntFinishedUpdating = 0;
-                    for (int i = 0; i < deviceCntUpdating; i++)
-                    {
-                        if(listView1.Items[i].ImageIndex == (int)Image.Processing)
-                        {
-                            listView1.Items[i].ImageIndex = (int)Image.Error;
-                            // todo - send bootloader cancel
-                        }
-                        
-                    }
+                    firmwareManager.CancelFirmwareActions();
                     if (e.GetType() == typeof(FormClosingEventArgs))
                     {
                         CloseWindow();
@@ -237,7 +216,7 @@ namespace ArchonLightingSystem
         private void CloseWindow()
         {
             isClosing = true;
-            bootloader.ShutdownThread();
+            firmwareManager.CloseFirmwareManager();
             this.Close();
         }
 
@@ -279,24 +258,19 @@ namespace ArchonLightingSystem
                 Settings.Default.HexFileLocation = openFileDialog.FileName;
                 Settings.Default.Save();
 
+                // todo open file
                 try
                 {
-                    bool verified = false;
-                    UInt16 crc = 0;
-                    if (bootloader.LoadHexFile(openFileDialog.FileName))
+                    if(firmwareManager.OpenCustomHexFile(openFileDialog.FileName))
                     {
-                        crc = bootloader.CalculateFlashCRC(0);
-                        verified = true;
+                        // todo: get version
                     }
-
-                    // todo - validate crc of result
-                    if(verified)
+                    else
                     {
-                        btn_UpdateAll.Enabled = true;
+                        MessageBox.Show("Error: The file was invalid.");
                     }
-                    
                 }
-                catch(Exception ex)
+                catch (Exception ex)
                 {
                     MessageBox.Show($"An error occured: {ex.Message}");
                 }
@@ -315,38 +289,10 @@ namespace ArchonLightingSystem
         private void btn_StartApp_Click(object sender, EventArgs e)
         {
             this.Cursor = Cursors.WaitCursor;
-            for (int i = 0; i < listView1.Items.Count; i++)
-            {
-                bootloader.SendCommand(0, BootloaderCmd.JMP_TO_APP, 1, 1000);
-            }
+            firmwareManager.StartApp();
             Thread.Sleep(1000);
             usbApp.ClearDevices();
             CloseWindow();
-        }
-
-        private void timer_EnableUsb_Tick(object sender, EventArgs e)
-        {
-            while (bootUsbDriver.DeviceCount > listView1.Items.Count)
-            {
-                bootloader.SendCommand((uint)listView1.Items.Count, BootloaderCmd.READ_BOOT_INFO, 3, 500);
-                InitializeProgressBar(listView1.Items.Count);
-                ListViewItem listItem1 = new ListViewItem("", 0);
-                listItem1.SubItems.Add("?");
-                listItem1.SubItems.Add("?");
-                listItem1.SubItems.Add("?");
-                listView1.Items.Add(listItem1);
-                if(fileLoaded && !isConnected && !isUpdating)
-                {
-                    lbl_Status.Text = StatusString[(int)Status.Idle];
-                }
-                isConnected = true;
-            }
-
-            if(!isInitialized)
-            {
-                isInitialized = true;
-                bootUsbDriver.InitializeDevice(Consts.BootloaderVid, Consts.BootloaderPid);
-            }
         }
 
         private void timer_ResetHardware_Tick(object sender, EventArgs e)
@@ -357,6 +303,18 @@ namespace ArchonLightingSystem
                 if(device.AppIsInitialized)
                     device.AppData.ResetToBootloaderPending = true;
             }
+        }
+
+        private void btn_Erase_Click(object sender, EventArgs e)
+        {
+            SetFormIsUpdating();
+            firmwareManager.EraseFlash(); 
+        }
+
+        private void btn_Verify_Click(object sender, EventArgs e)
+        {
+            SetFormIsUpdating();
+            firmwareManager.VerifyFlash();
         }
     }
 }

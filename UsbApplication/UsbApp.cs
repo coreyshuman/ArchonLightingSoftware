@@ -146,7 +146,7 @@ namespace ArchonLightingSystem.UsbApplication
                         {
                             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
                             {
-                                await Task.Delay(2);
+                                //await Task.Delay(2);
                                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FANSPEED);
                                 if (response != null)
                                 {
@@ -263,7 +263,6 @@ namespace ArchonLightingSystem.UsbApplication
 
         private async Task GetDeviceInitialization(UsbDevice device)
         {
-            int i;
             ControlPacket bootResponse = new ControlPacket();
             ControlPacket appResponse = new ControlPacket();
             ControlPacket bootStatusResponse;
@@ -293,7 +292,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
             {
-                await Task.Delay(2);
+                //await Task.Delay(2);
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
                 return response;
             }
@@ -304,7 +303,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
             {
-                await Task.Delay(2);
+                //await Task.Delay(2);
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
                 return response;
             }
@@ -320,7 +319,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
             {
-                await Task.Delay(2);
+                //await Task.Delay(2);
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_BOOT_STATUS);
                 return response;
             }
@@ -333,7 +332,7 @@ namespace ArchonLightingSystem.UsbApplication
             byte[] request = new byte[] { (byte)address, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF) };
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
             {
-                await Task.Delay(100); // give controller time to read EEPROM
+                //await Task.Delay(100); // give controller time to read EEPROM
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EEPROM, 2000);
                 return response;
             }
@@ -344,7 +343,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
             {
-                await Task.Delay(2);
+                //await Task.Delay(2);
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_DEFAULT_CONFIG);
                 return response;
             }
@@ -355,7 +354,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
             {
-                await Task.Delay(50); // larger packet
+                //await Task.Delay(50); // larger packet
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_CONFIG);
                 return response;
             }
@@ -366,7 +365,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
             {
-                await Task.Delay(100); // writing to eeprom
+                //await Task.Delay(100); // writing to eeprom
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_CONFIG);
                 return response;
             }
@@ -379,7 +378,7 @@ namespace ArchonLightingSystem.UsbApplication
             uint length = config.ToBuffer(ref buffer);
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
             {
-                await Task.Delay(50); // larger packet
+                //await Task.Delay(50); // larger packet
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_UPDATE_CONFIG);
                 return response;
             }
@@ -390,7 +389,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
             {
-                await Task.Delay(2); 
+                //await Task.Delay(2); 
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
                 return response;
             }
@@ -401,7 +400,7 @@ namespace ArchonLightingSystem.UsbApplication
         {
             if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
             {
-                await Task.Delay(2);
+                //await Task.Delay(2);
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EE_DEBUG);
                 if (response != null)
                 {

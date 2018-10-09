@@ -139,7 +139,7 @@ namespace ArchonLightingSystem.Bootloader
                             TransmitTask(i);
                         }
                     }
-                    Thread.Sleep(10);
+                    Thread.Sleep(2);
                 }
                 catch (Exception ex)
                 {
@@ -398,7 +398,7 @@ namespace ArchonLightingSystem.Bootloader
                             WritePort(deviceIdx, bootState[deviceIdx].TxPacket, bootState[deviceIdx].TxPacketLen);
                             // Decrement retry count.
                             bootState[deviceIdx].RetryCount--;
-
+                            UpdateProgress(deviceIdx);
                         }
                     }
                     else
@@ -499,22 +499,24 @@ namespace ArchonLightingSystem.Bootloader
                     }
                     bootState[deviceIdx].MaxRetry = bootState[deviceIdx].RetryCount = retries;
                     bootState[deviceIdx].TxRetryDelay = delayInMs; // in ms
-                    UpdateProgress(deviceIdx);
                     break;
 
 	            case BootloaderCmd.READ_CRC:
                     buff[buffLen++] = (byte)cmd;
                     hexManager.VerifyFlash(ref StartAddress, ref Len, ref crc);
-                    buff[buffLen++] = (byte)(StartAddress);
-                    buff[buffLen++] = (byte)(StartAddress >> 8);
-                    buff[buffLen++] = (byte)(StartAddress >> 16);
-                    buff[buffLen++] = (byte)(StartAddress >> 24);
-                    buff[buffLen++] = (byte)(Len);
-                    buff[buffLen++] = (byte)(Len >> 8);
-                    buff[buffLen++] = (byte)(Len >> 16);
-                    buff[buffLen++] = (byte)(Len >> 24);
-                    buff[buffLen++] = (byte)crc;
-                    buff[buffLen++] = (byte)(crc >> 8);
+                    unchecked
+                    {
+                        buff[buffLen++] = (byte)(StartAddress);
+                        buff[buffLen++] = (byte)(StartAddress >> 8);
+                        buff[buffLen++] = (byte)(StartAddress >> 16);
+                        buff[buffLen++] = (byte)(StartAddress >> 24);
+                        buff[buffLen++] = (byte)(Len);
+                        buff[buffLen++] = (byte)(Len >> 8);
+                        buff[buffLen++] = (byte)(Len >> 16);
+                        buff[buffLen++] = (byte)(Len >> 24);
+                        buff[buffLen++] = (byte)crc;
+                        buff[buffLen++] = (byte)(crc >> 8);
+                    }
                     bootState[deviceIdx].MaxRetry = bootState[deviceIdx].RetryCount = retries;
                     bootState[deviceIdx].TxRetryDelay = delayInMs; // in ms
                     break;
@@ -523,6 +525,7 @@ namespace ArchonLightingSystem.Bootloader
 		            return false;
 
             }
+            UpdateProgress(deviceIdx);
 
             // Calculate CRC for the frame.
             unchecked
@@ -569,7 +572,7 @@ namespace ArchonLightingSystem.Bootloader
                 case BootloaderCmd.READ_CRC:
                 case BootloaderCmd.JMP_TO_APP:
                     // Progress with respect to retry count.
-                    bootloaderTaskWorker.ReportProgress((int)((1 - bootState[deviceIdx].RetryCount / bootState[deviceIdx].MaxRetry) * 100), bootState[deviceIdx].bootloaderStatus);
+                    bootloaderTaskWorker.ReportProgress((int)(((float)bootState[deviceIdx].RetryCount / (float)bootState[deviceIdx].MaxRetry) * 100f), bootState[deviceIdx].bootloaderStatus);
                     break;
 
                 case BootloaderCmd.PROGRAM_FLASH:
@@ -597,7 +600,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <returns></returns>
         public Version GetApplicationVersion()
         {
-            uint versionLocation = HexManager.PA_TO_VFA(0x9D00EFF0);
+            uint versionLocation = HexManager.PA_TO_VFA(Consts.ApplicationVersionAddress);
             return new Version(hexManager.GetFlashByte(versionLocation), hexManager.GetFlashByte(versionLocation + 1));
 
         }
@@ -644,7 +647,7 @@ namespace ArchonLightingSystem.Bootloader
          *****************************************************************************/
         UInt32 ReadPort(uint deviceIdx, ref byte[] buffer, UInt32 bufflen)
         {
-            return usbDriver.ReadUSBDevice(usbDriver.GetDevice((int)deviceIdx), ref buffer, bufflen);
+            return usbDriver.ReadUSBDevice(usbDriver.GetDevice((int)deviceIdx), ref buffer, 65);
         }
 
     }

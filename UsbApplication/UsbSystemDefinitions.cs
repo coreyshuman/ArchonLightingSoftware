@@ -35,6 +35,14 @@ namespace ArchonLightingSystem.UsbApplication
         internal const uint ERROR_NO_MORE_ITEMS = 0x00000103;
         internal const uint ERROR_DEVICE_NOT_CONNECTED = 0x48F;
         internal const uint SPDRP_HARDWAREID = 0x00000001;
+        //Overlapped IO definitions
+        internal const uint WAIT_ABANDONED = 0x00000080;
+        internal const uint WAIT_OBJECT_0 = 0x00000000;
+        internal const uint WAIT_TIMEOUT = 0x00000102;
+        internal const uint WAIT_FAILED = 0xFFFFFFFF;
+        //GetLastError definitions
+        internal const uint ERROR_IO_PENDING = 0x000003E5;
+
 
         //Various structure definitions for structures that this code will be using
         internal struct SP_DEVICE_INTERFACE_DATA

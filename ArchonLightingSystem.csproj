@@ -101,6 +101,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Bootloader\Bootloader.cs" />
+    <Compile Include="Bootloader\FirmwareUpdateManager.cs" />
     <Compile Include="Bootloader\HexManager.cs" />
     <Compile Include="Common\Consts.cs" />
     <Compile Include="Common\DataGridViewHandlers.cs" />

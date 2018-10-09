@@ -7,6 +7,7 @@ using ArchonLightingSystem.Common;
 using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
+using ArchonLightingSystem.Properties;
 
 namespace ArchonLightingSystem
 {
@@ -28,7 +29,9 @@ namespace ArchonLightingSystem
         public unsafe AppForm()
         {
             InitializeComponent();
+            
             dragSupport.Initialize(this, menuStrip1);
+            dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
 
             usbApp = new UsbApp();
             InitializeForm();
@@ -37,6 +40,17 @@ namespace ArchonLightingSystem
             usbApp.InitializeDevice(Consts.ApplicationVid, Consts.ApplicationPid);
             //InitializeHardwareMonitor();
             FormUpdateTimer.Enabled = true;
+
+            if (Settings.Default.MainWindowLocation.X >= 0)
+            {
+                this.Location = Settings.Default.MainWindowLocation;
+            }
+        }
+
+        void DragWindowEventHandler(object sender, DragWindowEventArgs args)
+        {
+            Settings.Default.MainWindowLocation = args.Location;
+            Settings.Default.Save();
         }
 
         void InitializeForm()
@@ -277,6 +291,7 @@ namespace ArchonLightingSystem
             {
                 firmwareForm.WindowState = FormWindowState.Normal;
             }
+            firmwareForm.Location = this.Location;
             firmwareForm.Focus();
         }
 

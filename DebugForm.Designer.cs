@@ -126,6 +126,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.Name = "DebugForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Debug Form";
             this.ResumeLayout(false);
             this.PerformLayout();

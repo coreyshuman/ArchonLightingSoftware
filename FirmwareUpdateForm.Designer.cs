@@ -39,10 +39,11 @@
             this.btn_Cancel = new System.Windows.Forms.Button();
             this.formUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.btn_OpenHexFile = new System.Windows.Forms.Button();
-            this.progressBar1 = new System.Windows.Forms.ProgressBar();
             this.btn_StartApp = new System.Windows.Forms.Button();
             this.timer_ResetHardware = new System.Windows.Forms.Timer(this.components);
-            this.timer_EnableUsb = new System.Windows.Forms.Timer(this.components);
+            this.btn_Erase = new System.Windows.Forms.Button();
+            this.btn_Verify = new System.Windows.Forms.Button();
+            this.txt_Log = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
             // listView1
@@ -50,7 +51,7 @@
             this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.listView1.GridLines = true;
-            this.listView1.Location = new System.Drawing.Point(35, 87);
+            this.listView1.Location = new System.Drawing.Point(24, 87);
             this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
             this.listView1.Size = new System.Drawing.Size(637, 571);
@@ -83,7 +84,7 @@
             // 
             this.btn_UpdateAll.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_UpdateAll.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_UpdateAll.Location = new System.Drawing.Point(355, 14);
+            this.btn_UpdateAll.Location = new System.Drawing.Point(374, 47);
             this.btn_UpdateAll.Name = "btn_UpdateAll";
             this.btn_UpdateAll.Size = new System.Drawing.Size(86, 33);
             this.btn_UpdateAll.TabIndex = 3;
@@ -116,7 +117,7 @@
             // 
             this.btn_Cancel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_Cancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Cancel.Location = new System.Drawing.Point(457, 14);
+            this.btn_Cancel.Location = new System.Drawing.Point(558, 46);
             this.btn_Cancel.Name = "btn_Cancel";
             this.btn_Cancel.Size = new System.Drawing.Size(86, 33);
             this.btn_Cancel.TabIndex = 6;
@@ -128,7 +129,7 @@
             // 
             this.btn_OpenHexFile.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_OpenHexFile.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_OpenHexFile.Location = new System.Drawing.Point(253, 14);
+            this.btn_OpenHexFile.Location = new System.Drawing.Point(374, 7);
             this.btn_OpenHexFile.Name = "btn_OpenHexFile";
             this.btn_OpenHexFile.Size = new System.Drawing.Size(86, 33);
             this.btn_OpenHexFile.TabIndex = 7;
@@ -136,18 +137,11 @@
             this.btn_OpenHexFile.UseVisualStyleBackColor = false;
             this.btn_OpenHexFile.Click += new System.EventHandler(this.btn_OpenHexFile_Click);
             // 
-            // progressBar1
-            // 
-            this.progressBar1.Location = new System.Drawing.Point(35, 57);
-            this.progressBar1.Name = "progressBar1";
-            this.progressBar1.Size = new System.Drawing.Size(508, 23);
-            this.progressBar1.TabIndex = 8;
-            // 
             // btn_StartApp
             // 
             this.btn_StartApp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_StartApp.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_StartApp.Location = new System.Drawing.Point(558, 14);
+            this.btn_StartApp.Location = new System.Drawing.Point(558, 7);
             this.btn_StartApp.Name = "btn_StartApp";
             this.btn_StartApp.Size = new System.Drawing.Size(86, 33);
             this.btn_StartApp.TabIndex = 9;
@@ -160,19 +154,50 @@
             this.timer_ResetHardware.Interval = 500;
             this.timer_ResetHardware.Tick += new System.EventHandler(this.timer_ResetHardware_Tick);
             // 
-            // timer_EnableUsb
+            // btn_Erase
             // 
-            this.timer_EnableUsb.Interval = 2000;
-            this.timer_EnableUsb.Tick += new System.EventHandler(this.timer_EnableUsb_Tick);
+            this.btn_Erase.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Erase.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Erase.Location = new System.Drawing.Point(466, 7);
+            this.btn_Erase.Name = "btn_Erase";
+            this.btn_Erase.Size = new System.Drawing.Size(86, 33);
+            this.btn_Erase.TabIndex = 10;
+            this.btn_Erase.Text = "Erase";
+            this.btn_Erase.UseVisualStyleBackColor = false;
+            this.btn_Erase.Click += new System.EventHandler(this.btn_Erase_Click);
+            // 
+            // btn_Verify
+            // 
+            this.btn_Verify.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Verify.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Verify.Location = new System.Drawing.Point(466, 46);
+            this.btn_Verify.Name = "btn_Verify";
+            this.btn_Verify.Size = new System.Drawing.Size(86, 33);
+            this.btn_Verify.TabIndex = 11;
+            this.btn_Verify.Text = "Verify";
+            this.btn_Verify.UseVisualStyleBackColor = false;
+            this.btn_Verify.Click += new System.EventHandler(this.btn_Verify_Click);
+            // 
+            // txt_Log
+            // 
+            this.txt_Log.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.txt_Log.Location = new System.Drawing.Point(24, 677);
+            this.txt_Log.Multiline = true;
+            this.txt_Log.Name = "txt_Log";
+            this.txt_Log.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.txt_Log.Size = new System.Drawing.Size(637, 130);
+            this.txt_Log.TabIndex = 12;
             // 
             // FirmwareUpdateForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.ClientSize = new System.Drawing.Size(685, 662);
+            this.ClientSize = new System.Drawing.Size(685, 819);
+            this.Controls.Add(this.txt_Log);
+            this.Controls.Add(this.btn_Verify);
+            this.Controls.Add(this.btn_Erase);
             this.Controls.Add(this.btn_StartApp);
-            this.Controls.Add(this.progressBar1);
             this.Controls.Add(this.btn_OpenHexFile);
             this.Controls.Add(this.btn_Cancel);
             this.Controls.Add(this.lbl_Status);
@@ -188,6 +213,7 @@
             this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.Name = "FirmwareUpdateForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Firmware Updater";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.FirmwareUpdateForm_FormClosing);
             this.ResumeLayout(false);
@@ -206,9 +232,10 @@
         private System.Windows.Forms.Button btn_Cancel;
         private System.Windows.Forms.Timer formUpdateTimer;
         private System.Windows.Forms.Button btn_OpenHexFile;
-        private System.Windows.Forms.ProgressBar progressBar1;
         private System.Windows.Forms.Button btn_StartApp;
         private System.Windows.Forms.Timer timer_ResetHardware;
-        private System.Windows.Forms.Timer timer_EnableUsb;
+        private System.Windows.Forms.Button btn_Erase;
+        private System.Windows.Forms.Button btn_Verify;
+        private System.Windows.Forms.TextBox txt_Log;
     }
 }

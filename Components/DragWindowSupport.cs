@@ -8,11 +8,25 @@ using System.Windows.Forms;
 
 namespace ArchonLightingSystem.Components
 {
+    public class DragWindowEventArgs
+    {
+        public Point Location { get; }
+
+        public DragWindowEventArgs(Point loc)
+        {
+            Location = loc;
+        }
+    }
+
+    public delegate void DragWindowEventDelegate(object sender, DragWindowEventArgs args);
+
     class DragWindowSupport
     {
         private bool IsWindowMoving = false;
         private Point WindowOffset;
         private Form Form;
+
+        public event DragWindowEventDelegate DragWindowEvent;
 
         public DragWindowSupport()
         {
@@ -57,7 +71,13 @@ namespace ArchonLightingSystem.Components
             if (IsWindowMoving)
             {
                 IsWindowMoving = false;
+                OnDragEvent(Form.Location.X, Form.Location.Y);
             }
+        }
+
+        private void OnDragEvent(int x, int y)
+        {
+            DragWindowEvent?.Invoke(this, new DragWindowEventArgs(Form.Location));
         }
     }
 }

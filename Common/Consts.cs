@@ -12,5 +12,6 @@ namespace ArchonLightingSystem.Common
         public const string BootloaderPid = "3033";
         public const string ApplicationVid = "04D8";
         public const string ApplicationPid = "3034";
+        public const uint ApplicationVersionAddress = 0x9D00EFF0;
     }
 }

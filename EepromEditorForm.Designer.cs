@@ -85,6 +85,7 @@
             this.MinimizeBox = false;
             this.Name = "EepromEditorForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Eeprom Editor";
             ((System.ComponentModel.ISupportInitialize)(this.eepromGridView)).EndInit();
             this.ResumeLayout(false);
