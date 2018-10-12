@@ -84,7 +84,7 @@
     <UseVSHostingProcess>false</UseVSHostingProcess>
   </PropertyGroup>
   <PropertyGroup>
-    <ApplicationIcon>archon.ico</ApplicationIcon>
+    <ApplicationIcon>assets\archon.ico</ApplicationIcon>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
@@ -148,6 +148,7 @@
     <Compile Include="Interfaces\ISubform.cs" />
     <Compile Include="Models\FrameInfo.cs" />
     <Compile Include="Models\LightingModes.cs" />
+    <Compile Include="Models\UserSettings.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SubformBase.cs">
@@ -213,10 +214,10 @@
     <Folder Include="Properties\DataSources\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="archon.ico" />
     <Content Include="assets\archon.ico" />
     <Content Include="assets\cancel.png" />
     <Content Include="assets\checkmark.png" />
+    <Content Include="assets\darkarchon.ico" />
     <Content Include="assets\processing.png" />
     <Content Include="Documentation\modes.txt" />
   </ItemGroup>

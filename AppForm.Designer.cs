@@ -58,6 +58,8 @@ namespace ArchonLightingSystem
             this.trk_FanSpeed1 = new System.Windows.Forms.TrackBar();
             this.cbo_LightMode = new System.Windows.Forms.ComboBox();
             this.grp_Device1 = new System.Windows.Forms.GroupBox();
+            this.txt_Name = new System.Windows.Forms.TextBox();
+            this.lbl_Name = new System.Windows.Forms.Label();
             this.grp_FanSpeed1 = new System.Windows.Forms.GroupBox();
             this.lbl_FanUnits = new System.Windows.Forms.Label();
             this.btn_FanConfig = new System.Windows.Forms.Button();
@@ -72,6 +74,10 @@ namespace ArchonLightingSystem
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.notifiyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txt_ControllerName = new System.Windows.Forms.TextBox();
+            this.label3 = new System.Windows.Forms.Label();
+            this.chk_Enabled = new System.Windows.Forms.CheckBox();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -161,7 +167,7 @@ namespace ArchonLightingSystem
             this.pnl_TemperatureMarker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnl_TemperatureMarker.Location = new System.Drawing.Point(12, 125);
             this.pnl_TemperatureMarker.Name = "pnl_TemperatureMarker";
-            this.pnl_TemperatureMarker.Size = new System.Drawing.Size(40, 255);
+            this.pnl_TemperatureMarker.Size = new System.Drawing.Size(40, 245);
             this.pnl_TemperatureMarker.TabIndex = 55;
             // 
             // statusStrip1
@@ -169,7 +175,7 @@ namespace ArchonLightingSystem
             this.statusStrip1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.statusStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.statusLabel});
-            this.statusStrip1.Location = new System.Drawing.Point(0, 644);
+            this.statusStrip1.Location = new System.Drawing.Point(0, 714);
             this.statusStrip1.Name = "statusStrip1";
             this.statusStrip1.Size = new System.Drawing.Size(1331, 22);
             this.statusStrip1.TabIndex = 56;
@@ -299,7 +305,7 @@ namespace ArchonLightingSystem
             this.trk_FanSpeed1.Maximum = 100;
             this.trk_FanSpeed1.Name = "trk_FanSpeed1";
             this.trk_FanSpeed1.Orientation = System.Windows.Forms.Orientation.Vertical;
-            this.trk_FanSpeed1.Size = new System.Drawing.Size(45, 255);
+            this.trk_FanSpeed1.Size = new System.Drawing.Size(45, 245);
             this.trk_FanSpeed1.SmallChange = 5;
             this.trk_FanSpeed1.TabIndex = 69;
             this.trk_FanSpeed1.TickFrequency = 10;
@@ -310,13 +316,15 @@ namespace ArchonLightingSystem
             this.cbo_LightMode.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cbo_LightMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightMode.FormattingEnabled = true;
-            this.cbo_LightMode.Location = new System.Drawing.Point(97, 58);
+            this.cbo_LightMode.Location = new System.Drawing.Point(97, 93);
             this.cbo_LightMode.Name = "cbo_LightMode";
             this.cbo_LightMode.Size = new System.Drawing.Size(121, 28);
             this.cbo_LightMode.TabIndex = 70;
             // 
             // grp_Device1
             // 
+            this.grp_Device1.Controls.Add(this.txt_Name);
+            this.grp_Device1.Controls.Add(this.lbl_Name);
             this.grp_Device1.Controls.Add(this.grp_FanSpeed1);
             this.grp_Device1.Controls.Add(this.lbl_LightingSpeed);
             this.grp_Device1.Controls.Add(this.cbo_LightSpeed);
@@ -336,13 +344,32 @@ namespace ArchonLightingSystem
             this.grp_Device1.Controls.Add(this.button6);
             this.grp_Device1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grp_Device1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
-            this.grp_Device1.Location = new System.Drawing.Point(29, 74);
+            this.grp_Device1.Location = new System.Drawing.Point(29, 117);
             this.grp_Device1.Name = "grp_Device1";
-            this.grp_Device1.Size = new System.Drawing.Size(251, 554);
+            this.grp_Device1.Size = new System.Drawing.Size(251, 577);
             this.grp_Device1.TabIndex = 71;
             this.grp_Device1.TabStop = false;
             this.grp_Device1.Text = "Device 1";
             this.grp_Device1.Visible = false;
+            // 
+            // txt_Name
+            // 
+            this.txt_Name.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.txt_Name.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_Name.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.txt_Name.Location = new System.Drawing.Point(97, 41);
+            this.txt_Name.Name = "txt_Name";
+            this.txt_Name.Size = new System.Drawing.Size(121, 26);
+            this.txt_Name.TabIndex = 83;
+            // 
+            // lbl_Name
+            // 
+            this.lbl_Name.AutoSize = true;
+            this.lbl_Name.Location = new System.Drawing.Point(101, 20);
+            this.lbl_Name.Name = "lbl_Name";
+            this.lbl_Name.Size = new System.Drawing.Size(103, 20);
+            this.lbl_Name.TabIndex = 75;
+            this.lbl_Name.Text = "Device Name";
             // 
             // grp_FanSpeed1
             // 
@@ -353,9 +380,9 @@ namespace ArchonLightingSystem
             this.grp_FanSpeed1.Controls.Add(this.pnl_TemperatureMarker);
             this.grp_FanSpeed1.Controls.Add(this.trk_FanSpeed1);
             this.grp_FanSpeed1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
-            this.grp_FanSpeed1.Location = new System.Drawing.Point(78, 160);
+            this.grp_FanSpeed1.Location = new System.Drawing.Point(78, 186);
             this.grp_FanSpeed1.Name = "grp_FanSpeed1";
-            this.grp_FanSpeed1.Size = new System.Drawing.Size(155, 388);
+            this.grp_FanSpeed1.Size = new System.Drawing.Size(155, 385);
             this.grp_FanSpeed1.TabIndex = 72;
             this.grp_FanSpeed1.TabStop = false;
             this.grp_FanSpeed1.Text = "Fan Speed";
@@ -396,13 +423,13 @@ namespace ArchonLightingSystem
             this.pnl_FanMarker.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnl_FanMarker.Location = new System.Drawing.Point(58, 125);
             this.pnl_FanMarker.Name = "pnl_FanMarker";
-            this.pnl_FanMarker.Size = new System.Drawing.Size(39, 255);
+            this.pnl_FanMarker.Size = new System.Drawing.Size(39, 245);
             this.pnl_FanMarker.TabIndex = 56;
             // 
             // lbl_LightingSpeed
             // 
             this.lbl_LightingSpeed.AutoSize = true;
-            this.lbl_LightingSpeed.Location = new System.Drawing.Point(101, 103);
+            this.lbl_LightingSpeed.Location = new System.Drawing.Point(101, 128);
             this.lbl_LightingSpeed.Name = "lbl_LightingSpeed";
             this.lbl_LightingSpeed.Size = new System.Drawing.Size(116, 20);
             this.lbl_LightingSpeed.TabIndex = 74;
@@ -414,7 +441,7 @@ namespace ArchonLightingSystem
             this.cbo_LightSpeed.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cbo_LightSpeed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightSpeed.FormattingEnabled = true;
-            this.cbo_LightSpeed.Location = new System.Drawing.Point(97, 126);
+            this.cbo_LightSpeed.Location = new System.Drawing.Point(97, 151);
             this.cbo_LightSpeed.Name = "cbo_LightSpeed";
             this.cbo_LightSpeed.Size = new System.Drawing.Size(121, 28);
             this.cbo_LightSpeed.TabIndex = 73;
@@ -422,7 +449,7 @@ namespace ArchonLightingSystem
             // lbl_LightingMode
             // 
             this.lbl_LightingMode.AutoSize = true;
-            this.lbl_LightingMode.Location = new System.Drawing.Point(101, 35);
+            this.lbl_LightingMode.Location = new System.Drawing.Point(101, 70);
             this.lbl_LightingMode.Name = "lbl_LightingMode";
             this.lbl_LightingMode.Size = new System.Drawing.Size(109, 20);
             this.lbl_LightingMode.TabIndex = 72;
@@ -433,7 +460,7 @@ namespace ArchonLightingSystem
             this.btn_SaveConfig.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_SaveConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_SaveConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_SaveConfig.Location = new System.Drawing.Point(295, 32);
+            this.btn_SaveConfig.Location = new System.Drawing.Point(1173, 39);
             this.btn_SaveConfig.Name = "btn_SaveConfig";
             this.btn_SaveConfig.Size = new System.Drawing.Size(146, 37);
             this.btn_SaveConfig.TabIndex = 75;
@@ -447,11 +474,11 @@ namespace ArchonLightingSystem
             this.cbo_DeviceAddress.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cbo_DeviceAddress.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.cbo_DeviceAddress.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.cbo_DeviceAddress.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(224)))), ((int)(((byte)(224)))), ((int)(((byte)(224)))));
+            this.cbo_DeviceAddress.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_DeviceAddress.FormattingEnabled = true;
-            this.cbo_DeviceAddress.Location = new System.Drawing.Point(180, 36);
+            this.cbo_DeviceAddress.Location = new System.Drawing.Point(29, 68);
             this.cbo_DeviceAddress.Name = "cbo_DeviceAddress";
-            this.cbo_DeviceAddress.Size = new System.Drawing.Size(100, 28);
+            this.cbo_DeviceAddress.Size = new System.Drawing.Size(130, 28);
             this.cbo_DeviceAddress.TabIndex = 77;
             this.cbo_DeviceAddress.SelectedIndexChanged += new System.EventHandler(this.cbo_DeviceAddress_SelectedIndexChanged);
             // 
@@ -461,9 +488,9 @@ namespace ArchonLightingSystem
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(25, 39);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(150, 20);
+            this.label1.Size = new System.Drawing.Size(140, 20);
             this.label1.TabIndex = 78;
-            this.label1.Text = "Controller (Address)";
+            this.label1.Text = "Controller Address";
             // 
             // notifyIcon1
             // 
@@ -487,12 +514,57 @@ namespace ArchonLightingSystem
             this.closeToolStripMenuItem1.Text = "Close";
             this.closeToolStripMenuItem1.Click += new System.EventHandler(this.closeToolStripMenuItem1_Click);
             // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label2.Location = new System.Drawing.Point(348, 39);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(123, 20);
+            this.label2.TabIndex = 79;
+            this.label2.Text = "Controller Name";
+            // 
+            // txt_ControllerName
+            // 
+            this.txt_ControllerName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.txt_ControllerName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txt_ControllerName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.txt_ControllerName.Location = new System.Drawing.Point(352, 68);
+            this.txt_ControllerName.Name = "txt_ControllerName";
+            this.txt_ControllerName.Size = new System.Drawing.Size(200, 26);
+            this.txt_ControllerName.TabIndex = 80;
+            this.txt_ControllerName.Leave += new System.EventHandler(this.txt_ControllerName_Leave);
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label3.Location = new System.Drawing.Point(185, 39);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(140, 20);
+            this.label3.TabIndex = 81;
+            this.label3.Text = "Controller Enabled";
+            // 
+            // chk_Enabled
+            // 
+            this.chk_Enabled.AutoSize = true;
+            this.chk_Enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chk_Enabled.Location = new System.Drawing.Point(240, 75);
+            this.chk_Enabled.Name = "chk_Enabled";
+            this.chk_Enabled.Size = new System.Drawing.Size(15, 14);
+            this.chk_Enabled.TabIndex = 82;
+            this.chk_Enabled.UseVisualStyleBackColor = true;
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
-            this.ClientSize = new System.Drawing.Size(1331, 666);
+            this.ClientSize = new System.Drawing.Size(1331, 736);
+            this.Controls.Add(this.chk_Enabled);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.txt_ControllerName);
+            this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cbo_DeviceAddress);
             this.Controls.Add(this.btn_SaveConfig);
@@ -565,6 +637,12 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.Button btn_FanConfig;
         private System.Windows.Forms.Label lbl_FanControls;
         private System.Windows.Forms.Label lbl_FanUnits;
+        private System.Windows.Forms.TextBox txt_Name;
+        private System.Windows.Forms.Label lbl_Name;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.TextBox txt_ControllerName;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.CheckBox chk_Enabled;
     }
 }
 

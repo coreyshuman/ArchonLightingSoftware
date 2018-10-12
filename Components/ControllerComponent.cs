@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
 using System.Drawing;
+using System.Diagnostics;
 
 namespace ArchonLightingSystem.Components
 {
@@ -25,9 +26,12 @@ namespace ArchonLightingSystem.Components
         private TrackBar fanCtrl;
         private ComboBox lightingMode;
         private ComboBox lightingSpeed;
+        private TextBox txtName;
         private IList<Button> buttons;
         private Timer fanUpdateTimer;
         private bool isInitialized = false;
+        private UserSettings userSettings = null;
+        private int devIdx = 0;
 
         public bool UpdateReady { get; set; }
         public ApplicationData AppData
@@ -43,8 +47,27 @@ namespace ArchonLightingSystem.Components
                 ControlsEnabled(false);
                 applicationData = value;
                 fanUpdateTimer.Enabled = true;
+                if(userSettings != null)
+                {
+                    txtName.Text = userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name;
+                }
             }
         }
+
+        public UserSettings UserSettings
+        {
+            get
+            {
+                return userSettings;
+            }
+            set
+            {
+                userSettings = value;
+                txtName.Text = userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name;
+            }
+        }
+
+        public int ControllerIndex { get; set; }
 
         public ControllerComponent()
         {
@@ -56,6 +79,7 @@ namespace ArchonLightingSystem.Components
             buttons = new List<Button>();
             lightingMode = new ComboBox();
             lightingSpeed = new ComboBox();
+            txtName = new TextBox();
             fanUpdateTimer = new Timer();
             fanUpdateTimer.Interval = 100;
         }
@@ -77,13 +101,16 @@ namespace ArchonLightingSystem.Components
             };
         }
 
-        public void InitializeComponent(Control parent, int index)
+        public void InitializeComponent(Control parent, int compNum)
         {
+            devIdx = compNum - 1;
             GroupBox deviceTemplate = (GroupBox)parent.Controls["grp_Device1"];
             parentControl = deviceTemplate;
             Button buttonTemplate = (Button)deviceTemplate.Controls["btn_1_1"];
             Label lblModeTemplate = (Label)deviceTemplate.Controls["lbl_LightingMode"];
             Label lblSpeedTemplate = (Label)deviceTemplate.Controls["lbl_LightingSpeed"];
+            Label lblNameTemplate = (Label)deviceTemplate.Controls["lbl_Name"];
+            TextBox txtNameTemplate = (TextBox)deviceTemplate.Controls["txt_Name"];
             ComboBox cboModeTemplate = (ComboBox)deviceTemplate.Controls["cbo_LightMode"];
             ComboBox cboSpeedTemplate = (ComboBox)deviceTemplate.Controls["cbo_LightSpeed"];
             GroupBox fanTemplate = (GroupBox)deviceTemplate.Controls["grp_FanSpeed1"];
@@ -95,53 +122,63 @@ namespace ArchonLightingSystem.Components
             Label lblFanUnitsTemplate = (Label)fanTemplate.Controls["lbl_FanUnits"];
 
             Util.CopyObjectProperties<GroupBox>(grpDev, deviceTemplate, new string[] { "ForeColor", "BackColor", "Width", "Top", "Height" });
-            grpDev.Left = deviceTemplate.Left + (deviceTemplate.Width + 10) * (index - 1);
+            grpDev.Left = deviceTemplate.Left + (deviceTemplate.Width + 10) * (compNum - 1);
             grpDev.Parent = parent;
-            grpDev.Text = $"Device {index}";
+            grpDev.Text = $"Device {compNum}";
             grpDev.Font = deviceTemplate.Font;
-            grpDev.Name = $"deviceGroup_{index}";
+            grpDev.Name = $"deviceGroup_{compNum}";
             grpDev.Show();
 
             for(int i = 0; i < DeviceControllerDefinitions.LedCountPerDevice; i++)
             {
                 Button btn = new Button();
                 Util.CopyObjectProperties<Button>(btn, buttonTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Width", "Left", "Height" });
-                btn.Top = buttonTemplate.Top + (buttonTemplate.Height + 6) * i;
+                btn.Top = buttonTemplate.Top + (buttonTemplate.Height + 8) * i;
                 btn.Text = $"L{i + 1}";
                 btn.Parent = grpDev;
                 btn.Name = $"ledBtn_{i}";
                 btn.Show();
-                btn.Click += ColorUpdateClickEventHandler(index - 1, i);
+                btn.Click += ColorUpdateClickEventHandler(compNum - 1, i);
                 buttons.Add(btn);
             }
 
             Label lblMode = new Label();
-            Util.CopyObjectProperties<Label>(lblMode, lblModeTemplate, new string[] { "Left", "Width", "Top", "Height" });
+            Util.CopyObjectProperties<Label>(lblMode, lblModeTemplate, new string[] { "ForeColor", "BackColor", "Left", "Text", "Width", "Top", "Height" });
             lblMode.Parent = grpDev;
             lblMode.Show();
 
             Label lblSpeed = new Label();
-            Util.CopyObjectProperties<Label>(lblSpeed, lblSpeedTemplate, new string[] { "Left", "Width", "Top", "Height" });
+            Util.CopyObjectProperties<Label>(lblSpeed, lblSpeedTemplate, new string[] { "ForeColor", "BackColor", "Left", "Text", "Width", "Top", "Height" });
             lblSpeed.Parent = grpDev;
             lblSpeed.Show();
+
+            Label lblName = new Label();
+            Util.CopyObjectProperties<Label>(lblName, lblNameTemplate, new string[] { "ForeColor", "BackColor", "Left", "Text", "Width", "Top", "Height" });
+            lblName.Parent = grpDev;
+            lblName.Show();
+
+            Util.CopyObjectProperties<TextBox>(txtName, txtNameTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
+            txtName.Parent = grpDev;
+            txtName.Show();
+            txtName.Leave += TextNameChangedEventHandler(compNum - 1);
 
             Util.CopyObjectProperties<ComboBox>(lightingMode, cboModeTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
             lightingMode.Parent = grpDev;
             lightingMode.Show();
             lightingMode.Items.AddRange(LightingModes.GetLightingModes());
-            lightingMode.SelectedIndexChanged += LightingModeChangedEventHandler(index - 1);
+            lightingMode.SelectedIndexChanged += LightingModeChangedEventHandler(compNum - 1);
 
 
             Util.CopyObjectProperties<ComboBox>(lightingSpeed, cboSpeedTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
             lightingSpeed.Parent = grpDev;
             lightingSpeed.Show();
             lightingSpeed.Items.AddRange(LightingModes.GetLightingSpeeds());
-            lightingSpeed.SelectedIndexChanged += LightingSpeedChangedEventHandler(index - 1);
+            lightingSpeed.SelectedIndexChanged += LightingSpeedChangedEventHandler(compNum - 1);
 
 
             Util.CopyObjectProperties<GroupBox>(grpFan, fanTemplate, new string[] { "ForeColor", "BackColor", "Width", "Top", "Left", "Height", "Text" });
             grpFan.Parent = grpDev;
-            grpFan.Name = $"grp_FanSpeed{index}";
+            grpFan.Name = $"grp_FanSpeed{compNum}";
             grpFan.Show();
 
             Label lblFanControls = new Label();
@@ -192,8 +229,8 @@ namespace ArchonLightingSystem.Components
 
             fanCtrl.Parent = grpFan;
             fanCtrl.Show();
-            fanCtrl.Scroll += TrackScrollEvent(index - 1);
-            fanUpdateTimer.Tick += FanUpdateTimerTickHandler(index - 1);
+            fanCtrl.Scroll += TrackScrollEvent(compNum - 1);
+            fanUpdateTimer.Tick += FanUpdateTimerTickHandler(compNum - 1);
 
             ControlsEnabled(false);
         }
@@ -245,6 +282,27 @@ namespace ArchonLightingSystem.Components
             {
                 applicationData.DeviceControllerData.DeviceConfig.FanSpeed[deviceIdx] = (byte)((TrackBar)sender).Value;
                 applicationData.UpdateConfigPending = true;
+            };
+        }
+
+        private EventHandler TextNameChangedEventHandler(int deviceIdx)
+        {
+            return (object sender, EventArgs e) =>
+            {
+                try
+                {
+                    TextBox txt = (TextBox)sender;
+                    if (userSettings != null)
+                    {
+                        userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name = txt.Text;
+                        userSettings.Save();
+                    }
+                }
+                catch(Exception ex)
+                {
+                    Trace.WriteLine(ex.Message);
+                }
+                
             };
         }
 

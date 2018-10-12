@@ -23,11 +23,11 @@ namespace ArchonLightingSystem.Models
 
         public DeviceControllerConfig()
         {
-            FanSpeed = new byte[DeviceControllerDefinitions.DeviceCount];
-            LedMode = new byte[DeviceControllerDefinitions.DeviceCount];
-            LedSpeed = new byte[DeviceControllerDefinitions.DeviceCount];
+            FanSpeed = new byte[DeviceControllerDefinitions.DevicePerController];
+            LedMode = new byte[DeviceControllerDefinitions.DevicePerController];
+            LedSpeed = new byte[DeviceControllerDefinitions.DevicePerController];
             Unused1 = 0;
-            Colors = new byte[DeviceControllerDefinitions.DeviceCount, DeviceControllerDefinitions.LedBytesPerDevice];
+            Colors = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
             
         }
 
@@ -38,13 +38,13 @@ namespace ArchonLightingSystem.Models
             int i, j;
             Crc = Util.UInt16FromBytes(buffer[0], buffer[1]);
             Length = Util.UInt16FromBytes(buffer[2], buffer[3]);
-            for(i=0; i<DeviceControllerDefinitions.DeviceCount; i++)
+            for(i=0; i<DeviceControllerDefinitions.DevicePerController; i++)
             {
                 FanSpeed[i] = buffer[i + FanSpeedOffset];
                 LedMode[i] = buffer[i + LedModeOffset];
                 LedSpeed[i] = buffer[i + LedSpeedOffset];
             }
-            for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
                 for(j=0; j < DeviceControllerDefinitions.LedBytesPerDevice; j++)
                 {
@@ -64,13 +64,13 @@ namespace ArchonLightingSystem.Models
             buffer[2] = lengthBytes.Item1;
             buffer[3] = lengthBytes.Item2;
 
-            for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
                 buffer[i + FanSpeedOffset] = FanSpeed[i];
                 buffer[i + LedModeOffset] = LedMode[i];
                 buffer[i + LedSpeedOffset] = LedSpeed[i];
             }
-            for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
                 for (j = 0; j < DeviceControllerDefinitions.LedBytesPerDevice; j++)
                 {

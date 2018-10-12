@@ -36,7 +36,7 @@ namespace ArchonLightingSystem
             var bindingSource = new BindingSource();
             ledColorNavigator.BindingSource = bindingSource;
 
-            for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
                 bindingSource.Add(i);
             }
@@ -51,20 +51,20 @@ namespace ArchonLightingSystem
 
             topGrids.Select(grid =>
             {
-                grid.ColumnCount = (int)DeviceControllerDefinitions.DeviceCount;
+                grid.ColumnCount = (int)DeviceControllerDefinitions.DevicePerController;
                 grid.RowHeadersVisible = true;
                 grid.AllowUserToAddRows = false;
                 grid.AllowUserToDeleteRows = false;
                 grid.CellValidating += DataGridViewHandlers.DataGridValidateNumericRangeHandler(GetNumericValidationRangeForGrid(grid));
                 grid.CellEndEdit += CellEndHandler(GetDataPropertyForGrid(grid));
-                for (i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+                for (i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
                 {
                     grid.Columns[i - 1].Name = $"D{i}";
                 }
                 return grid;
             }).ToArray();
 
-            for (i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+            for (i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
                 string name = $"D{i}";
                 fanSpeedGridView.Columns[i - 1].Name = name;

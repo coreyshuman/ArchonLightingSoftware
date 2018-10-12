@@ -23,10 +23,13 @@ namespace ArchonLightingSystem
         
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
+        private int selectedAddress = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private OpenHardwareMonitor.Hardware.IHardware motherboard;
         private string temperatureString = "";
         private DragWindowSupport dragSupport = new DragWindowSupport();
+        private UserSettingsManager settingsManager = new UserSettingsManager();
+        private UserSettings userSettings = null;
 
         public unsafe AppForm()
         {
@@ -36,6 +39,8 @@ namespace ArchonLightingSystem
             dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
 
             usbApp = new UsbApp();
+            userSettings = settingsManager.GetSettings();
+
             InitializeForm();
 
             usbApp.RegisterEventHandler(this.Handle);
@@ -47,6 +52,8 @@ namespace ArchonLightingSystem
             {
                 this.Location = Settings.Default.MainWindowLocation;
             }
+
+            
         }
 
         void DragWindowEventHandler(object sender, DragWindowEventArgs args)
@@ -60,22 +67,28 @@ namespace ArchonLightingSystem
             cbo_DeviceAddress.DisplayMember = "Text";
             cbo_DeviceAddress.ValueMember = "Value";
 
-            for(int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+            for(int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
                 ControllerComponent device = new ControllerComponent();
                 deviceComponents.Add(device);
                 device.InitializeComponent(this, i);
+                device.UserSettings = userSettings;
             }
         }
 
         void UpdateFormSettings(DeviceControllerData controller)
         {
             FormUpdateTimer.Enabled = false;
-            FormUpdateTimer.Enabled = true;
-            for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+
+            txt_ControllerName.Text = userSettings.Controllers.Where(c => c.Address == selectedAddress).FirstOrDefault()?.Name;
+
+
+            for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
+                deviceComponents[i - 1].ControllerIndex = selectedAddressIdx;
                 deviceComponents[i - 1].AppData = usbApp.GetAppData(selectedAddressIdx);
             }
+            FormUpdateTimer.Enabled = true;
         }
 
         //This is a callback function that gets called when a Windows message is received by the form.
@@ -138,6 +151,7 @@ namespace ArchonLightingSystem
                         {
                             UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
                             FormIsInitialized = true;
+                            SetErrorIcon(true);
                         }
                     }
                     if ((usbDevice.IsAttached == false) || (usbDevice.IsAttachedButBroken == true))
@@ -196,7 +210,7 @@ namespace ArchonLightingSystem
                         {
                             temperatureString += sensor.Name + ": " + sensor.Value + "C ";
                         }
-                        for (int i = 1; i <= DeviceControllerDefinitions.DeviceCount; i++)
+                        for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
                         {
                             deviceComponents[i - 1].Temperature = (int)sensors.Where(s => s.Name == "CPU").FirstOrDefault()?.Value;
                         }
@@ -214,6 +228,12 @@ namespace ArchonLightingSystem
             notifyIcon1.BalloonTipTitle = title;
             notifyIcon1.BalloonTipText = content;
             notifyIcon1.ShowBalloonTip(duration);
+        }
+
+        private void SetErrorIcon(bool error)
+        {
+            notifyIcon1.Icon = error ? Resources.darkarchon : Resources.archon;
+            this.Icon = notifyIcon1.Icon;
         }
 
         /*
@@ -315,7 +335,9 @@ namespace ArchonLightingSystem
 
         private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
         {
-            selectedAddressIdx = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
+            var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
+            selectedAddressIdx = item.Value;
+            selectedAddress = int.Parse(item.Text);
             UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
         }
 
@@ -334,6 +356,11 @@ namespace ArchonLightingSystem
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void txt_ControllerName_Leave(object sender, EventArgs e)
+        {
+            userSettings.Controllers.Where(c => c.Address == selectedAddress).FirstOrDefault().Name = txt_ControllerName.Text;
         }
     }
 } 

@@ -169,7 +169,7 @@ namespace ArchonLightingSystem.UsbApplication
                                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FANSPEED);
                                 if (response != null)
                                 {
-                                    for (i = 0; i < DeviceControllerDefinitions.DeviceCount; i++)
+                                    for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
                                     {
                                         //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
                                         device.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
