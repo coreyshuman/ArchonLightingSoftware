@@ -8,6 +8,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using ArchonLightingSystem.Properties;
+using ArchonLightingSystem.OpenHardware;
 
 namespace ArchonLightingSystem
 {
@@ -20,12 +21,12 @@ namespace ArchonLightingSystem
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
         private FirmwareUpdateForm firmwareForm = null;
+        private HardwareManager hardwareManager = null;
         
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
         private int selectedAddress = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
-        private OpenHardwareMonitor.Hardware.IHardware motherboard;
         private string temperatureString = "";
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private UserSettingsManager settingsManager = new UserSettingsManager();
@@ -40,20 +41,25 @@ namespace ArchonLightingSystem
 
             usbApp = new UsbApp();
             userSettings = settingsManager.GetSettings();
-
-            InitializeForm();
-
-            usbApp.RegisterEventHandler(this.Handle);
-            usbApp.InitializeDevice(Consts.ApplicationVid, Consts.ApplicationPid);
-            InitializeHardwareMonitor();
-            FormUpdateTimer.Enabled = true;
-
+            hardwareManager = new HardwareManager();
             if (Settings.Default.MainWindowLocation.X >= 0)
             {
                 this.Location = Settings.Default.MainWindowLocation;
             }
 
+            InitializeForm();
+
+            usbApp.RegisterEventHandler(this.Handle);
+            usbApp.InitializeDevice(Consts.ApplicationVid, Consts.ApplicationPid);
             
+            FormUpdateTimer.Enabled = true;
+
+            
+
+            // Handle cleanup when the user logs off
+            Microsoft.Win32.SystemEvents.SessionEnded += delegate {
+                hardwareManager.Close();
+            };
         }
 
         void DragWindowEventHandler(object sender, DragWindowEventArgs args)
@@ -71,7 +77,7 @@ namespace ArchonLightingSystem
             {
                 ControllerComponent device = new ControllerComponent();
                 deviceComponents.Add(device);
-                device.InitializeComponent(this, i);
+                device.InitializeComponent(this, hardwareManager, i);
                 device.UserSettings = userSettings;
             }
         }
@@ -103,6 +109,8 @@ namespace ArchonLightingSystem
         {
             //This timer tick event handler function is used to update the user interface on the form, based on data
             //obtained asynchronously by the ReadWriteThread and the WM_DEVICECHANGE event handler functions.
+
+            hardwareManager.UpdateReadings();
 
             if(usbApp.DeviceCount > cbo_DeviceAddress.Items.Count)
             {
@@ -159,8 +167,6 @@ namespace ArchonLightingSystem
                         //Device not available to communicate. Disable user interface on the form.
                         statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
                     }
-
-                    UpdateHardwareTemperature();
                 }
                 catch(Exception ex)
                 {
@@ -169,56 +175,6 @@ namespace ArchonLightingSystem
                 finally
                 {
                     usbDevice.semaphore.Release();
-                }
-            }
-        }
-
-        private void InitializeHardwareMonitor()
-        {
-            try
-            {
-                var cp = new OpenHardwareMonitor.Hardware.Computer();
-                cp.Open();
-                //cp.HDDEnabled = true;
-                //cp.RAMEnabled = true;
-                //cp.GPUEnabled = true;
-                cp.MainboardEnabled = true;
-                //cp.CPUEnabled = true;
-
-                motherboard = cp.Hardware.Where(hw => hw.HardwareType == OpenHardwareMonitor.Hardware.HardwareType.Mainboard).FirstOrDefault();
-            }
-            catch(Exception ex)
-            {
-                Trace.WriteLine($"HardwareMonitor Init Error: {ex.ToString()}");
-            }
-        }
-
-        private void UpdateHardwareTemperature()
-        {
-            if (motherboard != null)
-            {
-                try
-                {
-                    motherboard.Update();
-                    if (motherboard.SubHardware.Count() > 0)
-                    {
-                        var superio = motherboard.SubHardware.ElementAt(0);
-                        superio.Update();
-                        var sensors = superio.Sensors.Where(sens => sens.SensorType == OpenHardwareMonitor.Hardware.SensorType.Temperature);
-                        temperatureString = "";
-                        foreach (var sensor in sensors)
-                        {
-                            temperatureString += sensor.Name + ": " + sensor.Value + "C ";
-                        }
-                        for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
-                        {
-                            deviceComponents[i - 1].Temperature = (int)sensors.Where(s => s.Name == "CPU").FirstOrDefault()?.Value;
-                        }
-                    }
-                } 
-                catch(Exception ex)
-                {
-                    Trace.WriteLine($"HardwareMonitor Update Error: {ex.ToString()}");
                 }
             }
         }

@@ -579,6 +579,7 @@ namespace ArchonLightingSystem
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "AppForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
+            this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "Archon Lighting System";
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();

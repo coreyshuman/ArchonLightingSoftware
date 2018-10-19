@@ -15,6 +15,7 @@ namespace ArchonLightingSystem.Models
         [XmlAttribute]
         public int Index { get; set; }
         public string Name { get; set; }
+        public string Sensor { get; set; }
     }
 
     [Serializable]

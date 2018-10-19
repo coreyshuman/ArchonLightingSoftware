@@ -8,16 +8,20 @@ using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
 using System.Drawing;
 using System.Diagnostics;
+using ArchonLightingSystem.OpenHardware;
+using OpenHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.Components
 {
-    class ControllerComponent
+    public class ControllerComponent
     {
         private static Color lastColor;
         private static List<Color> lastColorsAll = new List<Color>();
         private static ColorDialog colorDialog = new ColorDialog();
 
         private ApplicationData applicationData;
+        private HardwareManager hardwareManager;
+        private Form parentForm;
         private Control parentControl;
         private GroupBox grpDev;
         private GroupBox grpFan;
@@ -27,11 +31,14 @@ namespace ArchonLightingSystem.Components
         private ComboBox lightingMode;
         private ComboBox lightingSpeed;
         private TextBox txtName;
+        private Button btnFanConfig;
         private IList<Button> buttons;
         private Timer fanUpdateTimer;
         private bool isInitialized = false;
         private UserSettings userSettings = null;
         private int devIdx = 0;
+        private ISensor sensor = null;
+        private int controllerIndex = 0;
 
         public bool UpdateReady { get; set; }
         public ApplicationData AppData
@@ -47,10 +54,7 @@ namespace ArchonLightingSystem.Components
                 ControlsEnabled(false);
                 applicationData = value;
                 fanUpdateTimer.Enabled = true;
-                if(userSettings != null)
-                {
-                    txtName.Text = userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name;
-                }
+                LoadConfig();
             }
         }
 
@@ -63,11 +67,24 @@ namespace ArchonLightingSystem.Components
             set
             {
                 userSettings = value;
-                txtName.Text = userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name;
+                LoadConfig();
             }
         }
 
-        public int ControllerIndex { get; set; }
+        
+
+        public int ControllerIndex
+        {
+            get
+            {
+                return controllerIndex;
+            }
+            set
+            {
+                controllerIndex = value;
+                LoadConfig();
+            }
+        }
 
         public ControllerComponent()
         {
@@ -84,6 +101,11 @@ namespace ArchonLightingSystem.Components
             fanUpdateTimer.Interval = 100;
         }
 
+        private DeviceSettings GetDeviceSettings()
+        {
+            return userSettings.Controllers.Where(c => c.Address == controllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault();
+        }
+
         private EventHandler FanUpdateTimerTickHandler(int deviceIdx)
         {
             return (object sender, EventArgs e) =>
@@ -97,12 +119,22 @@ namespace ArchonLightingSystem.Components
                 if(isInitialized)
                 {
                     fanBar.Value = applicationData.DeviceControllerData.MeasuredFanRpm[deviceIdx];
+                    if(sensor != null && sensor.Value.HasValue)
+                    {
+                        tempBar.Value = (int)Math.Round(sensor.Value.Value);
+                    }
+                    else
+                    {
+                        tempBar.Value = 0;
+                    }
                 }
             };
         }
 
-        public void InitializeComponent(Control parent, int compNum)
+        public void InitializeComponent(Form parent, HardwareManager hm, int compNum)
         {
+            parentForm = parent;
+            hardwareManager = hm;
             devIdx = compNum - 1;
             GroupBox deviceTemplate = (GroupBox)parent.Controls["grp_Device1"];
             parentControl = deviceTemplate;
@@ -191,9 +223,10 @@ namespace ArchonLightingSystem.Components
             lblFanUnits.Parent = grpFan;
             lblFanUnits.Show();
 
-            Button btnFanConfig = new Button();
+            btnFanConfig = new Button();
             Util.CopyObjectProperties<Button>(btnFanConfig, btnFanConfigTemplate, new string[] { "FlatStyle", "ForeColor", "Text", "BackColor", "Width", "Top", "Left", "Height" });
             btnFanConfig.Parent = grpFan;
+            btnFanConfig.Click += OpenConfigFormEventHandler(devIdx);
             btnFanConfig.Show();
 
 
@@ -218,6 +251,7 @@ namespace ArchonLightingSystem.Components
             tempBar.BorderStyle = fanTemperature.BorderStyle;
             tempBar.BarColor = System.Drawing.Color.FromArgb(185, 49, 79);
             tempBar.ForeColor = grpFan.ForeColor;
+            tempBar.UseAverage = true;
             tempBar.Minimum = 0;
             tempBar.Maximum = 120;
             tempBar.Value = 0;
@@ -233,6 +267,32 @@ namespace ArchonLightingSystem.Components
             fanUpdateTimer.Tick += FanUpdateTimerTickHandler(compNum - 1);
 
             ControlsEnabled(false);
+        }
+
+        private EventHandler OpenConfigFormEventHandler(int deviceIdx)
+        {
+            return (object sender, EventArgs e) =>
+            {
+                ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
+                form.InitializeForm(applicationData, hardwareManager);
+                form.Location = parentForm.Location;
+                DialogResult res = form.ShowDialog(parentForm);
+                if(res == DialogResult.OK)
+                {
+                    sensor = hardwareManager.GetSensorByIdentifier(form.Identifier);
+                    GetDeviceSettings().Sensor = null;
+                    if (sensor != null)
+                    {
+                        ((Button)sender).Text = sensor.Name;
+                        GetDeviceSettings().Sensor = form.Identifier;
+                    }
+                    userSettings.Save();
+                }
+                if(sensor == null)
+                {
+                    ((Button)sender).Text = "Configure";
+                }
+            };
         }
 
         public int Temperature
@@ -252,6 +312,24 @@ namespace ArchonLightingSystem.Components
             foreach(Control cont in parentControl.Controls)
             {
                 cont.Enabled = enable;
+            }
+        }
+
+        private void LoadConfig()
+        {
+            if (userSettings == null) return;
+
+            txtName.Text = GetDeviceSettings().Name;
+            string identifier = GetDeviceSettings().Sensor;
+            if (identifier == null)
+            {
+                sensor = null;
+                btnFanConfig.Text = "Configure";
+            }
+            else
+            {
+                sensor = hardwareManager.GetSensorByIdentifier(identifier);
+                btnFanConfig.Text = sensor.Name;
             }
         }
 

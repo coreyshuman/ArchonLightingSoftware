@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.27703.2026
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchonLightingSystem", "ArchonLightingSystem.csproj", "{16F6C5BD-2B6A-46A1-96E6-7BEB4E0AB5E7}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OpenHardwareMonitorLib", "..\LibreHardwareMonitor\OpenHardwareMonitorLib.csproj", "{7C70B74D-3565-416B-9F04-EF3A00BB2095}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,8 +23,19 @@ Global
 		{16F6C5BD-2B6A-46A1-96E6-7BEB4E0AB5E7}.Release|Any CPU.Build.0 = Release|Any CPU
 		{16F6C5BD-2B6A-46A1-96E6-7BEB4E0AB5E7}.Release|x86.ActiveCfg = Release|x86
 		{16F6C5BD-2B6A-46A1-96E6-7BEB4E0AB5E7}.Release|x86.Build.0 = Release|x86
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Debug|x86.Build.0 = Debug|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Release|x86.ActiveCfg = Release|Any CPU
+		{7C70B74D-3565-416B-9F04-EF3A00BB2095}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E246484D-5BC7-4E54-B787-DB765C4CE82C}
 	EndGlobalSection
 EndGlobal

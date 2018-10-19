@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading.Tasks;
 
@@ -55,6 +56,24 @@ namespace ArchonLightingSystem.Common
             {
                 property.SetValue(destination, property.GetValue(source));
             }
+        }
+
+        // <summary>
+        // Get the name of a static or instance property from a property access lambda.
+        // </summary>
+        // <typeparam name="T">Type of the property</typeparam>
+        // <param name="propertyLambda">lambda expression of the form: '() => Class.Property' or '() => object.Property'</param>
+        // <returns>The name of the property</returns>
+        static public string GetPropertyName<T>(Expression<Func<T>> propertyLambda)
+        {
+            var me = propertyLambda.Body as MemberExpression;
+
+            if (me == null)
+            {
+                throw new ArgumentException("You must pass a lambda of the form: '() => Class.Property' or '() => object.Property'");
+            }
+
+            return me.Member.Name;
         }
 
         private static UInt16[] crc_table = new UInt16[]
