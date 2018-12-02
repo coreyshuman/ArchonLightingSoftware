@@ -28,12 +28,20 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.listView1 = new System.Windows.Forms.ListView();
             this.btn_Back = new System.Windows.Forms.Button();
             this.btn_Close = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
             this.lbl_Selected = new System.Windows.Forms.Label();
             this.btn_OK = new System.Windows.Forms.Button();
+            this.fanCurveChart = new System.Windows.Forms.DataVisualization.Charting.Chart();
+            this.useFanCheckbox = new System.Windows.Forms.CheckBox();
+            this.btnCopyFanCurve = new System.Windows.Forms.Button();
+            this.btnPasteFanCurve = new System.Windows.Forms.Button();
+            ((System.ComponentModel.ISupportInitialize)(this.fanCurveChart)).BeginInit();
             this.SuspendLayout();
             // 
             // listView1
@@ -41,21 +49,22 @@
             this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.listView1.Location = new System.Drawing.Point(56, 59);
-            this.listView1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(642, 479);
+            this.listView1.Size = new System.Drawing.Size(642, 243);
             this.listView1.TabIndex = 0;
             this.listView1.UseCompatibleStateImageBehavior = false;
             this.listView1.ItemActivate += new System.EventHandler(this.listView1_ItemActivate);
             this.listView1.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.listView1_ItemChecked);
             this.listView1.Click += new System.EventHandler(this.listView1_Click);
+            this.listView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
             // 
             // btn_Back
             // 
             this.btn_Back.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_Back.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_Back.Location = new System.Drawing.Point(56, 23);
-            this.btn_Back.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.btn_Back.Margin = new System.Windows.Forms.Padding(4);
             this.btn_Back.Name = "btn_Back";
             this.btn_Back.Size = new System.Drawing.Size(100, 28);
             this.btn_Back.TabIndex = 1;
@@ -109,6 +118,69 @@
             this.btn_OK.UseVisualStyleBackColor = false;
             this.btn_OK.Click += new System.EventHandler(this.btn_OK_Click);
             // 
+            // fanCurveChart
+            // 
+            this.fanCurveChart.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            chartArea2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            chartArea2.BorderColor = System.Drawing.Color.White;
+            chartArea2.Name = "ChartArea1";
+            this.fanCurveChart.ChartAreas.Add(chartArea2);
+            this.fanCurveChart.Location = new System.Drawing.Point(56, 309);
+            this.fanCurveChart.Name = "fanCurveChart";
+            this.fanCurveChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
+            series3.BorderWidth = 3;
+            series3.ChartArea = "ChartArea1";
+            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series3.Name = "FanCurveSeries";
+            series4.ChartArea = "ChartArea1";
+            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
+            series4.MarkerSize = 7;
+            series4.Name = "FanCurvePoints";
+            this.fanCurveChart.Series.Add(series3);
+            this.fanCurveChart.Series.Add(series4);
+            this.fanCurveChart.Size = new System.Drawing.Size(642, 229);
+            this.fanCurveChart.TabIndex = 6;
+            this.fanCurveChart.Text = "fanCurveChart";
+            this.fanCurveChart.PrePaint += new System.EventHandler<System.Windows.Forms.DataVisualization.Charting.ChartPaintEventArgs>(this.fanCurveChart_PrePaint);
+            this.fanCurveChart.MouseDown += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseDown);
+            this.fanCurveChart.MouseMove += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseMove);
+            this.fanCurveChart.MouseUp += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseUp);
+            // 
+            // useFanCheckbox
+            // 
+            this.useFanCheckbox.AutoSize = true;
+            this.useFanCheckbox.Location = new System.Drawing.Point(709, 309);
+            this.useFanCheckbox.Name = "useFanCheckbox";
+            this.useFanCheckbox.Size = new System.Drawing.Size(116, 20);
+            this.useFanCheckbox.TabIndex = 7;
+            this.useFanCheckbox.Text = "Use Fan Curve";
+            this.useFanCheckbox.UseVisualStyleBackColor = true;
+            this.useFanCheckbox.CheckedChanged += new System.EventHandler(this.useFanCheckbox_CheckedChanged);
+            // 
+            // btnCopyFanCurve
+            // 
+            this.btnCopyFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btnCopyFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnCopyFanCurve.Location = new System.Drawing.Point(709, 335);
+            this.btnCopyFanCurve.Name = "btnCopyFanCurve";
+            this.btnCopyFanCurve.Size = new System.Drawing.Size(116, 31);
+            this.btnCopyFanCurve.TabIndex = 8;
+            this.btnCopyFanCurve.Text = "Copy Fan Curve";
+            this.btnCopyFanCurve.UseVisualStyleBackColor = false;
+            this.btnCopyFanCurve.Click += new System.EventHandler(this.btnCopyFanCurve_Click);
+            // 
+            // btnPasteFanCurve
+            // 
+            this.btnPasteFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btnPasteFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btnPasteFanCurve.Location = new System.Drawing.Point(831, 335);
+            this.btnPasteFanCurve.Name = "btnPasteFanCurve";
+            this.btnPasteFanCurve.Size = new System.Drawing.Size(116, 31);
+            this.btnPasteFanCurve.TabIndex = 9;
+            this.btnPasteFanCurve.Text = "Paste Fan Curve";
+            this.btnPasteFanCurve.UseVisualStyleBackColor = false;
+            this.btnPasteFanCurve.Click += new System.EventHandler(this.btnPasteFanCurve_Click);
+            // 
             // FanConfigurationForm
             // 
             this.AcceptButton = this.btn_OK;
@@ -117,6 +189,10 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.CancelButton = this.btn_Close;
             this.ClientSize = new System.Drawing.Size(1067, 554);
+            this.Controls.Add(this.btnPasteFanCurve);
+            this.Controls.Add(this.btnCopyFanCurve);
+            this.Controls.Add(this.useFanCheckbox);
+            this.Controls.Add(this.fanCurveChart);
             this.Controls.Add(this.btn_OK);
             this.Controls.Add(this.lbl_Selected);
             this.Controls.Add(this.label1);
@@ -126,13 +202,15 @@
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.Margin = new System.Windows.Forms.Padding(4);
             this.MaximizeBox = false;
             this.MinimizeBox = false;
             this.Name = "FanConfigurationForm";
             this.SizeGripStyle = System.Windows.Forms.SizeGripStyle.Hide;
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "FanConfigurationForm";
+            this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FanConfigurationForm_KeyDown);
+            ((System.ComponentModel.ISupportInitialize)(this.fanCurveChart)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -146,5 +224,9 @@
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lbl_Selected;
         private System.Windows.Forms.Button btn_OK;
+        private System.Windows.Forms.DataVisualization.Charting.Chart fanCurveChart;
+        private System.Windows.Forms.CheckBox useFanCheckbox;
+        private System.Windows.Forms.Button btnCopyFanCurve;
+        private System.Windows.Forms.Button btnPasteFanCurve;
     }
 }

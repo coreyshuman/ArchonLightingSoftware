@@ -16,16 +16,21 @@ using System.Windows.Forms;
 using ArchonLightingSystem.OpenHardware;
 using System.Collections.ObjectModel;
 using ArchonLightingSystem.Components;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace ArchonLightingSystem.Forms
 {
     public partial class FanConfigurationForm : Form
     {
+        private const string fanCurveCopyPasteKey = "fanCurve";
         private HardwareManager hardwareManager;
         private ApplicationData appData;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private Node currentNode = null;
         private string identifier = "";
+        private DataPoint selectedDataPoint = null;
+        private DataPoint lastSelectedDataPoint = null;
+        private DeviceSettings deviceSettings = null;
 
         public string Identifier
         {
@@ -41,11 +46,21 @@ namespace ArchonLightingSystem.Forms
             dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(ApplicationData ad, HardwareManager hm)
+        public void InitializeForm(ApplicationData ad, HardwareManager hm, DeviceSettings settings)
         {
             appData = ad;
             hardwareManager = hm;
+            deviceSettings = settings;
+
+            useFanCheckbox.Checked = settings.UseFanCurve;
+            identifier = settings.Sensor;
+            if(identifier != "")
+            {
+                currentNode = hardwareManager.GetParentNodeByIdentifier(identifier);
+            }
+
             InitializeGrid();
+            InitializeFanCurve();
         }
 
         void InitializeGrid()
@@ -70,7 +85,88 @@ namespace ArchonLightingSystem.Forms
             listView1.Columns.Add("Name", 240, HorizontalAlignment.Left);
             listView1.Columns.Add("Children", 120, HorizontalAlignment.Left);
 
-            LoadGridForNode();
+            LoadGridForNode(currentNode);
+        }
+
+        void InitializeFanCurve()
+        {
+            var lineSeries = fanCurveChart.Series[0];
+            var linePoints = lineSeries.Points;
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+            fanCurveChart.Titles.Add("Fan Curve");
+            fanCurveChart.Titles[0].ForeColor = AppColors.PrimaryText;
+            lineSeries.Color = AppColors.PrimaryHighlight;
+            pointSeries.Color = AppColors.SecondaryHighlight;
+            chart.AxisX.LineColor = AppColors.PrimaryText;
+            chart.AxisX.TitleForeColor = AppColors.PrimaryText;
+            chart.AxisX.LabelStyle.ForeColor = AppColors.PrimaryText;
+            chart.AxisX.MajorGrid.LineColor = AppColors.PrimaryText;
+            chart.AxisX.MajorTickMark.LineColor = AppColors.PrimaryText;
+            chart.AxisY.LineColor = AppColors.PrimaryText;
+            chart.AxisY.TitleForeColor = AppColors.PrimaryText;
+            chart.AxisY.LabelStyle.ForeColor = AppColors.PrimaryText;
+            chart.AxisY.MajorGrid.LineColor = AppColors.PrimaryText;
+            chart.AxisY.MajorTickMark.LineColor = AppColors.PrimaryText;
+            chart.AxisX.Maximum = 100;
+            chart.AxisX.Minimum = 0;
+            chart.AxisX.Interval = 10;
+            chart.AxisY.Maximum = 100;
+            chart.AxisY.Minimum = 0;
+            chart.AxisY.Interval = 10;
+
+            // default points
+            linePoints.AddXY(0, 10);
+            linePoints.AddXY(10, 10);
+            linePoints.AddXY(20, 10);
+            linePoints.AddXY(30, 10);
+            linePoints.AddXY(40, 20);
+            linePoints.AddXY(50, 40);
+            linePoints.AddXY(60, 60);
+            linePoints.AddXY(70, 80);
+            linePoints.AddXY(80, 100);
+            linePoints.AddXY(90, 100);
+            linePoints.AddXY(100, 100);
+            pointPoints.AddXY(0, 10);
+            pointPoints.AddXY(10, 10);
+            pointPoints.AddXY(20, 10);
+            pointPoints.AddXY(30, 10);
+            pointPoints.AddXY(40, 20);
+            pointPoints.AddXY(50, 40);
+            pointPoints.AddXY(60, 60);
+            pointPoints.AddXY(70, 80);
+            pointPoints.AddXY(80, 100);
+            pointPoints.AddXY(90, 100);
+            pointPoints.AddXY(100, 100);
+
+            // get user settings
+            if (deviceSettings.FanCurveValues.Count != 11) deviceSettings.SetFanCurveToDefault();
+            UpdateFanCurvePoints();
+        }
+
+        void StoreChartPointLocation(ChartArea ca, Series s, DataPoint dp)
+        {
+            float mh = dp.MarkerSize / 2f;
+            float px = (float)ca.AxisX.ValueToPixelPosition(dp.XValue);
+            float py = (float)ca.AxisY.ValueToPixelPosition(dp.YValues[0]);
+            dp.Tag = (new RectangleF(px - mh, py - mh, dp.MarkerSize, dp.MarkerSize));
+        }
+
+        void UpdateFanCurvePoints()
+        {
+            var lineSeries = fanCurveChart.Series[0];
+            var linePoints = lineSeries.Points;
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+
+            for (int i = 0; i < pointPoints.Count; i++)
+            {
+                linePoints[i].YValues[0] = deviceSettings.FanCurveValues[i];
+                pointPoints[i].YValues[0] = deviceSettings.FanCurveValues[i];
+            }
+            fanCurveChart.Invalidate();
         }
 
         private void LoadGridForNode(Node topNode = null)
@@ -104,6 +200,11 @@ namespace ArchonLightingSystem.Forms
                     value = sensor.Value;
                     item.Text = ((TypeNode)node.Parent).Text;
                     item.ImageKey = ((TypeNode)node.Parent).ImageKey;
+                    if(sensor.Sensor.Identifier.ToString() == identifier)
+                    {
+                        item.Selected = true;
+                        lbl_Selected.Text = sensor.Text;
+                    }
                 }
                 else if(nodeType == typeof(HardwareNode))
                 {
@@ -122,6 +223,14 @@ namespace ArchonLightingSystem.Forms
         {
             lbl_Selected.Text = node.Text;
             identifier = node.Sensor.Identifier.ToString();
+            var sensor = hardwareManager.GetSensorByIdentifier(Identifier);
+            deviceSettings.Sensor = null;
+            deviceSettings.SensorName = null;
+            if (sensor != null)
+            {
+                deviceSettings.Sensor = Identifier;
+                deviceSettings.SensorName = sensor.Name.Trim();
+            }
         }
 
         private void listView1_ItemActivate(object sender, EventArgs e)
@@ -132,7 +241,7 @@ namespace ArchonLightingSystem.Forms
             {
                 LoadGridForNode(node);
             }
-            else
+            else if(node.GetType() == typeof(SensorNode))
             {
                 SelectSensor((SensorNode)node);
             }
@@ -165,10 +274,152 @@ namespace ArchonLightingSystem.Forms
         {
             Node node = (Node)((ListView)sender).FocusedItem.Tag;
 
-            if (node?.Nodes.Count == 0)
+            if (node.GetType() == typeof(SensorNode))
             {
                 SelectSensor((SensorNode)node);
             }
+        }
+
+        private void fanCurveChart_PrePaint(object sender, ChartPaintEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+
+            foreach (DataPoint dp in pointPoints)
+            {
+                StoreChartPointLocation(chart, pointSeries, dp);
+            }
+        }
+
+        private void fanCurveChart_MouseDown(object sender, MouseEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            if(lastSelectedDataPoint != null)
+            {
+                lastSelectedDataPoint.Color = AppColors.SecondaryHighlight;
+            }
+
+            foreach (DataPoint dp in pointPoints)
+            {
+                if (((RectangleF)dp.Tag).Contains(e.Location))
+                {
+                    Cursor = Cursors.HSplit;
+                    dp.Color = AppColors.PrimaryLowLight;
+                    selectedDataPoint = dp;
+                    lastSelectedDataPoint = dp;
+                    break;
+                }
+            }
+        }
+
+        private void fanCurveChart_MouseMove(object sender, MouseEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+
+            if (e.Button.HasFlag(MouseButtons.Left) && selectedDataPoint != null)
+            {
+                float mh = selectedDataPoint.MarkerSize / 2f;
+                //double vx = chart.AxisX.PixelPositionToValue(e.Location.X);
+                double vy = selectedDataPoint.YValues[0];
+                try
+                {
+                    vy = chart.AxisY.PixelPositionToValue(e.Location.Y);
+                }
+                finally
+                {
+                    if (vy < chart.AxisY.Minimum) vy = 0;
+                    if (vy > chart.AxisY.Maximum) vy = 100;
+                }
+
+                selectedDataPoint.SetValueXY(selectedDataPoint.XValue, vy);
+                StoreChartPointLocation(chart, pointSeries, selectedDataPoint);
+                fanCurveChart.Invalidate();
+            }
+            else
+            {
+                Cursor = Cursors.Default;
+                foreach (DataPoint dp in pointPoints)
+                {
+                    if (dp.Tag == null) continue;
+                    if (((RectangleF)dp.Tag).Contains(e.Location))
+                    {
+                        Cursor = Cursors.Hand; break;
+                    }
+                }
+            }
+        }
+
+        private void fanCurveChart_MouseUp(object sender, MouseEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            if (selectedDataPoint != null)
+            {
+                int pointIndex = pointPoints.IndexOf(selectedDataPoint);
+                deviceSettings.FanCurveValues[pointIndex] = (int)selectedDataPoint.YValues[0];
+                selectedDataPoint = null;
+                UpdateFanCurvePoints();
+            }
+        }
+
+        private void useFanCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            deviceSettings.UseFanCurve = useFanCheckbox.Checked;
+        }
+
+        private void btnCopyFanCurve_Click(object sender, EventArgs e)
+        {
+            CopyPasteDictionary.Copy(fanCurveCopyPasteKey, deviceSettings.FanCurveValues);
+        }
+
+        private void btnPasteFanCurve_Click(object sender, EventArgs e)
+        {
+            deviceSettings.FanCurveValues = (List<int>)CopyPasteDictionary.Paste(fanCurveCopyPasteKey);
+            UpdateFanCurvePoints();
+        }
+
+        private void HandleKeyPress(object sender, KeyEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+
+            if (lastSelectedDataPoint != null)
+            {
+                int value = (int)lastSelectedDataPoint.YValues[0];
+                if(e.KeyCode == Keys.W)
+                {
+                    value += 10;
+                }
+                else if(e.KeyCode == Keys.S)
+                {
+                    value -= 10;
+                }
+                if (value > 100) value = 100;
+                if (value < 0) value = 0;
+
+                int pointIndex = pointPoints.IndexOf(lastSelectedDataPoint);
+                deviceSettings.FanCurveValues[pointIndex] = value;
+                UpdateFanCurvePoints();
+                fanCurveChart.Invalidate();
+            }
+            e.SuppressKeyPress = true;
+        }
+
+        private void listView1_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
+        }
+
+        private void FanConfigurationForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
         }
     }
 }

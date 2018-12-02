@@ -2,9 +2,6 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Xml.Serialization;
 
 namespace ArchonLightingSystem.Models
@@ -16,6 +13,30 @@ namespace ArchonLightingSystem.Models
         public int Index { get; set; }
         public string Name { get; set; }
         public string Sensor { get; set; }
+        public string SensorName { get; set; }
+        public List<int> FanCurveValues { get; set; } = new List<int>();
+        public bool UseFanCurve { get; set; }
+
+        public DeviceSettings()
+        {
+            
+        }
+
+        public void SetFanCurveToDefault()
+        {
+            FanCurveValues = new List<int>();
+            FanCurveValues.Add(10);
+            FanCurveValues.Add(10);
+            FanCurveValues.Add(10);
+            FanCurveValues.Add(10);
+            FanCurveValues.Add(20);
+            FanCurveValues.Add(40);
+            FanCurveValues.Add(60);
+            FanCurveValues.Add(80);
+            FanCurveValues.Add(100);
+            FanCurveValues.Add(100);
+            FanCurveValues.Add(100);
+        }
     }
 
     [Serializable]
@@ -39,10 +60,11 @@ namespace ArchonLightingSystem.Models
         [XmlIgnore]
         public UserSettingsManager Manager { get; set; } = null;
 
-        public List<ControllerSettings> Controllers { get; } = new List<ControllerSettings>();
+        public List<ControllerSettings> Controllers { get; private set; } = new List<ControllerSettings>();
+
         //public ControllerSettings[] Controllers { get; set; } = new ControllerSettings[DeviceControllerDefinitions.MaxControllers];
         public string ComputerName { get; set; } = "Archon";
-        public string SoftwareVersion { get; set; } = ".99";
+        public string SoftwareVersion { get; set; } = ".101";
         public string LatestFirmwareVersion { get; set; } = "1.10";
 
         public UserSettings()
@@ -53,6 +75,12 @@ namespace ArchonLightingSystem.Models
         public void Save()
         {
             Manager?.SaveSettings(this);
+        }
+
+        public void RevertChanges()
+        {
+            var revertedSettings = Manager?.GetSettings();
+            Controllers = revertedSettings.Controllers;
         }
     }
 
@@ -78,7 +106,6 @@ namespace ArchonLightingSystem.Models
                     settings.Manager = this;
                     return settings;
                 }
-
             }
             catch (Exception ex)
             {
@@ -92,11 +119,12 @@ namespace ArchonLightingSystem.Models
             var settings = new UserSettings();
             for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
             {
-                var controller = new ControllerSettings() { Address = i + 1, Name = "Controller" + (i + 1) };
+                var controller = new ControllerSettings() { Address = i, Name = "Controller" + (i + 1) };
                 for (int j = 0; j < DeviceControllerDefinitions.DevicePerController; j++)
                 {
                     controller.Devices.Add(new DeviceSettings() { Index = j });
                 }
+                controller.Devices.ForEach((devSet) => devSet.SetFanCurveToDefault());
                 settings.Controllers.Add(controller);
             }
             settings.Manager = this;

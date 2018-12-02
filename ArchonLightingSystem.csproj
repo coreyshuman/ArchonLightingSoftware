@@ -94,6 +94,7 @@
     <Reference Include="System.Design" />
     <Reference Include="System.Drawing" />
     <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Windows.Forms.DataVisualization" />
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
@@ -136,6 +137,14 @@
     <Compile Include="Forms\FirmwareUpdateForm.Designer.cs">
       <DependentUpon>FirmwareUpdateForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\SequencerForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\SequencerForm.Designer.cs">
+      <DependentUpon>SequencerForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\AppColors.cs" />
+    <Compile Include="Models\CopyPasteDictionary.cs" />
     <Compile Include="Models\DeviceControllerConfig.cs" />
     <Compile Include="Models\DeviceControllerDefinitions.cs" />
     <Compile Include="Models\DeviceConfigBase.cs" />
@@ -152,6 +161,7 @@
     <Compile Include="Models\FrameInfo.cs" />
     <Compile Include="Models\LightingModes.cs" />
     <Compile Include="Models\UserSettings.cs" />
+    <Compile Include="Models\StartupService.cs" />
     <Compile Include="OpenHardware\HardwareManager.cs" />
     <Compile Include="OpenHardware\HardwareNode.cs" />
     <Compile Include="OpenHardware\HardwareSettings.cs" />
@@ -163,6 +173,7 @@
     <Compile Include="OpenHardware\UpdateVisitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\FanControllerService.cs" />
     <Compile Include="SubformBase.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -192,6 +203,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\FirmwareUpdateForm.resx">
       <DependentUpon>FirmwareUpdateForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\SequencerForm.resx">
+      <DependentUpon>SequencerForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>

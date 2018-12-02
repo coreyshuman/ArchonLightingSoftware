@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Threading.Tasks;
 
 namespace ArchonLightingSystem.Common
@@ -31,6 +33,11 @@ namespace ArchonLightingSystem.Common
         public static string[] ToStringArray(this byte[] array)
         {
             return array.Select(d => ((int)d).ToString()).ToArray();
+        }
+
+        public static bool IsNotNullOrEmpty(this string str)
+        {
+            return (str != null && str.Length > 0);
         }
 
         static public UInt16 UInt16FromBytes(byte low, byte high)
@@ -145,6 +152,33 @@ namespace ArchonLightingSystem.Common
                 throw allTasks.Exception;
             }
             return allTasks;
+        }
+
+        public static T DeepCopy<T>(T obj)
+
+        {
+            if (!typeof(T).IsSerializable)
+            {
+                throw new Exception("The source object must be serializable");
+            }
+
+            if (Object.ReferenceEquals(obj, null))
+            {
+                throw new Exception("The source object must not be null");
+            }
+
+            T result = default(T);
+
+            using (var memoryStream = new MemoryStream())
+            {
+                var formatter = new BinaryFormatter();
+                formatter.Serialize(memoryStream, obj);
+                memoryStream.Seek(0, SeekOrigin.Begin);
+                result = (T)formatter.Deserialize(memoryStream);
+                memoryStream.Close();
+            }
+
+            return result;
         }
     }
 }

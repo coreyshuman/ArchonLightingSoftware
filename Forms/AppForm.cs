@@ -9,6 +9,8 @@ using System.Linq;
 using System.Diagnostics;
 using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.OpenHardware;
+using ArchonLightingSystem.Services;
+using ArchonLightingSystem.Forms;
 
 namespace ArchonLightingSystem
 {
@@ -22,6 +24,9 @@ namespace ArchonLightingSystem
         private DebugForm debugForm = null;
         private FirmwareUpdateForm firmwareForm = null;
         private HardwareManager hardwareManager = null;
+        private SequencerForm sequencerForm = null;
+        private StartupService startupService = new StartupService();
+        private FanControllerService fanControllerService = new FanControllerService();
         
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
@@ -54,12 +59,15 @@ namespace ArchonLightingSystem
             
             FormUpdateTimer.Enabled = true;
 
-            
+            startWithWindowsToolStripMenuItem.Checked = startupService.Enabled;
 
             // Handle cleanup when the user logs off
             Microsoft.Win32.SystemEvents.SessionEnded += delegate {
+                fanControllerService.CloseService();
                 hardwareManager.Close();
             };
+
+            fanControllerService.BeginService(userSettings, usbApp, hardwareManager);
         }
 
         void DragWindowEventHandler(object sender, DragWindowEventArgs args)
@@ -91,7 +99,7 @@ namespace ArchonLightingSystem
 
             for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
-                deviceComponents[i - 1].ControllerIndex = selectedAddressIdx;
+                deviceComponents[i - 1].ControllerAddress = selectedAddress;
                 deviceComponents[i - 1].AppData = usbApp.GetAppData(selectedAddressIdx);
             }
             FormUpdateTimer.Enabled = true;
@@ -107,11 +115,6 @@ namespace ArchonLightingSystem
 
         private async void FormUpdateTimer_Tick(object sender, EventArgs e)
         {
-            //This timer tick event handler function is used to update the user interface on the form, based on data
-            //obtained asynchronously by the ReadWriteThread and the WM_DEVICECHANGE event handler functions.
-
-            hardwareManager.UpdateReadings();
-
             if(usbApp.DeviceCount > cbo_DeviceAddress.Items.Count)
             {
                 var activeDevices = usbApp.UsbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
@@ -317,6 +320,35 @@ namespace ArchonLightingSystem
         private void txt_ControllerName_Leave(object sender, EventArgs e)
         {
             userSettings.Controllers.Where(c => c.Address == selectedAddress).FirstOrDefault().Name = txt_ControllerName.Text;
+        }
+
+        private void startWithWindowsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if(!startupService.Available)
+            {
+                MessageBox.Show("The startup service is not available.");
+                return;
+            }
+
+            startupService.Enabled = !startupService.Enabled;
+
+            startWithWindowsToolStripMenuItem.Checked = startupService.Enabled;
+        }
+
+        private void sequencerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (debugForm == null || debugForm.IsDisposed)
+            {
+                sequencerForm = new SequencerForm();
+                //sequencerForm.InitializeForm(usbApp);
+                sequencerForm.Location = this.Location;
+                sequencerForm.Show();
+            }
+            if (sequencerForm.WindowState == FormWindowState.Minimized)
+            {
+                sequencerForm.WindowState = FormWindowState.Normal;
+            }
+            sequencerForm.Focus();
         }
     }
 } 

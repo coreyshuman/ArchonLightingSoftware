@@ -30,7 +30,7 @@ namespace ArchonLightingSystem.Components
         private TrackBar fanCtrl;
         private ComboBox lightingMode;
         private ComboBox lightingSpeed;
-        private TextBox txtName;
+        private TextBox txtDeviceName;
         private Button btnFanConfig;
         private IList<Button> buttons;
         private Timer fanUpdateTimer;
@@ -38,7 +38,7 @@ namespace ArchonLightingSystem.Components
         private UserSettings userSettings = null;
         private int devIdx = 0;
         private ISensor sensor = null;
-        private int controllerIndex = 0;
+        private int controllerAddress = 0;
 
         public bool UpdateReady { get; set; }
         public ApplicationData AppData
@@ -73,15 +73,15 @@ namespace ArchonLightingSystem.Components
 
         
 
-        public int ControllerIndex
+        public int ControllerAddress
         {
             get
             {
-                return controllerIndex;
+                return controllerAddress;
             }
             set
             {
-                controllerIndex = value;
+                controllerAddress = value;
                 LoadConfig();
             }
         }
@@ -96,14 +96,14 @@ namespace ArchonLightingSystem.Components
             buttons = new List<Button>();
             lightingMode = new ComboBox();
             lightingSpeed = new ComboBox();
-            txtName = new TextBox();
+            txtDeviceName = new TextBox();
             fanUpdateTimer = new Timer();
-            fanUpdateTimer.Interval = 100;
+            fanUpdateTimer.Interval = 200;
         }
 
         private DeviceSettings GetDeviceSettings()
         {
-            return userSettings.Controllers.Where(c => c.Address == controllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault();
+            return userSettings.Controllers.Where(c => c.Address == controllerAddress).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault();
         }
 
         private EventHandler FanUpdateTimerTickHandler(int deviceIdx)
@@ -189,10 +189,10 @@ namespace ArchonLightingSystem.Components
             lblName.Parent = grpDev;
             lblName.Show();
 
-            Util.CopyObjectProperties<TextBox>(txtName, txtNameTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
-            txtName.Parent = grpDev;
-            txtName.Show();
-            txtName.Leave += TextNameChangedEventHandler(compNum - 1);
+            Util.CopyObjectProperties<TextBox>(txtDeviceName, txtNameTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
+            txtDeviceName.Parent = grpDev;
+            txtDeviceName.Show();
+            txtDeviceName.Leave += TextNameChangedEventHandler(compNum - 1);
 
             Util.CopyObjectProperties<ComboBox>(lightingMode, cboModeTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
             lightingMode.Parent = grpDev;
@@ -235,7 +235,7 @@ namespace ArchonLightingSystem.Components
             fanBar.Width = fanMarker.Width;
             fanBar.Height = fanMarker.Height;
             fanBar.BorderStyle = fanMarker.BorderStyle;
-            fanBar.BarColor = System.Drawing.Color.FromArgb(53, 114, 102);
+            fanBar.BarColor = AppColors.PrimaryHighlight;
             fanBar.ForeColor = grpFan.ForeColor;
             fanBar.UseAverage = true;
             fanBar.Minimum = 0;
@@ -274,23 +274,17 @@ namespace ArchonLightingSystem.Components
             return (object sender, EventArgs e) =>
             {
                 ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
-                form.InitializeForm(applicationData, hardwareManager);
+                form.InitializeForm(applicationData, hardwareManager, GetDeviceSettings());
                 form.Location = parentForm.Location;
                 DialogResult res = form.ShowDialog(parentForm);
                 if(res == DialogResult.OK)
                 {
-                    sensor = hardwareManager.GetSensorByIdentifier(form.Identifier);
-                    GetDeviceSettings().Sensor = null;
-                    if (sensor != null)
-                    {
-                        ((Button)sender).Text = sensor.Name;
-                        GetDeviceSettings().Sensor = form.Identifier;
-                    }
                     userSettings.Save();
+                    UpdateControlsUsingSettings();
                 }
-                if(sensor == null)
+                else
                 {
-                    ((Button)sender).Text = "Configure";
+                    userSettings.RevertChanges();
                 }
             };
         }
@@ -319,18 +313,18 @@ namespace ArchonLightingSystem.Components
         {
             if (userSettings == null) return;
 
-            txtName.Text = GetDeviceSettings().Name;
-            string identifier = GetDeviceSettings().Sensor;
-            if (identifier == null)
-            {
-                sensor = null;
-                btnFanConfig.Text = "Configure";
-            }
-            else
-            {
-                sensor = hardwareManager.GetSensorByIdentifier(identifier);
-                btnFanConfig.Text = sensor.Name;
-            }
+            txtDeviceName.Text = GetDeviceSettings().Name;
+
+            UpdateControlsUsingSettings();
+        }
+
+        private void UpdateControlsUsingSettings()
+        {
+            var deviceSettings = GetDeviceSettings();
+
+            fanCtrl.Enabled = !deviceSettings.UseFanCurve;
+            btnFanConfig.Text = deviceSettings.SensorName.IsNotNullOrEmpty() ? deviceSettings.SensorName : "Configure";
+            sensor = hardwareManager.GetSensorByIdentifier(deviceSettings.Sensor);
         }
 
         private void UpdatePeripheralSettings(int deviceIdx)
@@ -372,7 +366,7 @@ namespace ArchonLightingSystem.Components
                     TextBox txt = (TextBox)sender;
                     if (userSettings != null)
                     {
-                        userSettings.Controllers.Where(c => c.Address == ControllerIndex + 1).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault().Name = txt.Text;
+                        GetDeviceSettings().Name = txt.Text;
                         userSettings.Save();
                     }
                 }

@@ -2,15 +2,10 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Properties;
-using OpenHardwareMonitor.Collections;
 using OpenHardwareMonitor.Hardware;
-using OpenHardwareMonitor.Software;
 
 namespace ArchonLightingSystem.OpenHardware
 {
@@ -89,6 +84,10 @@ namespace ArchonLightingSystem.OpenHardware
 
         public ISensor GetSensorByIdentifier(string identifier, Node node = null)
         {
+            if(!identifier.IsNotNullOrEmpty())
+            {
+                return null;
+            }
             if (node == null) node = this.rootNode;
 
             var type = node.GetType();
@@ -133,6 +132,31 @@ namespace ArchonLightingSystem.OpenHardware
                 foreach (Node subnode in node.Nodes)
                 {
                     var result = GetSensorByIdentifier(identifier, subnode);
+                    if (result != null) return result;
+                }
+            }
+
+            return null;
+        }
+
+        public Node GetParentNodeByIdentifier(string identifier, Node node = null)
+        {
+            if (node == null) node = this.rootNode;
+
+            var type = node.GetType();
+
+            if (type == typeof(SensorNode))
+            {
+                if (identifier == ((SensorNode)node).Sensor.Identifier.ToString())
+                {
+                    return node.Parent;
+                }
+            }
+            else
+            {
+                foreach (Node subnode in node.Nodes)
+                {
+                    var result = GetParentNodeByIdentifier(identifier, subnode);
                     if (result != null) return result;
                 }
             }
