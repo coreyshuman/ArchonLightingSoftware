@@ -18,6 +18,7 @@ namespace ArchonLightingSystem.Models
         public bool WriteConfigPending;
         public bool ReadDebugPending;
         public bool ResetToBootloaderPending;
+        public bool UpdateFanSpeedPending;
         public uint EepromAddress;
         public uint EepromLength;
         public string Debug;
@@ -31,6 +32,11 @@ namespace ArchonLightingSystem.Models
             EepromReadDone = false;
             EepromWritePending = false;
             ReadDebugPending = false;
+            DefaultConfigPending = false;
+            UpdateConfigPending = false;
+            WriteConfigPending = false;
+            ResetToBootloaderPending = false;
+            UpdateFanSpeedPending = false;
             EepromAddress = 1;
             EepromLength = 1;
             Debug = "";

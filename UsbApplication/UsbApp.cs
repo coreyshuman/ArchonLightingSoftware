@@ -176,6 +176,12 @@ namespace ArchonLightingSystem.UsbApplication
                                     }
                                 }
                             }
+
+                            if(device.AppData.UpdateFanSpeedPending)
+                            {
+                                await WriteFanSpeed(device, device.AppData.DeviceControllerData.AutoFanSpeedValue);
+                                device.AppData.UpdateFanSpeedPending = false;
+                            }
                         }
 
                         if (device.AppData.ResetToBootloaderPending)
@@ -329,6 +335,16 @@ namespace ArchonLightingSystem.UsbApplication
             return null;
         }
 
+        private async Task<ControlPacket> WriteFanSpeed(UsbDevice device, byte[] speedValues)
+        {
+            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_FANSPEED, 20);
+                return response;
+            }
+            return null;
+        }
+
         private bool ResetDeviceToBootloader(UsbDevice device)
         {
             return GenerateAndSendFrames(device, CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
@@ -454,6 +470,7 @@ namespace ArchonLightingSystem.UsbApplication
                 {
                     frameCnt++;
                     frameInfo.FrameLen = byteCnt;
+                    // validate frame and load data into controlPacket
                     byteCnt = ValidateFrame(frameInfo, controlPacket);
                     if (byteCnt == 0)
                     {
@@ -463,8 +480,11 @@ namespace ArchonLightingSystem.UsbApplication
                     {
                         if(controlPacket.Cmd == CONTROL_CMD.CMD_ERROR_OCCURED)
                         {
-                            // do error handling here
-                            throw new Exception("Error Occured");
+                            // handle error codes from the Controller
+                            byte errorCode = controlPacket.Data[0];
+                            string err = $"USB Controller Error. Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
+                            Trace.WriteLine(err);
+                            throw new Exception(err);
                         }
                         return controlPacket.Cmd == cmd ? controlPacket : null;
                     }
@@ -598,6 +618,20 @@ namespace ArchonLightingSystem.UsbApplication
         }
 
         
-
+        private string GetErrorMessage(byte errorCode)
+        {
+            string ret = "Unknown error code.";
+            switch(errorCode)
+            {
+                case 0x01: ret = "Controller transmit buffer overflow."; break;
+                case 0x02: ret = "Controller receiver buffer overflow."; break;
+                case 0x03: ret = "Controller EEPROM failure."; break;
+                case 0xF0: ret = "Controller USB overflow (still processing last request)."; break;
+                case 0xF1: ret = "Controller invalid USB multipacket frame."; break;
+                case 0xF2: ret = "Controller invalid CRC."; break;
+                case 0xFF: ret = "Controller unknown command."; break;
+            }
+            return ret;
+        }
     }
 }

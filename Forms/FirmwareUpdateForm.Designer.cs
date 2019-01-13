@@ -41,8 +41,7 @@
             this.btn_OpenHexFile = new System.Windows.Forms.Button();
             this.btn_StartApp = new System.Windows.Forms.Button();
             this.timer_ResetHardware = new System.Windows.Forms.Timer(this.components);
-            this.btn_Erase = new System.Windows.Forms.Button();
-            this.btn_Verify = new System.Windows.Forms.Button();
+            this.btn_UpdateSelected = new System.Windows.Forms.Button();
             this.txt_Log = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
             // 
@@ -117,11 +116,11 @@
             // 
             this.btn_Cancel.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_Cancel.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Cancel.Location = new System.Drawing.Point(558, 46);
+            this.btn_Cancel.Location = new System.Drawing.Point(558, 7);
             this.btn_Cancel.Name = "btn_Cancel";
             this.btn_Cancel.Size = new System.Drawing.Size(86, 33);
             this.btn_Cancel.TabIndex = 6;
-            this.btn_Cancel.Text = "Cancel";
+            this.btn_Cancel.Text = "Close";
             this.btn_Cancel.UseVisualStyleBackColor = false;
             this.btn_Cancel.Click += new System.EventHandler(this.btn_Cancel_Click);
             // 
@@ -141,7 +140,7 @@
             // 
             this.btn_StartApp.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_StartApp.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_StartApp.Location = new System.Drawing.Point(558, 7);
+            this.btn_StartApp.Location = new System.Drawing.Point(466, 7);
             this.btn_StartApp.Name = "btn_StartApp";
             this.btn_StartApp.Size = new System.Drawing.Size(86, 33);
             this.btn_StartApp.TabIndex = 9;
@@ -154,29 +153,17 @@
             this.timer_ResetHardware.Interval = 500;
             this.timer_ResetHardware.Tick += new System.EventHandler(this.timer_ResetHardware_Tick);
             // 
-            // btn_Erase
+            // btn_UpdateSelected
             // 
-            this.btn_Erase.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.btn_Erase.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Erase.Location = new System.Drawing.Point(466, 7);
-            this.btn_Erase.Name = "btn_Erase";
-            this.btn_Erase.Size = new System.Drawing.Size(86, 33);
-            this.btn_Erase.TabIndex = 10;
-            this.btn_Erase.Text = "Erase";
-            this.btn_Erase.UseVisualStyleBackColor = false;
-            this.btn_Erase.Click += new System.EventHandler(this.btn_Erase_Click);
-            // 
-            // btn_Verify
-            // 
-            this.btn_Verify.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.btn_Verify.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Verify.Location = new System.Drawing.Point(466, 46);
-            this.btn_Verify.Name = "btn_Verify";
-            this.btn_Verify.Size = new System.Drawing.Size(86, 33);
-            this.btn_Verify.TabIndex = 11;
-            this.btn_Verify.Text = "Verify";
-            this.btn_Verify.UseVisualStyleBackColor = false;
-            this.btn_Verify.Click += new System.EventHandler(this.btn_Verify_Click);
+            this.btn_UpdateSelected.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_UpdateSelected.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_UpdateSelected.Location = new System.Drawing.Point(466, 46);
+            this.btn_UpdateSelected.Name = "btn_UpdateSelected";
+            this.btn_UpdateSelected.Size = new System.Drawing.Size(178, 33);
+            this.btn_UpdateSelected.TabIndex = 10;
+            this.btn_UpdateSelected.Text = "Update Selected";
+            this.btn_UpdateSelected.UseVisualStyleBackColor = false;
+            this.btn_UpdateSelected.Click += new System.EventHandler(this.btn_UpdateSelected_Click);
             // 
             // txt_Log
             // 
@@ -195,8 +182,7 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(685, 819);
             this.Controls.Add(this.txt_Log);
-            this.Controls.Add(this.btn_Verify);
-            this.Controls.Add(this.btn_Erase);
+            this.Controls.Add(this.btn_UpdateSelected);
             this.Controls.Add(this.btn_StartApp);
             this.Controls.Add(this.btn_OpenHexFile);
             this.Controls.Add(this.btn_Cancel);
@@ -234,8 +220,7 @@
         private System.Windows.Forms.Button btn_OpenHexFile;
         private System.Windows.Forms.Button btn_StartApp;
         private System.Windows.Forms.Timer timer_ResetHardware;
-        private System.Windows.Forms.Button btn_Erase;
-        private System.Windows.Forms.Button btn_Verify;
+        private System.Windows.Forms.Button btn_UpdateSelected;
         private System.Windows.Forms.TextBox txt_Log;
     }
 }

@@ -40,6 +40,7 @@ namespace ArchonLightingSystem
             this.updateFirmwareToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.startWithWindowsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.sequencerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.closeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.pnl_TemperatureMarker = new System.Windows.Forms.Panel();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -80,7 +81,6 @@ namespace ArchonLightingSystem
             this.txt_ControllerName = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.chk_Enabled = new System.Windows.Forms.CheckBox();
-            this.sequencerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -91,7 +91,7 @@ namespace ArchonLightingSystem
             // 
             // FormUpdateTimer
             // 
-            this.FormUpdateTimer.Interval = 6;
+            this.FormUpdateTimer.Interval = 50;
             this.FormUpdateTimer.Tick += new System.EventHandler(this.FormUpdateTimer_Tick);
             // 
             // menuStrip1
@@ -125,7 +125,7 @@ namespace ArchonLightingSystem
             this.editConfigToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.editConfigToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.editConfigToolStripMenuItem.Name = "editConfigToolStripMenuItem";
-            this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editConfigToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editConfigToolStripMenuItem.Text = "Edit Config";
             this.editConfigToolStripMenuItem.Click += new System.EventHandler(this.editConfigToolStripMenuItem_Click);
             // 
@@ -134,7 +134,7 @@ namespace ArchonLightingSystem
             this.editEEPROMToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.editEEPROMToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.editEEPROMToolStripMenuItem.Name = "editEEPROMToolStripMenuItem";
-            this.editEEPROMToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.editEEPROMToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.editEEPROMToolStripMenuItem.Text = "Edit EEPROM";
             this.editEEPROMToolStripMenuItem.Click += new System.EventHandler(this.editEEPROMToolStripMenuItem_Click);
             // 
@@ -143,7 +143,7 @@ namespace ArchonLightingSystem
             this.debugToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.debugToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.debugToolStripMenuItem.Name = "debugToolStripMenuItem";
-            this.debugToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.debugToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.debugToolStripMenuItem.Text = "Debug";
             this.debugToolStripMenuItem.Click += new System.EventHandler(this.debugToolStripMenuItem_Click);
             // 
@@ -152,7 +152,7 @@ namespace ArchonLightingSystem
             this.updateFirmwareToolStripMenuItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.updateFirmwareToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.updateFirmwareToolStripMenuItem.Name = "updateFirmwareToolStripMenuItem";
-            this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.updateFirmwareToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.updateFirmwareToolStripMenuItem.Text = "Update Firmware";
             this.updateFirmwareToolStripMenuItem.Click += new System.EventHandler(this.updateFirmwareToolStripMenuItem_Click);
             // 
@@ -163,7 +163,7 @@ namespace ArchonLightingSystem
             this.startWithWindowsToolStripMenuItem});
             this.settingsToolStripMenuItem.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.settingsToolStripMenuItem.Name = "settingsToolStripMenuItem";
-            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
+            this.settingsToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
             this.settingsToolStripMenuItem.Text = "Settings";
             // 
             // startWithWindowsToolStripMenuItem
@@ -174,6 +174,13 @@ namespace ArchonLightingSystem
             this.startWithWindowsToolStripMenuItem.Size = new System.Drawing.Size(178, 22);
             this.startWithWindowsToolStripMenuItem.Text = "Start With Windows";
             this.startWithWindowsToolStripMenuItem.Click += new System.EventHandler(this.startWithWindowsToolStripMenuItem_Click);
+            // 
+            // sequencerToolStripMenuItem
+            // 
+            this.sequencerToolStripMenuItem.Name = "sequencerToolStripMenuItem";
+            this.sequencerToolStripMenuItem.Size = new System.Drawing.Size(164, 22);
+            this.sequencerToolStripMenuItem.Text = "Sequencer";
+            this.sequencerToolStripMenuItem.Click += new System.EventHandler(this.sequencerToolStripMenuItem_Click);
             // 
             // closeToolStripMenuItem
             // 
@@ -578,13 +585,6 @@ namespace ArchonLightingSystem
             this.chk_Enabled.Size = new System.Drawing.Size(15, 14);
             this.chk_Enabled.TabIndex = 82;
             this.chk_Enabled.UseVisualStyleBackColor = true;
-            // 
-            // sequencerToolStripMenuItem
-            // 
-            this.sequencerToolStripMenuItem.Name = "sequencerToolStripMenuItem";
-            this.sequencerToolStripMenuItem.Size = new System.Drawing.Size(180, 22);
-            this.sequencerToolStripMenuItem.Text = "Sequencer";
-            this.sequencerToolStripMenuItem.Click += new System.EventHandler(this.sequencerToolStripMenuItem_Click);
             // 
             // AppForm
             // 

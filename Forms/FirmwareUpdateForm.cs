@@ -143,6 +143,7 @@ namespace ArchonLightingSystem
             listView1.Items[device.DeviceIndex].SubItems[2].Text = device.BootloaderVersion.ToString();
             listView1.Items[device.DeviceIndex].SubItems[3].Text = device.ApplicationVersion.ToString();
             listView1.Items[device.DeviceIndex].SubItems[1].Text = device.DeviceAddress.ToString();
+            listView1.Items[device.DeviceIndex].Tag = device;
             ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).Value = device.Progress;
             switch (device.DeviceStatus)
             {
@@ -189,17 +190,11 @@ namespace ArchonLightingSystem
             this.Cursor = Cursors.Default;
         }
 
-        private void btn_UpdateAll_Click(object sender, EventArgs e)
-        {
-            SetFormIsUpdating();
-            firmwareManager.ProgramFlash(); // start erase, update, verify
-        }
-
         private void btn_Cancel_Click(object sender, EventArgs e)
         {
             if(isBusy)
             {
-                if (MessageBox.Show("This could prevent your devices from working. Are you sure?", "Cancel Actions", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+                if (MessageBox.Show("Firmware update in progress. Canceling now could prevent your devices from working. Are you sure?", "Warning: Cancel Actions", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
                 {
                     firmwareManager.CancelFirmwareActions();
                     if (e.GetType() == typeof(FormClosingEventArgs))
@@ -227,19 +222,6 @@ namespace ArchonLightingSystem
         {
             bootUsbDriver.HandleWindowEvent(ref m);
             base.WndProc(ref m);
-            /*
-            if(bootUsbDriver.GetDevice(0).IsAttached && !isConnected)
-            {
-                isConnected = true;
-                lbl_Status.Text = StatusString[(int)Status.Disconnected];
-                bootloader.SendCommand(BootloaderCmd.READ_BOOT_INFO, 3, 500);
-            } 
-            else if(!bootUsbDriver.GetDevice(0).IsAttached && isConnected)
-            {
-                isConnected = false;
-                lbl_Status.Text = StatusString[(int)Status.Idle];
-            }
-            */
         }
 
         private void btn_OpenHexFile_Click(object sender, EventArgs e)
@@ -308,10 +290,25 @@ namespace ArchonLightingSystem
             }
         }
 
-        private void btn_Erase_Click(object sender, EventArgs e)
+        private void btn_UpdateSelected_Click(object sender, EventArgs e)
         {
             SetFormIsUpdating();
-            firmwareManager.EraseFlash(); 
+            List<byte> devices = new List<byte>();
+            var selectedItems = listView1.SelectedItems;
+            foreach(ListViewItem item in selectedItems)
+            {
+                FirmwareDevice fDevice = (FirmwareDevice)(item.Tag);
+                devices.Add((byte)fDevice.DeviceAddress);
+            }
+            // this begins an erase, program, verify cycle
+            firmwareManager.EraseProgramVerifyFlash(devices.ToArray()); 
+        }
+
+        private void btn_UpdateAll_Click(object sender, EventArgs e)
+        {
+            SetFormIsUpdating();
+            // this begins an erase, program, verify cycle
+            firmwareManager.EraseProgramVerifyFlash();
         }
 
         private void btn_Verify_Click(object sender, EventArgs e)

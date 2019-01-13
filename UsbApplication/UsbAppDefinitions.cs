@@ -23,11 +23,13 @@
             CMD_RESET_TO_BOOTLOADER = 0x03,
             CMD_READ_BOOT_STATUS = 0x04,
             CMD_READ_CONTROLLER_ADDRESS = 0x0A,
+            CMD_WRITE_LED_FRAME = 0x20,
             CMD_READ_CONFIG = 0x30,
             CMD_UPDATE_CONFIG = 0x31,
             CMD_WRITE_CONFIG = 0x32,
             CMD_DEFAULT_CONFIG = 0x33,
             CMD_READ_FANSPEED = 0x35,
+            CMD_WRITE_FANSPEED = 0x36,
             CMD_READ_EEPROM = 0x38,
             CMD_WRITE_EEPROM = 0x39,
             CMD_ERROR_OCCURED = 0x40

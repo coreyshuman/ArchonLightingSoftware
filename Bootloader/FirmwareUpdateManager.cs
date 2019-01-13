@@ -85,7 +85,7 @@ namespace ArchonLightingSystem.Bootloader
         private string hexFirmwareVersion;
         private UsbDriver bootUsbDriver;
         private List<FirmwareDevice> firmwareDevices = new List<FirmwareDevice>();
-        private Timer usbUpdateTimer = new Timer(1000);
+        private Timer usbUpdateTimer = new Timer(2000);
 
         public event FirmwareEventDelgate FirmwareEventHandler;
         public event FirmwareLogDelegate FirmwareLogHandler;
@@ -116,13 +116,16 @@ namespace ArchonLightingSystem.Bootloader
             return StatusString[(int)Status];
         }
 
-        public void EraseFlash()
+        /// <summary>
+        /// Start an Erase - Program - Verify Cycle
+        /// </summary>
+        public void EraseProgramVerifyFlash(byte[] deviceIds = null)
         {
             if(!IsManagerBusy())
             {
                 WriteLog("--Erase Flash--");
                 firmwareDevices.ForEach((device) => {
-                    if(!IsDeviceBusy(device.DeviceStatus))
+                    if(!IsDeviceBusy(device.DeviceStatus) && (deviceIds == null || deviceIds.Contains((byte)device.DeviceAddress)))
                     {
                         bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.ERASE_FLASH, 3, 5000);
                         device.DeviceStatus = FirmwareDevice.StatusCode.Erasing;
@@ -281,7 +284,7 @@ namespace ArchonLightingSystem.Bootloader
                     verified = true;
                 }
 
-                // todo - validate crc of result
+                // todo - validate crc of result (must be saved in code somewhere)
                 if (verified)
                 {
                     hexFirmwareVersion = bootloader.GetApplicationVersion().ToString();

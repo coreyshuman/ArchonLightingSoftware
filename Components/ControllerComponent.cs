@@ -98,7 +98,7 @@ namespace ArchonLightingSystem.Components
             lightingSpeed = new ComboBox();
             txtDeviceName = new TextBox();
             fanUpdateTimer = new Timer();
-            fanUpdateTimer.Interval = 200;
+            fanUpdateTimer.Interval = 50;
         }
 
         private DeviceSettings GetDeviceSettings()
