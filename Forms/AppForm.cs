@@ -11,6 +11,7 @@ using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Services;
 using ArchonLightingSystem.Forms;
+using ArchonLightingSystem.OpenHardware.Startup;
 
 namespace ArchonLightingSystem
 {
@@ -25,7 +26,7 @@ namespace ArchonLightingSystem
         private FirmwareUpdateForm firmwareForm = null;
         private HardwareManager hardwareManager = null;
         private SequencerForm sequencerForm = null;
-        private StartupService startupService = new StartupService();
+        private StartupManager startupManager = new StartupManager();
         private FanControllerService fanControllerService = new FanControllerService();
         
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
@@ -36,11 +37,14 @@ namespace ArchonLightingSystem
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private UserSettingsManager settingsManager = new UserSettingsManager();
         private UserSettings userSettings = null;
+        private bool isHidden = false;
+        private bool allowVisible = false;
+        private bool allowClose = false;
 
-        public unsafe AppForm()
+        public unsafe AppForm(bool startInBackground)
         {
-            InitializeComponent();
-            
+            InitializeComponent();     
+
             dragSupport.Initialize(this, menuStrip1);
             dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
 
@@ -59,7 +63,8 @@ namespace ArchonLightingSystem
             
             FormUpdateTimer.Enabled = true;
 
-            startWithWindowsToolStripMenuItem.Checked = startupService.Enabled;
+            startWithWindowsToolStripMenuItem.Enabled = startupManager.IsAvailable;
+            startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
 
             // Handle cleanup when the user logs off
             Microsoft.Win32.SystemEvents.SessionEnded += delegate {
@@ -68,6 +73,31 @@ namespace ArchonLightingSystem
             };
 
             fanControllerService.BeginService(userSettings, usbApp, hardwareManager);
+
+            allowVisible = !startInBackground;
+            isHidden = startInBackground;
+        }
+
+         
+
+        protected override void SetVisibleCore(bool value)
+        {
+            if (!allowVisible)
+            {
+                value = false;
+                if (!this.IsHandleCreated) CreateHandle();
+            }
+            base.SetVisibleCore(value);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (!allowClose)
+            {
+                HideForm();
+                e.Cancel = true;
+            }
+            base.OnFormClosing(e);
         }
 
         void DragWindowEventHandler(object sender, DragWindowEventArgs args)
@@ -305,18 +335,35 @@ namespace ArchonLightingSystem
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            this.Hide();
-            FormUpdateTimer.Enabled = false;
+            HideForm();
         }
 
         private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            Show();
-            FormUpdateTimer.Enabled = true;
+            ShowForm();
+        }
+
+        public void HideForm()
+        {
+            Hide();
+            FormUpdateTimer.Enabled = false;
+            isHidden = true;
+        }
+
+        public void ShowForm()
+        {
+            if (isHidden)
+            {
+                allowVisible = true;
+                Show();
+                FormUpdateTimer.Enabled = true;
+                isHidden = false;
+            }
         }
 
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
+            allowClose = true;
             this.Close();
         }
 
@@ -327,15 +374,14 @@ namespace ArchonLightingSystem
 
         private void startWithWindowsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if(!startupService.Available)
+            if(!startupManager.IsAvailable)
             {
                 MessageBox.Show("The startup service is not available.");
                 return;
             }
 
-            startupService.Enabled = !startupService.Enabled;
-
-            startWithWindowsToolStripMenuItem.Checked = startupService.Enabled;
+            startupManager.Startup = !startupManager.Startup;
+            startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
         }
 
         private void sequencerToolStripMenuItem_Click(object sender, EventArgs e)

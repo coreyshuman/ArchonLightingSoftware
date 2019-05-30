@@ -14,7 +14,7 @@
     <GenerateManifests>false</GenerateManifests>
     <ExcludedPermissions>
     </ExcludedPermissions>
-    <TargetFrameworkVersion>v4.5.2</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileUpgradeFlags>
     </FileUpgradeFlags>
     <UpgradeBackupLocation>
@@ -88,6 +88,7 @@
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
+    <Reference Include="Microsoft.VisualBasic" />
     <Reference Include="System" />
     <Reference Include="System.Data" />
     <Reference Include="System.Deployment" />
@@ -161,13 +162,14 @@
     <Compile Include="Models\FrameInfo.cs" />
     <Compile Include="Models\LightingModes.cs" />
     <Compile Include="Models\UserSettings.cs" />
-    <Compile Include="Models\StartupService.cs" />
     <Compile Include="OpenHardware\HardwareManager.cs" />
     <Compile Include="OpenHardware\HardwareNode.cs" />
     <Compile Include="OpenHardware\HardwareSettings.cs" />
     <Compile Include="OpenHardware\HardwareTypeImage.cs" />
     <Compile Include="OpenHardware\Node.cs" />
     <Compile Include="OpenHardware\SensorNode.cs" />
+    <Compile Include="OpenHardware\Startup\StartupManager.cs" />
+    <Compile Include="OpenHardware\Startup\TaskScheduler.cs" />
     <Compile Include="OpenHardware\TypeNode.cs" />
     <Compile Include="OpenHardware\UnitManager.cs" />
     <Compile Include="OpenHardware\UpdateVisitor.cs" />
@@ -217,6 +219,7 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
+    <None Include=".gitignore" />
     <None Include="app.config" />
     <BaseApplicationManifest Include="Properties\app.manifest" />
     <None Include="Firmware\latest.hex">
@@ -240,7 +243,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="OpenHardware\Startup\" />
     <Folder Include="Properties\DataSources\" />
   </ItemGroup>
   <ItemGroup>
