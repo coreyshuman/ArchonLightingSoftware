@@ -165,8 +165,6 @@ namespace ArchonLightingSystem
             appData.DeviceControllerData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
         }
 
-        
-
         private void BindingSource_PositionChanged(object sender, EventArgs e)
         {
             currentDevice = ((BindingSource)sender).Position;
@@ -195,6 +193,17 @@ namespace ArchonLightingSystem
         {
             appData.DefaultConfigPending = true;
             updateTimer.Enabled = true;
+        }
+
+        private void btn_UpdateConfig_Click(object sender, EventArgs e)
+        {
+            appData.UpdateConfigPending = true;
+        }
+
+        private void btn_WriteLedFrame_Click(object sender, EventArgs e)
+        {
+            appData.LedFrameData = appData.DeviceControllerData.DeviceConfig.Colors;
+            appData.WriteLedFrame = true;
         }
         #endregion
 
@@ -232,9 +241,6 @@ namespace ArchonLightingSystem
         
         #endregion
 
-        private void btn_UpdateConfig_Click(object sender, EventArgs e)
-        {
-            appData.UpdateConfigPending = true;
-        }
+      
     }
 }

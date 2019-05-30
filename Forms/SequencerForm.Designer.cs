@@ -29,6 +29,7 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(SequencerForm));
             this.tick_1 = new System.Windows.Forms.Button();
             this.light_1_1 = new System.Windows.Forms.Button();
             this.grpSeq = new System.Windows.Forms.GroupBox();
@@ -156,6 +157,7 @@
             this.Controls.Add(this.grpOut);
             this.Controls.Add(this.grpLights);
             this.Controls.Add(this.grpSeq);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "SequencerForm";
             this.StartPosition = System.Windows.Forms.FormStartPosition.Manual;
             this.Text = "SequencerForm";

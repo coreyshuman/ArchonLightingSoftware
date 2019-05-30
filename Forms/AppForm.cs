@@ -224,6 +224,7 @@ namespace ArchonLightingSystem
             {
                 configForm.WindowState = FormWindowState.Normal;
             }
+            configForm.Location = this.Location;
             configForm.Focus();
             
             //OpenSubform<ConfigEditorForm>(configForm);
@@ -241,6 +242,7 @@ namespace ArchonLightingSystem
             {
                 eepromForm.WindowState = FormWindowState.Normal;
             }
+            eepromForm.Location = this.Location;
             eepromForm.Focus();
         }
 
@@ -256,6 +258,7 @@ namespace ArchonLightingSystem
             {
                 debugForm.WindowState = FormWindowState.Normal;
             }
+            debugForm.Location = this.Location;
             debugForm.Focus();
         }
 
@@ -340,7 +343,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
-                //sequencerForm.InitializeForm(usbApp);
+                sequencerForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
                 sequencerForm.Location = this.Location;
                 sequencerForm.Show();
             }

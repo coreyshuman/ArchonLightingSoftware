@@ -14,6 +14,7 @@ namespace ArchonLightingSystem.Forms
 {
     public partial class SequencerForm : Form
     {
+        private ApplicationData appData;
         private static Color lastColor;
         private static List<Color> lastColorsAll = new List<Color>();
         private static ColorDialog colorDialog = new ColorDialog();
@@ -28,10 +29,13 @@ namespace ArchonLightingSystem.Forms
             InitializeComponent();
         }
 
+        public void InitializeForm(ApplicationData applicationData)
+        {
+            appData = applicationData;
+        }
+
         private void SequencerForm_Load(object sender, EventArgs e)
         {
-            
-
             light_1_1.Click += ColorUpdateClickEventHandler(0, 0);
             for (int j = 1; j <= 16; j++)
             {
@@ -106,6 +110,7 @@ namespace ArchonLightingSystem.Forms
                 CurrentStep = 1;
             }
             UpdateSequencerStep(CurrentStep);
+            SendLedFrameToDevice(CurrentStep);
         }
 
         private void UpdateSequencerStep(int step)
@@ -120,6 +125,20 @@ namespace ArchonLightingSystem.Forms
             {
                 grpOut.Controls[$"out_{i}"].BackColor = grpLights.Controls[$"light_{step}_{i}"].BackColor;
             }
+        }
+
+        private void SendLedFrameToDevice(int step)
+        {
+            byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
+
+            for (int i = 1; i <= DeviceControllerDefinitions.LedCountPerDevice; i++)
+            {
+                ledFrame[0, (i - 1) * 3 + 0] = colorStorage[step-1, i-1].G;
+                ledFrame[0, (i - 1) * 3 + 1] = colorStorage[step - 1, i - 1].R;
+                ledFrame[0, (i - 1) * 3 + 2] = colorStorage[step - 1, i - 1].B;
+            }
+            appData.LedFrameData = ledFrame;
+            appData.WriteLedFrame = true;
         }
 
         private EventHandler ColorUpdateClickEventHandler(int stepIdx, int ledIdx)
@@ -221,7 +240,7 @@ namespace ArchonLightingSystem.Forms
             {
                 if (G > 0)
                 {
-                    G = (byte)(G / 2 + 128);
+                    G = (byte)(G / 1.5 + 85);
                 }
                 if (R > 0)
                 {

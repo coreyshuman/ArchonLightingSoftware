@@ -267,6 +267,12 @@ namespace ArchonLightingSystem.UsbApplication
                             }
                         }
 
+                        if(device.AppData.WriteLedFrame)
+                        {
+                            device.AppData.WriteLedFrame = false;
+                            await WriteLedFrame(device, device.AppData.LedFrameData);
+                        }
+
                         if (device.AppData.ReadDebugPending)
                         {
                             device.AppData.ReadDebugPending = false;
@@ -415,6 +421,25 @@ namespace ArchonLightingSystem.UsbApplication
             {
                 //await Task.Delay(50); // larger packet
                 ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_UPDATE_CONFIG);
+                return response;
+            }
+            return null;
+        }
+
+        private async Task<ControlPacket> WriteLedFrame(UsbDevice device, byte[,] ledFrame)
+        {
+            Byte[] buffer = new byte[DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice];
+            uint length = DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice;
+            for(int devi = 0; devi < DeviceControllerDefinitions.DevicePerController; devi++)
+            {
+                for(int ledi = 0; ledi < DeviceControllerDefinitions.LedBytesPerDevice; ledi++)
+                {
+                    buffer[devi * DeviceControllerDefinitions.LedBytesPerDevice + ledi] = ledFrame[devi, ledi];
+                }
+            }
+            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_LED_FRAME);
                 return response;
             }
             return null;
@@ -626,6 +651,7 @@ namespace ArchonLightingSystem.UsbApplication
                 case 0x01: ret = "Controller transmit buffer overflow."; break;
                 case 0x02: ret = "Controller receiver buffer overflow."; break;
                 case 0x03: ret = "Controller EEPROM failure."; break;
+                case 0x04: ret = "Controller invalid payload length."; break;
                 case 0xF0: ret = "Controller USB overflow (still processing last request)."; break;
                 case 0xF1: ret = "Controller invalid USB multipacket frame."; break;
                 case 0xF2: ret = "Controller invalid CRC."; break;

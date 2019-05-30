@@ -240,6 +240,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="OpenHardware\Startup\" />
     <Folder Include="Properties\DataSources\" />
   </ItemGroup>
   <ItemGroup>

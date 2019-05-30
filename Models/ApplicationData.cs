@@ -19,12 +19,14 @@ namespace ArchonLightingSystem.Models
         public bool ReadDebugPending;
         public bool ResetToBootloaderPending;
         public bool UpdateFanSpeedPending;
+        public bool WriteLedFrame;
         public uint EepromAddress;
         public uint EepromLength;
         public string Debug;
 
         public DeviceControllerData DeviceControllerData { get; set; }
-        
+
+        public byte[,] LedFrameData;
 
         public ApplicationData()
         {
@@ -37,6 +39,7 @@ namespace ArchonLightingSystem.Models
             WriteConfigPending = false;
             ResetToBootloaderPending = false;
             UpdateFanSpeedPending = false;
+            WriteLedFrame = false;
             EepromAddress = 1;
             EepromLength = 1;
             Debug = "";
