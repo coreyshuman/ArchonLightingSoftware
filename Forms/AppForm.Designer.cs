@@ -509,7 +509,7 @@ namespace ArchonLightingSystem
             this.cbo_DeviceAddress.FormattingEnabled = true;
             this.cbo_DeviceAddress.Location = new System.Drawing.Point(29, 68);
             this.cbo_DeviceAddress.Name = "cbo_DeviceAddress";
-            this.cbo_DeviceAddress.Size = new System.Drawing.Size(130, 28);
+            this.cbo_DeviceAddress.Size = new System.Drawing.Size(322, 28);
             this.cbo_DeviceAddress.TabIndex = 77;
             this.cbo_DeviceAddress.SelectedIndexChanged += new System.EventHandler(this.cbo_DeviceAddress_SelectedIndexChanged);
             // 
@@ -519,9 +519,9 @@ namespace ArchonLightingSystem
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label1.Location = new System.Drawing.Point(25, 39);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(140, 20);
+            this.label1.Size = new System.Drawing.Size(126, 20);
             this.label1.TabIndex = 78;
-            this.label1.Text = "Controller Address";
+            this.label1.Text = "Select Controller";
             // 
             // notifyIcon1
             // 
@@ -549,7 +549,7 @@ namespace ArchonLightingSystem
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(348, 39);
+            this.label2.Location = new System.Drawing.Point(535, 39);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(123, 20);
             this.label2.TabIndex = 79;
@@ -560,7 +560,7 @@ namespace ArchonLightingSystem
             this.txt_ControllerName.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.txt_ControllerName.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txt_ControllerName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
-            this.txt_ControllerName.Location = new System.Drawing.Point(352, 68);
+            this.txt_ControllerName.Location = new System.Drawing.Point(539, 68);
             this.txt_ControllerName.Name = "txt_ControllerName";
             this.txt_ControllerName.Size = new System.Drawing.Size(365, 26);
             this.txt_ControllerName.TabIndex = 80;
@@ -570,7 +570,7 @@ namespace ArchonLightingSystem
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(185, 39);
+            this.label3.Location = new System.Drawing.Point(372, 39);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(140, 20);
             this.label3.TabIndex = 81;
@@ -580,7 +580,7 @@ namespace ArchonLightingSystem
             // 
             this.chk_Enabled.AutoSize = true;
             this.chk_Enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chk_Enabled.Location = new System.Drawing.Point(240, 75);
+            this.chk_Enabled.Location = new System.Drawing.Point(427, 75);
             this.chk_Enabled.Name = "chk_Enabled";
             this.chk_Enabled.Size = new System.Drawing.Size(15, 14);
             this.chk_Enabled.TabIndex = 82;

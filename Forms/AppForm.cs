@@ -149,7 +149,11 @@ namespace ArchonLightingSystem
             {
                 var activeDevices = usbApp.UsbDevices.Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
                 var newDevices = activeDevices.Where(dev => !deviceAddressList.Select(d => d.Text).Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
-                    .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.UsbDevices.IndexOf(dev)})
+                    .Select((dev) => new ComboBoxItem
+                        {
+                            Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString() +
+                                $" ({userSettings.Controllers.Where(c => c.Address == dev.AppData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name ?? ""})",
+                            Value = usbApp.UsbDevices.IndexOf(dev)})
                     .ToList();
                 newDevices.ForEach(dev =>
                 {
@@ -329,7 +333,7 @@ namespace ArchonLightingSystem
         {
             var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
             selectedAddressIdx = item.Value;
-            selectedAddress = int.Parse(item.Text);
+            selectedAddress = (int)usbApp.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress;
             UpdateFormSettings(usbApp.GetAppData(selectedAddressIdx).DeviceControllerData);
         }
 
