@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Linq;
 using System.Xml.Serialization;
 
 namespace ArchonLightingSystem.Models
@@ -52,6 +53,11 @@ namespace ArchonLightingSystem.Models
         {
             
         }
+
+        public DeviceSettings GetDeviceByIndex(int deviceIndex)
+        {
+            return Devices.Where(d => d.Index == deviceIndex).FirstOrDefault();
+        }
     }
 
     [Serializable]
@@ -81,6 +87,11 @@ namespace ArchonLightingSystem.Models
         {
             var revertedSettings = Manager?.GetSettings();
             Controllers = revertedSettings.Controllers;
+        }
+
+        public ControllerSettings GetControllerByAddress(int address)
+        {
+            return Controllers.Where(c => c.Address == address).FirstOrDefault();
         }
     }
 

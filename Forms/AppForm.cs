@@ -27,7 +27,7 @@ namespace ArchonLightingSystem
         private HardwareManager hardwareManager = null;
         private SequencerForm sequencerForm = null;
         private StartupManager startupManager = new StartupManager();
-        private FanControllerService fanControllerService = new FanControllerService();
+        private ServiceManager serviceManager = new ServiceManager();
         
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
@@ -68,11 +68,11 @@ namespace ArchonLightingSystem
 
             // Handle cleanup when the user logs off
             Microsoft.Win32.SystemEvents.SessionEnded += delegate {
-                fanControllerService.CloseService();
+                serviceManager.StopServices();
                 hardwareManager.Close();
             };
 
-            fanControllerService.BeginService(userSettings, usbApp, hardwareManager);
+            serviceManager.StartServices(userSettings, usbApp, hardwareManager);
 
             allowVisible = !startInBackground;
             isHidden = startInBackground;

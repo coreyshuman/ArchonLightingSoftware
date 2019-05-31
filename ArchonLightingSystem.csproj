@@ -175,7 +175,11 @@
     <Compile Include="OpenHardware\UpdateVisitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Services\ControllerServiceBase.cs" />
     <Compile Include="Services\FanControllerService.cs" />
+    <Compile Include="Services\HardwareUpdateService.cs" />
+    <Compile Include="Services\LightControllerService.cs" />
+    <Compile Include="Services\ServiceManager.cs" />
     <Compile Include="SubformBase.cs">
       <SubType>Form</SubType>
     </Compile>

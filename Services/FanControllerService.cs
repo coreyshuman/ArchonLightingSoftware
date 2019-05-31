@@ -1,116 +1,44 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
-using System.Threading;
 using ArchonLightingSystem.Models;
-using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.OpenHardware;
 
 namespace ArchonLightingSystem.Services
 {
-    class FanControllerService
+    class FanControllerService : ControllerServiceBase
     {
-        private UserSettings userSettings = null;
-        private UsbApp usbApplication = null;
-        private HardwareManager hardwareManager = null;
-        private BackgroundWorker serviceThread;
-        private int controllerAddress = 0;
-        private int controllerIdx = 0;
-
-        public FanControllerService()
+        /// <summary>
+        /// Service which periodically updates fan speeds based on temperature sensor and fan curve settings.
+        /// </summary>
+        /// <param name="taskFrequency">Task execution frequency in Hz. One controller updated per execution.</param>
+        public FanControllerService(int taskFrequency)
         {
-            
+            TaskFrequency = taskFrequency;
         }
 
-        public void BeginService(UserSettings us, UsbApp ap, HardwareManager hw)
-        {
-            userSettings = us;
-            usbApplication = ap;
-            hardwareManager = hw;
-            serviceThread = new BackgroundWorker();
-            serviceThread.WorkerReportsProgress = false;
-            serviceThread.DoWork += new DoWorkEventHandler(ServiceThread_DoWork);
-            serviceThread.RunWorkerAsync();
-        }
-
-        public void CloseService()
-        {
-            serviceThread.CancelAsync();
-        }
-
-        private void ServiceThread_DoWork(object sender, DoWorkEventArgs e)
-        {
-            while (true)
-            {
-                try
-                {
-                    hardwareManager.UpdateReadings();
-                    var controller = GetNextController();
-                    if (controller != null)
-                    {
-                        var appData = controller.Item1;
-                        var controllerSettings = controller.Item2;
-
-                        byte[] speedValues = CalculateFanSpeeds(appData, controllerSettings);
-                        SendFanSpeeds(appData, speedValues);
-                    }
-                    
-                }
-                catch (Exception ex)
-                {
-                    Trace.WriteLine($"FanServiceThread Error: {ex.ToString()}");
-                }
-                Thread.Sleep(500);
-            }
-        }
-
-        private Tuple<ApplicationData, ControllerSettings> GetNextController()
+        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
         {
             try
             {
-                if (++controllerIdx > usbApplication.DeviceCount)
-                {
-                    controllerIdx = 0;
-                }
-
-                var usbDevice = usbApplication.GetDevice(controllerIdx);
-                var appData = usbDevice?.AppData;
-                if (appData == null)
-                {
-                    return null;
-                }
-                var controllerSettings = GetControllerSettings(appData.DeviceControllerData.DeviceAddress);
-                if(controllerSettings == null)
-                {
-                    return null;
-                }
-                return new Tuple<ApplicationData, ControllerSettings>(appData, controllerSettings);
+                byte[] speedValues = CalculateFanSpeeds(applicationData, controllerSettings, hardwareManager);
+                SendFanSpeeds(applicationData, speedValues);
             }
-            catch
+            catch (Exception ex)
             {
-                Trace.TraceError("Couldn't locate next controller.");
-                return null;
+                Trace.WriteLine($"FanServiceThread Error: {ex.ToString()}");
             }
-        }
-
-        private ControllerSettings GetControllerSettings(int controllerAddress)
-        {
-            return userSettings.Controllers.Where(c => c.Address == controllerAddress).FirstOrDefault();
-        }
-
-        private DeviceSettings GetDeviceSettings(int devIdx)
-        {
-            return userSettings.Controllers.Where(c => c.Address == controllerAddress).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault();
         }
 
         /// <summary>
         /// Map fan temperature to fan speed based on speed curve
         /// </summary>
-        /// <param name="temperature"></param>
-        /// <param name="deviceIndex"></param>
-        private byte[] CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings)
+        /// <param name="applicationData"></param>
+        /// <param name="controllerSettings"></param>
+        /// <param name="hardwareManager"></param>
+        /// <returns>Array of bytes containing speed values</returns>
+        private byte[] CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
 
