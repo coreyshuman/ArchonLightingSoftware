@@ -1,4 +1,5 @@
 ﻿using ArchonLightingSystem.Common;
+using ArchonLightingSystem.Components;
 using ArchonLightingSystem.Models;
 using System;
 using System.Collections.Generic;
@@ -15,6 +16,8 @@ namespace ArchonLightingSystem.Forms
     public partial class SequencerForm : Form
     {
         private ApplicationData appData;
+        private UsbApplication.UsbApp usbApp;
+        private UserSettings userSettings;
         private static Color lastColor;
         private static List<Color> lastColorsAll = new List<Color>();
         private static ColorDialog colorDialog = new ColorDialog();
@@ -23,15 +26,30 @@ namespace ArchonLightingSystem.Forms
 
         private int MaxStepCount = 16;
         private int CurrentStep = 1;
+        private int SelectedDevice = 1;
 
         public SequencerForm()
         {
             InitializeComponent();
         }
 
-        public void InitializeForm(ApplicationData applicationData)
+        public void InitializeForm(UsbApplication.UsbApp ua, UserSettings us, List<ComboBoxItem> deviceAddressList, int controllerIdx)
         {
-            appData = applicationData;
+            usbApp = ua;
+            userSettings = us;
+            appData = usbApp.GetAppData(controllerIdx);
+            lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
+            cboController.DisplayMember = "Text";
+            cboController.ValueMember = "Value";
+            cboDevice.DisplayMember = "Text";
+            cboDevice.ValueMember = "Value";
+            cboController.Items.Clear();
+            cboController.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
+            cboController.SelectedValue = controllerIdx;
+            for(int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
+            {
+                cboDevice.Items.Add(new ComboBoxItem { Text = i.ToString(), Value = i });
+            }
         }
 
         private void SequencerForm_Load(object sender, EventArgs e)
@@ -110,7 +128,7 @@ namespace ArchonLightingSystem.Forms
                 CurrentStep = 1;
             }
             UpdateSequencerStep(CurrentStep);
-            SendLedFrameToDevice(CurrentStep);
+            SendLedFrameToDevice(SelectedDevice, CurrentStep);
         }
 
         private void UpdateSequencerStep(int step)
@@ -127,15 +145,15 @@ namespace ArchonLightingSystem.Forms
             }
         }
 
-        private void SendLedFrameToDevice(int step)
+        private void SendLedFrameToDevice(int device, int step)
         {
             byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
 
             for (int i = 1; i <= DeviceControllerDefinitions.LedCountPerDevice; i++)
             {
-                ledFrame[0, (i - 1) * 3 + 0] = colorStorage[step-1, i-1].G;
-                ledFrame[0, (i - 1) * 3 + 1] = colorStorage[step - 1, i - 1].R;
-                ledFrame[0, (i - 1) * 3 + 2] = colorStorage[step - 1, i - 1].B;
+                ledFrame[device - 1, (i - 1) * 3 + 0] = colorStorage[step-1, i-1].G;
+                ledFrame[device - 1, (i - 1) * 3 + 1] = colorStorage[step - 1, i - 1].R;
+                ledFrame[device - 1, (i - 1) * 3 + 2] = colorStorage[step - 1, i - 1].B;
             }
             appData.LedFrameData = ledFrame;
             appData.WriteLedFrame = true;
@@ -252,6 +270,25 @@ namespace ArchonLightingSystem.Forms
                 }
             }
             return System.Drawing.Color.FromArgb(R, G, B);
+        }
+
+        private void CboController_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
+            appData = usbApp.GetAppData(item.Value);
+            lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
+        }
+
+        private void CboDevice_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
+            SelectedDevice = item.Value;
+        }
+
+        private void NumSteps_ValueChanged(object sender, EventArgs e)
+        {
+            CurrentStep = 1;
+            MaxStepCount = (int)(((NumericUpDown)sender).Value);
         }
     }
 }

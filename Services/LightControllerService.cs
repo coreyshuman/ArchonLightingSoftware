@@ -27,7 +27,7 @@ namespace ArchonLightingSystem.Services
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"FanServiceThread Error: {ex.ToString()}");
+                Trace.WriteLine($"LightServiceThread Error: {ex.ToString()}");
             }
         }
     }

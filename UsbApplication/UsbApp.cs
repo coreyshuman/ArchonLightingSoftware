@@ -87,7 +87,7 @@ namespace ArchonLightingSystem.UsbApplication
                         var tasks = usbDevices.Select(dev => DeviceDoWork(dev));
                         var result = Util.WhenAllTasks(tasks);
 
-                        Thread.Sleep(10);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
+                        Thread.Sleep(1);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
                                                  //high CPU utilization, with no particular benefit to the application.
                         
                     }

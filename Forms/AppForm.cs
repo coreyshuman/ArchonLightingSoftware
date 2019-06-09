@@ -393,7 +393,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
-                sequencerForm.InitializeForm(usbApp.GetAppData(selectedAddressIdx));
+                sequencerForm.InitializeForm(usbApp, userSettings, deviceAddressList, selectedAddressIdx);
                 sequencerForm.Location = this.Location;
                 sequencerForm.Show();
             }
