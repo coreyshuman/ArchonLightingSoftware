@@ -20,7 +20,7 @@ namespace ArchonLightingSystem
     public partial class FirmwareUpdateForm : Form
     {
         private UsbApplication.UsbDriver bootUsbDriver;
-        private UsbApplication.UsbApp usbApp;
+        private UsbApplication.UsbDeviceManager usbDeviceManager;
         private bool isClosing = false;
         private bool isBusy = true;
         private DragWindowSupport dragSupport = new DragWindowSupport();
@@ -62,9 +62,9 @@ namespace ArchonLightingSystem
 
         
 
-        public void InitializeForm(AppForm parent, UsbApplication.UsbApp app)
+        public void InitializeForm(AppForm parent, UsbApplication.UsbDeviceManager app)
         {
-            usbApp = app;
+            usbDeviceManager = app;
             parentForm = parent;
             var appdata = app.GetAppData(0);
 
@@ -274,7 +274,7 @@ namespace ArchonLightingSystem
             this.Cursor = Cursors.WaitCursor;
             firmwareManager.StartApp();
             Thread.Sleep(1000);
-            usbApp.ClearDevices();
+            usbDeviceManager.ClearDevices();
             // have main for redraw
             parentForm.FormIsInitialized = false;
             CloseWindow();
@@ -283,7 +283,7 @@ namespace ArchonLightingSystem
         private void timer_ResetHardware_Tick(object sender, EventArgs e)
         {
             timer_ResetHardware.Enabled = false;
-            foreach (var device in usbApp.UsbDevices)
+            foreach (var device in usbDeviceManager.UsbDevices)
             {
                 if(device.AppIsInitialized)
                     device.AppData.ResetToBootloaderPending = true;

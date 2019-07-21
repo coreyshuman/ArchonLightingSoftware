@@ -32,15 +32,15 @@ namespace ArchonLightingSystem.Services
         private int frequency = 2;
         private int period = 500;
         private UserSettings userSettings = null;
-        private UsbApp usbApplication = null;
+        private UsbDeviceManager usbDeviceManager = null;
         private HardwareManager hardwareManager = null;
         private BackgroundWorker serviceThread;
         private int controllerIdx = 0;
 
-        public void BeginService(UserSettings us, UsbApp ap, HardwareManager hw)
+        public void BeginService(UserSettings us, UsbDeviceManager ap, HardwareManager hw)
         {
             userSettings = us;
-            usbApplication = ap;
+            usbDeviceManager = ap;
             hardwareManager = hw;
             serviceThread = new BackgroundWorker();
             serviceThread.WorkerReportsProgress = false;
@@ -83,12 +83,12 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
-                if (++controllerIdx >= usbApplication.DeviceCount)
+                if (++controllerIdx >= usbDeviceManager.DeviceCount)
                 {
                     controllerIdx = 0;
                 }
 
-                var usbDevice = usbApplication.GetDevice(controllerIdx);
+                var usbDevice = usbDeviceManager.GetDevice(controllerIdx);
                 var appData = usbDevice?.AppData;
                 if (appData == null)
                 {

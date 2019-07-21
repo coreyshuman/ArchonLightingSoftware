@@ -17,7 +17,7 @@ namespace ArchonLightingSystem.Models
 
         public FrameInfo()
         {
-            FrameData = new byte[UsbApp.USB_PACKET_SIZE];
+            FrameData = new byte[UsbDriver.USB_PACKET_SIZE];
             FrameLen = 0;
             OutBufferMaxLen = 512;
             Multiframe = false;

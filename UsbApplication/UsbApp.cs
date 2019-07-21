@@ -9,150 +9,61 @@ using System.Diagnostics;
 
 namespace ArchonLightingSystem.UsbApplication
 {
-    public partial class UsbDevice
+    public static partial class UsbApp
     {
-        public ApplicationData AppData { get; set; }
-        public bool PauseUsb { get; set; }
-        public bool AppIsInitialized { get; set; }
-        public bool IsDisconnected { get; set; }
-        public SemaphoreSlim semaphore { get; set; }
+        public static UsbDriver usbDriver { get; } = new UsbDriver();
 
-        public UsbDevice()
+
+        public static void Register(IntPtr handle, string vid, string pid)
         {
-            semaphore = new SemaphoreSlim(1, 1);
+            usbDriver.RegisterEventHandler(handle);
+            usbDriver.InitializeDevice(vid, pid);
         }
 
-        public void Disconnect()
+        public static void HandleWindowEvent(ref System.Windows.Forms.Message m)
         {
-            PauseUsb = true;
-            IsDisconnected = true;
+            usbDriver.HandleWindowEvent(ref m);
         }
 
-        public void Reinitialize()
-        {
-            PauseUsb = false;
-            IsDisconnected = false;
-        }
-    }
-
-    public partial class UsbApp : UsbDriver
-    {
-        private BackgroundWorker ReadWriteThread;
-
-        public UsbApp()
-        {
-            //Recommend performing USB read/write operations in a separate thread.  Otherwise,
-            //the Read/Write operations are effectively blocking functions and can lock up the
-            //user interface if the I/O operations take a long time to complete.
-            Trace.WriteLine("Initialize UsbApp Thread.");
-            ReadWriteThread = new BackgroundWorker();
-            ReadWriteThread.WorkerReportsProgress = true;
-            ReadWriteThread.DoWork += new DoWorkEventHandler(ReadWriteThread_DoWork);
-            ReadWriteThread.RunWorkerAsync();
-        }
-
-        public ApplicationData GetAppData(int deviceIdx)
-        {
-            var device = GetDevice(deviceIdx);
-            return device?.AppData;
-        }
-
-        public void ClearDevices()
-        {
-            usbDevices.ForEach((dev) =>
-            {
-                try
-                {
-                    dev.semaphore.Wait(1000);
-                    dev.AppIsInitialized = false;
-                    dev.AppData = null;
-                    DetachDevice(dev);
-                    dev.Reinitialize();
-                }
-                finally
-                {
-                    dev.semaphore.Release();
-                }
-            });
-        }
-
-        private void ReadWriteThread_DoWork(object sender, DoWorkEventArgs e)
-        {
-            while (true)
-            {
-                try
-                {
-                    if(DeviceCount > 0)
-                    {
-                        var tasks = usbDevices.Select(dev => DeviceDoWork(dev));
-                        var result = Util.WhenAllTasks(tasks);
-
-                        Thread.Sleep(1);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
-                                                 //high CPU utilization, with no particular benefit to the application.
-                        
-                    }
-                    else
-                    {
-                        // no devices present, longer sleep
-                        Thread.Sleep(1000);
-                    }
-                    
-                }
-                catch(Exception exc)
-                {
-                    //Exceptions can occur during the read or write operations.  For example,
-                    //exceptions may occur if for instance the USB device is physically unplugged
-                    //from the host while the above read/write functions are executing.
-
-                    //Don't need to do anything special in this case.  The application will automatically
-                    //re-establish communications based on the global IsAttached boolean variable used
-                    //in conjunction with the WM_DEVICECHANGE messages to dyanmically respond to Plug and Play
-                    //USB connection events.
-                    Trace.WriteLine($"ReadWriteThread Error: {exc.ToString()}");
-                    Thread.Sleep(3000);
-                }
-            }
-        }
-
-        private async Task DeviceDoWork(UsbDevice device)
+        public static async Task DeviceDoWork(UsbControllerInstance controllerInstance)
         {
             Byte[] rxtxBuffer = new Byte[CONTROL_BUFFER_SIZE];
             uint byteCnt = 0;
             int i = 0;
 
-            if (await device.semaphore.WaitAsync(200))
+            if (await controllerInstance.semaphore.WaitAsync(200))
             {
                 try
                 {
-                    if(device.IsDisconnected)
+                    if(controllerInstance.IsDisconnected)
                     {
                         return;
                     }
 
-                    if (!device.AppIsInitialized)
+                    if (!controllerInstance.AppIsInitialized)
                     {
                         Trace.WriteLine("Initialize ApplicationData");
-                        device.AppData = new ApplicationData();
-                        device.AppIsInitialized = true;
+                        controllerInstance.AppData = new ApplicationData();
+                        controllerInstance.AppIsInitialized = true;
                     }
 
-                    if (!device.IsAttached && device.AppData.DeviceControllerData.IsInitialized)
+                    if (!controllerInstance.UsbDevice.IsAttached && controllerInstance.AppData.DeviceControllerData.IsInitialized)
                     {
                         Trace.WriteLine("Initialize DeviceControllerData");
-                        device.AppData.DeviceControllerData = new DeviceControllerData();
+                        controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
                     }
 
-                    if (device.IsAttached == true)    //Do not try to use the read/write handles unless the USB device is attached and ready
+                    if (controllerInstance.UsbDevice.IsAttached == true)    //Do not try to use the read/write handles unless the USB controllerInstance is attached and ready
                     {
-                        if (device.AppData.DeviceControllerData == null)
+                        if (controllerInstance.AppData.DeviceControllerData == null)
                         {
                             Trace.WriteLine("Reinitialize ApplicationData");
-                            device.AppData.DeviceControllerData = new DeviceControllerData();
+                            controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
                         }
-                        if (!device.AppData.DeviceControllerData.IsInitialized)
+                        if (!controllerInstance.AppData.DeviceControllerData.IsInitialized)
                         {
                             Trace.WriteLine("Get Device Initialization");
-                            await GetDeviceInitialization(device);
+                            await GetDeviceInitialization(controllerInstance);
                         }
 
                         for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
@@ -161,62 +72,62 @@ namespace ArchonLightingSystem.UsbApplication
                         }
 
                         // stop general tasks when paused
-                        if (!device.PauseUsb)
+                        if (!controllerInstance.IsPaused)
                         {
-                            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
                             {
                                 //await Task.Delay(2);
-                                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FANSPEED);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED);
                                 if (response != null)
                                 {
                                     for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
                                     {
                                         //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
-                                        device.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
+                                        controllerInstance.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
                                     }
                                 }
                             }
 
-                            if(device.AppData.UpdateFanSpeedPending)
+                            if(controllerInstance.AppData.UpdateFanSpeedPending)
                             {
-                                await WriteFanSpeed(device, device.AppData.DeviceControllerData.AutoFanSpeedValue);
-                                device.AppData.UpdateFanSpeedPending = false;
+                                await WriteFanSpeed(controllerInstance, controllerInstance.AppData.DeviceControllerData.AutoFanSpeedValue);
+                                controllerInstance.AppData.UpdateFanSpeedPending = false;
                             }
                         }
 
-                        if (device.AppData.ResetToBootloaderPending)
+                        if (controllerInstance.AppData.ResetToBootloaderPending)
                         {
-                            device.AppData.ResetToBootloaderPending = false;
-                            ResetDeviceToBootloader(device);
-                            device.Disconnect();
+                            controllerInstance.AppData.ResetToBootloaderPending = false;
+                            ResetDeviceToBootloader(controllerInstance);
+                            controllerInstance.Disconnect();
                         }
 
-                        if (device.AppData.EepromReadPending)
+                        if (controllerInstance.AppData.EepromReadPending)
                         {
-                            device.AppData.EepromReadPending = false;
+                            controllerInstance.AppData.EepromReadPending = false;
 
-                            ControlPacket response = await ReadEeprom(device, (byte)device.AppData.EepromAddress, (byte)device.AppData.EepromLength);
-                            device.AppData.DeviceControllerData.UpdateEepromData(response.Data);
-                            device.AppData.EepromReadDone = true;
+                            ControlPacket response = await ReadEeprom(controllerInstance, (byte)controllerInstance.AppData.EepromAddress, (byte)controllerInstance.AppData.EepromLength);
+                            controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data);
+                            controllerInstance.AppData.EepromReadDone = true;
                         }
 
-                        if (device.AppData.EepromWritePending)
+                        if (controllerInstance.AppData.EepromWritePending)
                         {
-                            device.AppData.EepromWritePending = false;
+                            controllerInstance.AppData.EepromWritePending = false;
                             for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
                             }
-                            rxtxBuffer[0] = (byte)device.AppData.EepromAddress;
-                            rxtxBuffer[1] = (byte)device.AppData.EepromLength;
-                            for (i = 0; i < device.AppData.EepromLength; i++)
+                            rxtxBuffer[0] = (byte)controllerInstance.AppData.EepromAddress;
+                            rxtxBuffer[1] = (byte)controllerInstance.AppData.EepromLength;
+                            for (i = 0; i < controllerInstance.AppData.EepromLength; i++)
                             {
-                                rxtxBuffer[i + 2] = device.AppData.DeviceControllerData.EepromData[i];
+                                rxtxBuffer[i + 2] = controllerInstance.AppData.DeviceControllerData.EepromData[i];
                             }
 
-                            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + device.AppData.EepromLength) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + controllerInstance.AppData.EepromLength) > 0)
                             {
-                                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_EEPROM);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_EEPROM);
                                 if (response != null)
                                 {
                                     Console.WriteLine(response.Data[0]);
@@ -224,42 +135,42 @@ namespace ArchonLightingSystem.UsbApplication
                             }
                         }
 
-                        if (device.AppData.ReadConfigPending)
+                        if (controllerInstance.AppData.ReadConfigPending)
                         {
-                            device.AppData.ReadConfigPending = false;
+                            controllerInstance.AppData.ReadConfigPending = false;
 
-                            ControlPacket response = await ReadConfig(device);
+                            ControlPacket response = await ReadConfig(controllerInstance);
                             if (response != null)
                             {
-                                device.AppData.DeviceControllerData.DeviceConfig.FromBuffer(response.Data);
-                                device.AppData.EepromReadDone = true;
+                                controllerInstance.AppData.DeviceControllerData.DeviceConfig.FromBuffer(response.Data);
+                                controllerInstance.AppData.EepromReadDone = true;
                             }
                         }
 
-                        if (device.AppData.DefaultConfigPending)
+                        if (controllerInstance.AppData.DefaultConfigPending)
                         {
-                            device.AppData.DefaultConfigPending = false;
+                            controllerInstance.AppData.DefaultConfigPending = false;
 
-                            ControlPacket response = await DefaultConfig(device);
+                            ControlPacket response = await DefaultConfig(controllerInstance);
                             if (response != null)
                             {
-                                device.AppData.ReadConfigPending = true;
+                                controllerInstance.AppData.ReadConfigPending = true;
                             }
                         }
 
-                        if (device.AppData.UpdateConfigPending)
+                        if (controllerInstance.AppData.UpdateConfigPending)
                         {
-                            device.AppData.UpdateConfigPending = false;
-                            await UpdateConfig(device, device.AppData.DeviceControllerData.DeviceConfig);
+                            controllerInstance.AppData.UpdateConfigPending = false;
+                            await UpdateConfig(controllerInstance, controllerInstance.AppData.DeviceControllerData.DeviceConfig);
                         }
 
-                        if (device.AppData.WriteConfigPending)
+                        if (controllerInstance.AppData.WriteConfigPending)
                         {
-                            device.AppData.WriteConfigPending = false;
+                            controllerInstance.AppData.WriteConfigPending = false;
                             byteCnt = 1;// AppData.DeviceConfig.ToBuffer(ref rxtxBuffer);
-                            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
                             {
-                                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_CONFIG);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG);
                                 if (response != null)
                                 {
 
@@ -267,16 +178,16 @@ namespace ArchonLightingSystem.UsbApplication
                             }
                         }
 
-                        if(device.AppData.WriteLedFrame)
+                        if(controllerInstance.AppData.WriteLedFrame)
                         {
-                            device.AppData.WriteLedFrame = false;
-                            await WriteLedFrame(device, device.AppData.LedFrameData);
+                            controllerInstance.AppData.WriteLedFrame = false;
+                            await WriteLedFrame(controllerInstance, controllerInstance.AppData.LedFrameData);
                         }
 
-                        if (device.AppData.ReadDebugPending)
+                        if (controllerInstance.AppData.ReadDebugPending)
                         {
-                            device.AppData.ReadDebugPending = false;
-                            await ReadDebug(device);
+                            controllerInstance.AppData.ReadDebugPending = false;
+                            await ReadDebug(controllerInstance);
                         }
                     }
                 }
@@ -287,146 +198,146 @@ namespace ArchonLightingSystem.UsbApplication
                 }
                 finally
                 {
-                    device.semaphore.Release();
+                    controllerInstance.semaphore.Release();
                 }
             }
         }
 
-        private async Task GetDeviceInitialization(UsbDevice device)
+        private static async Task GetDeviceInitialization(UsbControllerInstance controllerInstance)
         {
             ControlPacket bootResponse = new ControlPacket();
             ControlPacket appResponse = new ControlPacket();
             ControlPacket bootStatusResponse;
             ControlPacket eepromResponse;
-            ControlPacket deviceAddressResponse;
-            ControlPacket deviceConfigResponse;
+            ControlPacket controllerInstanceAddressResponse;
+            ControlPacket controllerInstanceConfigResponse;
 
-            bootResponse = await ReadBootloaderInfo(device);
+            bootResponse = await ReadBootloaderInfo(controllerInstance);
             if (bootResponse == null) throw new Exception("Couldn't read Bootloader info.");
             Trace.WriteLine($"DeviceInit Boot: {bootResponse.Data[0].ToString()}.{bootResponse.Data[1].ToString()}");
-            appResponse = await ReadApplicationInfo(device);
+            appResponse = await ReadApplicationInfo(controllerInstance);
             if (appResponse == null) throw new Exception("Couldn't read Application info.");
             Trace.WriteLine($"DeviceInit App: {appResponse.Data[0].ToString()}.{appResponse.Data[1].ToString()}");
-            deviceAddressResponse = await ReadControllerAddress(device);
-            if (deviceAddressResponse == null) throw new Exception("Couldn't read Address.");
-            bootStatusResponse = await ReadBootStatus(device);
+            controllerInstanceAddressResponse = await ReadControllerAddress(controllerInstance);
+            if (controllerInstanceAddressResponse == null) throw new Exception("Couldn't read Address.");
+            bootStatusResponse = await ReadBootStatus(controllerInstance);
             if (bootStatusResponse == null) throw new Exception("Couldn't read boot status.");
-            eepromResponse = await ReadEeprom(device, 0, (UInt16)DeviceControllerDefinitions.EepromSize);
+            eepromResponse = await ReadEeprom(controllerInstance, 0, (UInt16)DeviceControllerDefinitions.EepromSize);
             if (eepromResponse == null) throw new Exception("Couldn't read EEPROM.");
-            deviceConfigResponse = await ReadConfig(device);
-            if (deviceConfigResponse == null) throw new Exception("Couldn't read Config.");
+            controllerInstanceConfigResponse = await ReadConfig(controllerInstance);
+            if (controllerInstanceConfigResponse == null) throw new Exception("Couldn't read Config.");
 
-            device.AppData.DeviceControllerData.InitializeDevice(deviceAddressResponse.Data[0], eepromResponse.Data, deviceConfigResponse.Data, bootResponse.Data, appResponse.Data, bootStatusResponse.Data);
+            controllerInstance.AppData.DeviceControllerData.InitializeDevice(controllerInstanceAddressResponse.Data[0], eepromResponse.Data, controllerInstanceConfigResponse.Data, bootResponse.Data, appResponse.Data, bootStatusResponse.Data);
         }
 
-        private async Task<ControlPacket> ReadBootloaderInfo(UsbDevice device)
+        private static async Task<ControlPacket> ReadBootloaderInfo(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> ReadApplicationInfo(UsbDevice device)
+        private static async Task<ControlPacket> ReadApplicationInfo(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> WriteFanSpeed(UsbDevice device, byte[] speedValues)
+        private static async Task<ControlPacket> WriteFanSpeed(UsbControllerInstance controllerInstance, byte[] speedValues)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController) > 0)
             {
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_FANSPEED, 20);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_FANSPEED, 20);
                 return response;
             }
             return null;
         }
 
-        private bool ResetDeviceToBootloader(UsbDevice device)
+        private static bool ResetDeviceToBootloader(UsbControllerInstance controllerInstance)
         {
-            return GenerateAndSendFrames(device, CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
+            return GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
         }
 
-        private async Task<ControlPacket> ReadBootStatus(UsbDevice device)
+        private static async Task<ControlPacket> ReadBootStatus(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_BOOT_STATUS);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_BOOT_STATUS);
                 return response;
             }
             return null;
         }
 
 
-        private async Task<ControlPacket> ReadEeprom(UsbDevice device, UInt16 address, UInt16 length)
+        private static async Task<ControlPacket> ReadEeprom(UsbControllerInstance controllerInstance, UInt16 address, UInt16 length)
         {
             byte[] request = new byte[] { (byte)address, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF) };
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
             {
                 //await Task.Delay(100); // give controller time to read EEPROM
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EEPROM, 2000);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_EEPROM, 2000);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> DefaultConfig(UsbDevice device)
+        private static async Task<ControlPacket> DefaultConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_DEFAULT_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_DEFAULT_CONFIG);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> ReadConfig(UsbDevice device)
+        private static async Task<ControlPacket> ReadConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(50); // larger packet
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_CONFIG);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> WriteConfig(UsbDevice device)
+        private static async Task<ControlPacket> WriteConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(100); // writing to eeprom
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> UpdateConfig(UsbDevice device, DeviceControllerConfig config)
+        private static async Task<ControlPacket> UpdateConfig(UsbControllerInstance controllerInstance, DeviceControllerConfig config)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.EepromSize];
             uint length = config.ToBuffer(ref buffer);
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
             {
                 //await Task.Delay(50); // larger packet
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_UPDATE_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_UPDATE_CONFIG);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> WriteLedFrame(UsbDevice device, byte[,] ledFrame)
+        private static async Task<ControlPacket> WriteLedFrame(UsbControllerInstance controllerInstance, byte[,] ledFrame)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice];
             uint length = DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice;
@@ -437,50 +348,50 @@ namespace ArchonLightingSystem.UsbApplication
                     buffer[devi * DeviceControllerDefinitions.LedBytesPerDevice + ledi] = ledFrame[devi, ledi];
                 }
             }
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length) > 0)
             {
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_WRITE_LED_FRAME);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_LED_FRAME);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> ReadControllerAddress(UsbDevice device)
+        private static async Task<ControlPacket> ReadControllerAddress(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
             {
                 //await Task.Delay(2); 
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
                 return response;
             }
             return null;
         }
 
-        private async Task<ControlPacket> ReadDebug(UsbDevice device)
+        private static async Task<ControlPacket> ReadDebug(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(device, CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(device, CONTROL_CMD.CMD_READ_EE_DEBUG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_EE_DEBUG);
                 if (response != null)
                 {
-                    device.AppData.Debug = ($"Debug Len: {response.Len}"+Environment.NewLine);
+                    controllerInstance.AppData.Debug = ($"Debug Len: {response.Len}"+Environment.NewLine);
                     for (int i = 0; i < response.Len;)
                     {
                         var dat = response.Data[i];
-                        device.AppData.Debug += ($"{dat.ToString("X2")} ");
+                        controllerInstance.AppData.Debug += ($"{dat.ToString("X2")} ");
                         if (++i % 20 == 0)
                         {
-                            device.AppData.Debug += Environment.NewLine;
+                            controllerInstance.AppData.Debug += Environment.NewLine;
                         }
                     }
-                    device.AppData.Debug += (Environment.NewLine + "_________________________" + Environment.NewLine);
+                    controllerInstance.AppData.Debug += (Environment.NewLine + "_________________________" + Environment.NewLine);
                 }
             }
             return null;
         }
 
-        private ControlPacket GetDeviceResponse(UsbDevice device, CONTROL_CMD cmd, uint readTimeout = 200)
+        private static ControlPacket GetDeviceResponse(UsbControllerInstance controllerInstance, CONTROL_CMD cmd, uint readTimeout = 200)
         {
             uint byteCnt;
             uint frameCnt = 0;
@@ -490,7 +401,7 @@ namespace ArchonLightingSystem.UsbApplication
 
             while (!frameInfo.FrameValid)
             {
-                byteCnt = ReadUSBDevice(device, ref frameInfo.FrameData, USB_PACKET_SIZE, readTimeout);
+                byteCnt = usbDriver.ReadUSBDevice(controllerInstance.UsbDevice, ref frameInfo.FrameData, UsbDriver.USB_PACKET_SIZE, readTimeout);
                 if (byteCnt > 0)
                 {
                     frameCnt++;
@@ -522,11 +433,11 @@ namespace ArchonLightingSystem.UsbApplication
             return null;
         }
 
-        private uint GenerateAndSendFrames(UsbDevice device, CONTROL_CMD cmd, Byte[] frameData, uint frameLen)
+        private static uint GenerateAndSendFrames(UsbControllerInstance controllerInstance, CONTROL_CMD cmd, Byte[] frameData, uint frameLen)
         {
             uint byteCnt;
             uint bytesSent = 0;
-            Byte[] usbBuffer = new byte[USB_PACKET_SIZE];
+            Byte[] usbBuffer = new byte[UsbDriver.USB_PACKET_SIZE];
             Byte[] packetsBuffer = new byte[USB_BUFFER_SIZE];
             byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, USB_BUFFER_SIZE);
             while (byteCnt > 0)
@@ -536,7 +447,7 @@ namespace ArchonLightingSystem.UsbApplication
                 {
                     usbBuffer[i] = packetsBuffer[i + bytesSent];
                 }
-                if (WriteUSBDevice(device, usbBuffer, sendLen) == 0)
+                if (usbDriver.WriteUSBDevice(controllerInstance.UsbDevice, usbBuffer, sendLen) == 0)
                 {
                     return 0;
                 }
@@ -546,7 +457,7 @@ namespace ArchonLightingSystem.UsbApplication
             return bytesSent;
         }
 
-        private uint GenerateFrames(CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
+        private static uint GenerateFrames(CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
         {
             uint outBufferLen = 0;
             uint packetDataCount = 0;
@@ -590,7 +501,7 @@ namespace ArchonLightingSystem.UsbApplication
 
         
 
-        private uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)
+        private static uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)
         {
             UInt16 crc;
             uint dataLen = 0;
@@ -643,7 +554,7 @@ namespace ArchonLightingSystem.UsbApplication
         }
 
         
-        private string GetErrorMessage(byte errorCode)
+        private static string GetErrorMessage(byte errorCode)
         {
             string ret = "Unknown error code.";
             switch(errorCode)

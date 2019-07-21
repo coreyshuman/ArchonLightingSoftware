@@ -18,9 +18,15 @@ namespace ArchonLightingSystem.UsbApplication
         public string DevicePath { get; set; }
     }
 
+    public class UsbDriverEventArgs : EventArgs
+    {
+        public List<UsbDevice> Devices { get; internal set; }
+    }
+
     public class UsbDriver : UsbSystemDefinitions
     {
-        public const uint USB_PACKET_SIZE = 64 + 1;
+        public static uint USB_PACKET_SIZE {get;} = 64 + 1;
+        public event EventHandler<UsbDriverEventArgs> UsbDriverEvent;
 
         protected List<UsbDevice> usbDevices = new List<UsbDevice>();
         //Globally Unique Identifier (GUID) for HID class devices.  Windows uses GUIDs to identify things.
@@ -28,6 +34,7 @@ namespace ArchonLightingSystem.UsbApplication
         private string devicePid = "0000";
         private string deviceVid = "0000";
         private string deviceIDToFind = "Vid_0000&Pid_0000";
+        private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         public int DeviceCount
         {
@@ -111,6 +118,11 @@ namespace ArchonLightingSystem.UsbApplication
             return usbDevices[deviceIdx];
         }
 
+        protected virtual void OnUsbDriverEvent(UsbDriverEventArgs e)
+        {
+            UsbDriverEvent?.Invoke(this, e);
+        }
+
         public void RegisterEventHandler(IntPtr handle)
         {
             //Register for WM_DEVICECHANGE notifications.  This code uses these messages to detect plug and play connection/disconnection events for USB devices
@@ -160,48 +172,66 @@ namespace ArchonLightingSystem.UsbApplication
 
         private void UpdateDeviceStatus()
         {
-            if (CheckIfPresentAndGetUSBDevicePath())    //Check and make sure at least one device with matching VID/PID is attached
+            if (semaphore.Wait(10))
             {
-                usbDevices.ForEach(device =>
+                try
                 {
-                    //If executes to here, this means the device is currently attached and was found.
-                    //This code needs to decide however what to do, based on whether or not the device was previously known to be
-                    //attached or not.
-                    if (device.IsFound && ((device.IsAttached == false) || (device.IsAttachedButBroken == true)))    //Check the previous attachment state
+                    if (CheckIfPresentAndGetUSBDevicePath())    //Check and make sure at least one device with matching VID/PID is attached
                     {
-                        uint ErrorStatusWrite;
-                        uint ErrorStatusRead;
-
-                        //We obtained the proper device path (from CheckIfPresentAndGetUSBDevicePath() function call), and it
-                        //is now possible to open read and write handles to the device.
-                        device.WriteHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
-                        ErrorStatusWrite = (uint)Marshal.GetLastWin32Error();
-                        device.ReadHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
-                        ErrorStatusRead = (uint)Marshal.GetLastWin32Error();
-
-                        if ((ErrorStatusWrite == ERROR_SUCCESS) && (ErrorStatusRead == ERROR_SUCCESS))
+                        usbDevices.ForEach(device =>
                         {
-                            device.IsAttached = true;       //Let the rest of the PC application know the USB device is connected, and it is safe to read/write to it
-                            device.IsAttachedButBroken = false;
-                        }
-                        else //for some reason the device was physically plugged in, but one or both of the read/write handles didn't open successfully...
+                        //If executes to here, this means the device is currently attached and was found.
+                        //This code needs to decide however what to do, based on whether or not the device was previously known to be
+                        //attached or not.
+                        if (device.IsFound && ((device.IsAttached == false) || (device.IsAttachedButBroken == true)))    //Check the previous attachment state
                         {
-                            device.IsAttached = false;      //Let the rest of this application known not to read/write to the device.
-                            device.IsAttachedButBroken = true;   //Flag so that next time a WM_DEVICECHANGE message occurs, can retry to re-open read/write pipes
-                            if (ErrorStatusWrite == ERROR_SUCCESS)
-                                device.WriteHandleToUSBDevice.Close();
-                            if (ErrorStatusRead == ERROR_SUCCESS)
-                                device.ReadHandleToUSBDevice.Close();
-                        }
+                                uint ErrorStatusWrite;
+                                uint ErrorStatusRead;
+
+                            //We obtained the proper device path (from CheckIfPresentAndGetUSBDevicePath() function call), and it
+                            //is now possible to open read and write handles to the device.
+                            device.WriteHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
+                                ErrorStatusWrite = (uint)Marshal.GetLastWin32Error();
+                                device.ReadHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
+                                ErrorStatusRead = (uint)Marshal.GetLastWin32Error();
+
+                                if ((ErrorStatusWrite == ERROR_SUCCESS) && (ErrorStatusRead == ERROR_SUCCESS))
+                                {
+                                    device.IsAttached = true;       //Let the rest of the PC application know the USB device is connected, and it is safe to read/write to it
+                                device.IsAttachedButBroken = false;
+                                }
+                                else //for some reason the device was physically plugged in, but one or both of the read/write handles didn't open successfully...
+                            {
+                                    device.IsAttached = false;      //Let the rest of this application known not to read/write to the device.
+                                device.IsAttachedButBroken = true;   //Flag so that next time a WM_DEVICECHANGE message occurs, can retry to re-open read/write pipes
+                                if (ErrorStatusWrite == ERROR_SUCCESS)
+                                        device.WriteHandleToUSBDevice.Close();
+                                    if (ErrorStatusRead == ERROR_SUCCESS)
+                                        device.ReadHandleToUSBDevice.Close();
+                                }
+                            }
+                        //Device must not be connected (or not programmed with correct firmware)
+                        else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
+                            {
+                                DetachDevice(device);
+                            }
+                        //else we did find the device, but IsAttached was already true.  In this case, don't do anything to the read/write handles,
+                        //since the WM_DEVICECHANGE message presumably wasn't caused by our USB device.  
+                    });
                     }
-                    //Device must not be connected (or not programmed with correct firmware)
-                    else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
+                    if (usbDevices.Count > 0)
                     {
-                        DetachDevice(device);
+                        OnUsbDriverEvent(new UsbDriverEventArgs() { Devices = usbDevices });
                     }
-                    //else we did find the device, but IsAttached was already true.  In this case, don't do anything to the read/write handles,
-                    //since the WM_DEVICECHANGE message presumably wasn't caused by our USB device.  
-                });
+                }
+                catch(Exception e)
+                {
+                    Trace.WriteLine(e.Message);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
             }
         }
 
@@ -242,7 +272,7 @@ namespace ArchonLightingSystem.UsbApplication
             }
             catch(Exception ex)
             {
-                Console.WriteLine(ex.Message);
+                Trace.WriteLine(ex.Message);
                 if (pINBuffer != IntPtr.Zero)
                 {
                     Marshal.FreeHGlobal(pINBuffer);
@@ -574,7 +604,8 @@ namespace ArchonLightingSystem.UsbApplication
                                 var foundDevice = usbDevices.Where(dev => dev.DevicePath == devicePath).FirstOrDefault();
                                 if(foundDevice != null)
                                 {
-                                    usbDevices[usbDevices.IndexOf(foundDevice)].IsFound = true;
+                                    //usbDevices[usbDevices.IndexOf(foundDevice)].IsFound = true;
+                                    foundDevice.IsFound = true;
                                 }
                                 else
                                 {

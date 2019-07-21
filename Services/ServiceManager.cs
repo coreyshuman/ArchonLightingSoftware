@@ -16,11 +16,11 @@ namespace ArchonLightingSystem.Services
             services.Add(new LightControllerService(1));
         }
 
-        public void StartServices(UserSettings userSettings, UsbApp usbApp, HardwareManager hardwareManager)
+        public void StartServices(UserSettings userSettings, UsbDeviceManager usbDeviceManager, HardwareManager hardwareManager)
         {
             services.ForEach(service =>
             {
-                service.BeginService(userSettings, usbApp, hardwareManager);
+                service.BeginService(userSettings, usbDeviceManager, hardwareManager);
             });
         }
 

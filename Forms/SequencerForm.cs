@@ -16,7 +16,7 @@ namespace ArchonLightingSystem.Forms
     public partial class SequencerForm : Form
     {
         private ApplicationData appData;
-        private UsbApplication.UsbApp usbApp;
+        private UsbApplication.UsbDeviceManager usbDeviceManager;
         private UserSettings userSettings;
         private static Color lastColor;
         private static List<Color> lastColorsAll = new List<Color>();
@@ -33,11 +33,11 @@ namespace ArchonLightingSystem.Forms
             InitializeComponent();
         }
 
-        public void InitializeForm(UsbApplication.UsbApp ua, UserSettings us, List<ComboBoxItem> deviceAddressList, int controllerIdx)
+        public void InitializeForm(UsbApplication.UsbDeviceManager ua, UserSettings us, List<ComboBoxItem> deviceAddressList, int controllerIdx)
         {
-            usbApp = ua;
+            usbDeviceManager = ua;
             userSettings = us;
-            appData = usbApp.GetAppData(controllerIdx);
+            appData = usbDeviceManager.GetAppData(controllerIdx);
             lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
             cboController.DisplayMember = "Text";
             cboController.ValueMember = "Value";
@@ -275,7 +275,7 @@ namespace ArchonLightingSystem.Forms
         private void CboController_SelectedIndexChanged(object sender, EventArgs e)
         {
             var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
-            appData = usbApp.GetAppData(item.Value);
+            appData = usbDeviceManager.GetAppData(item.Value);
             lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
         }
 

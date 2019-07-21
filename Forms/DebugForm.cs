@@ -16,7 +16,7 @@ namespace ArchonLightingSystem
 {
     public partial class DebugForm : Form
     {
-        private UsbApp usbApp;
+        private UsbDeviceManager usbDeviceManager;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private int selectedAddressIdx = -1;
         public DebugForm()
@@ -27,12 +27,12 @@ namespace ArchonLightingSystem
             dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(UsbApp usbApplication)
+        public void InitializeForm(UsbDeviceManager usbApplication)
         {
-            usbApp = usbApplication;
-            var activeDevices = usbApp.UsbDevices
-                .Where(dev => dev.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true)
-                .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbApp.UsbDevices.IndexOf(dev) })
+            usbDeviceManager = usbApplication;
+            var activeDevices = usbDeviceManager.UsbDevices
+                .Where(dev => dev.UsbDevice.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true)
+                .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbDeviceManager.UsbDevices.IndexOf(dev) })
                 .ToList();
             activeDevices.ForEach(dev =>
             {
@@ -53,14 +53,14 @@ namespace ArchonLightingSystem
         {
             if(selectedAddressIdx >= 0)
             {
-                usbApp.GetDevice(selectedAddressIdx).AppData.ReadDebugPending = true;
+                usbDeviceManager.GetDevice(selectedAddressIdx).AppData.ReadDebugPending = true;
                 updateFormTimer.Enabled = true;
             }
         }
 
         private void updateFormTimer_Tick(object sender, EventArgs e)
         {
-            txt_Debug.Text += usbApp.GetDevice(selectedAddressIdx).AppData.Debug;
+            txt_Debug.Text += usbDeviceManager.GetDevice(selectedAddressIdx).AppData.Debug;
             updateFormTimer.Enabled = false;
         }
 
