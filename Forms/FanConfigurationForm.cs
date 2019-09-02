@@ -292,24 +292,35 @@ namespace ArchonLightingSystem.Forms
             }
         }
 
+        private void clearSelectedPoint()
+        {
+            if (lastSelectedDataPoint != null)
+            {
+                lastSelectedDataPoint.Color = AppColors.SecondaryHighlight;
+            }
+            selectedDataPoint = null;
+        }
+
+        private void selectPoint(DataPoint dp)
+        {
+            dp.Color = AppColors.PrimaryLowLight;
+            selectedDataPoint = dp;
+            lastSelectedDataPoint = dp;
+        }
+
         private void fanCurveChart_MouseDown(object sender, MouseEventArgs e)
         {
             var pointSeries = fanCurveChart.Series[1];
             var pointPoints = pointSeries.Points;
 
-            if(lastSelectedDataPoint != null)
-            {
-                lastSelectedDataPoint.Color = AppColors.SecondaryHighlight;
-            }
+            clearSelectedPoint();
 
             foreach (DataPoint dp in pointPoints)
             {
                 if (((RectangleF)dp.Tag).Contains(e.Location))
                 {
                     Cursor = Cursors.HSplit;
-                    dp.Color = AppColors.PrimaryLowLight;
-                    selectedDataPoint = dp;
-                    lastSelectedDataPoint = dp;
+                    selectPoint(dp);
                     break;
                 }
             }
@@ -384,30 +395,66 @@ namespace ArchonLightingSystem.Forms
             UpdateFanCurvePoints();
         }
 
+        private void incrementPointValue(DataPoint dp, double value)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            value += dp.YValues[0];
+            if (value > 100) value = 100f;
+            else if (value < 0) value = 0f;
+
+            int pointIndex = pointPoints.IndexOf(dp);
+            deviceSettings.FanCurveValues[pointIndex] = (int)value;
+            UpdateFanCurvePoints();
+            fanCurveChart.Invalidate();
+        }
+
+        /// <summary>
+        /// Select a point based on the positive or negative index offset from the current point.
+        /// If the offset goes out of bounds, the first or last point in the series is selected depending on offset direction.
+        /// </summary>
+        /// <param name="currentPoint"></param>
+        /// <param name="offsetIndex"></param>
+        private void selectAdjacentPoint(DataPoint currentPoint, int offsetIndex)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            int pointIndex = pointPoints.IndexOf(currentPoint);
+
+            pointIndex += offsetIndex;
+            if (pointIndex > pointPoints.Count - 1) pointIndex = pointPoints.Count - 1;
+            else if (pointIndex < 0) pointIndex = 0;
+
+            clearSelectedPoint();
+            selectPoint(pointPoints[pointIndex]);
+        }
+
         private void HandleKeyPress(object sender, KeyEventArgs e)
         {
             var pointSeries = fanCurveChart.Series[1];
             var pointPoints = pointSeries.Points;
             var chart = fanCurveChart.ChartAreas[0];
+            var keyCode = e.KeyCode;
 
             if (lastSelectedDataPoint != null)
             {
-                int value = (int)lastSelectedDataPoint.YValues[0];
-                if(e.KeyCode == Keys.W)
+                if(keyCode == Keys.W)
                 {
-                    value += 10;
+                    incrementPointValue(lastSelectedDataPoint, 10);
                 }
-                else if(e.KeyCode == Keys.S)
+                else if(keyCode == Keys.S)
                 {
-                    value -= 10;
+                    incrementPointValue(lastSelectedDataPoint, -10);
                 }
-                if (value > 100) value = 100;
-                if (value < 0) value = 0;
-
-                int pointIndex = pointPoints.IndexOf(lastSelectedDataPoint);
-                deviceSettings.FanCurveValues[pointIndex] = value;
-                UpdateFanCurvePoints();
-                fanCurveChart.Invalidate();
+                else if(keyCode == Keys.D)
+                {
+                    selectAdjacentPoint(lastSelectedDataPoint, 1);
+                }
+                else if (keyCode == Keys.A)
+                {
+                    selectAdjacentPoint(lastSelectedDataPoint, -1);
+                }
             }
             e.SuppressKeyPress = true;
         }
@@ -418,6 +465,11 @@ namespace ArchonLightingSystem.Forms
         }
 
         private void FanConfigurationForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
+        }
+
+        private void FanCurveChart_KeyDown(object sender, KeyEventArgs e)
         {
             HandleKeyPress(sender, e);
         }

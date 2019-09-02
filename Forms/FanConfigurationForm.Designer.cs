@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea2 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series3 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series4 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.listView1 = new System.Windows.Forms.ListView();
             this.btn_Back = new System.Windows.Forms.Button();
             this.btn_Close = new System.Windows.Forms.Button();
@@ -48,6 +48,7 @@
             // 
             this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(56, 59);
             this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
@@ -121,27 +122,28 @@
             // fanCurveChart
             // 
             this.fanCurveChart.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea2.BorderColor = System.Drawing.Color.White;
-            chartArea2.Name = "ChartArea1";
-            this.fanCurveChart.ChartAreas.Add(chartArea2);
+            chartArea1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            chartArea1.BorderColor = System.Drawing.Color.White;
+            chartArea1.Name = "ChartArea1";
+            this.fanCurveChart.ChartAreas.Add(chartArea1);
             this.fanCurveChart.Location = new System.Drawing.Point(56, 309);
             this.fanCurveChart.Name = "fanCurveChart";
             this.fanCurveChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
-            series3.BorderWidth = 3;
-            series3.ChartArea = "ChartArea1";
-            series3.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series3.Name = "FanCurveSeries";
-            series4.ChartArea = "ChartArea1";
-            series4.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
-            series4.MarkerSize = 7;
-            series4.Name = "FanCurvePoints";
-            this.fanCurveChart.Series.Add(series3);
-            this.fanCurveChart.Series.Add(series4);
+            series1.BorderWidth = 3;
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Name = "FanCurveSeries";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
+            series2.MarkerSize = 7;
+            series2.Name = "FanCurvePoints";
+            this.fanCurveChart.Series.Add(series1);
+            this.fanCurveChart.Series.Add(series2);
             this.fanCurveChart.Size = new System.Drawing.Size(642, 229);
             this.fanCurveChart.TabIndex = 6;
             this.fanCurveChart.Text = "fanCurveChart";
             this.fanCurveChart.PrePaint += new System.EventHandler<System.Windows.Forms.DataVisualization.Charting.ChartPaintEventArgs>(this.fanCurveChart_PrePaint);
+            this.fanCurveChart.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FanCurveChart_KeyDown);
             this.fanCurveChart.MouseDown += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseDown);
             this.fanCurveChart.MouseMove += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseMove);
             this.fanCurveChart.MouseUp += new System.Windows.Forms.MouseEventHandler(this.fanCurveChart_MouseUp);
