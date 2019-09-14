@@ -40,6 +40,8 @@ namespace ArchonLightingSystem
         private bool isHidden = false;
         private bool allowVisible = false;
         private bool allowClose = false;
+        private string lastNotification = "";
+
 
         public unsafe AppForm(bool startInBackground)
         {
@@ -57,8 +59,10 @@ namespace ArchonLightingSystem
 
             InitializeForm();
 
-            usbDeviceManager = new UsbDeviceManager(Handle, Consts.ApplicationVid, Consts.ApplicationPid);
-            
+            usbDeviceManager = new UsbDeviceManager();
+            usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
+            usbDeviceManager.Connect(Handle, Consts.ApplicationVid, Consts.ApplicationPid);
+
             FormUpdateTimer.Enabled = true;
 
             startWithWindowsToolStripMenuItem.Enabled = startupManager.IsAvailable;
@@ -75,8 +79,6 @@ namespace ArchonLightingSystem
             allowVisible = !startInBackground;
             isHidden = startInBackground;
         }
-
-         
 
         protected override void SetVisibleCore(bool value)
         {
@@ -139,32 +141,47 @@ namespace ArchonLightingSystem
         {
             usbDeviceManager?.HandleWindowEvent(ref m);
             base.WndProc(ref m);
-        } 
+        }
+
+        private void UsbDeviceManager_UsbControllerEvent(object sender, UsbControllerEventArgs e)
+        {
+            
+            if (e is UsbControllerAddedEventArgs)
+            {
+                var controllerInstance = e.ControllerInstance;
+                var comboBoxItem = new ComboBoxItem
+                {
+                    Text = controllerInstance.AppData.DeviceControllerData.DeviceAddress.ToString() +
+                                $" ({userSettings.Controllers.Where(c => c.Address == controllerInstance.AppData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name ?? ""})",
+                    Value = usbDeviceManager.UsbDevices.IndexOf(controllerInstance)
+                };
+
+                deviceAddressList.Add(comboBoxItem);
+            }
+            else if (e is UsbControllerRemovedEventArgs)
+            {
+
+            }
+            else if (e is UsbControllerErrorEventArgs)
+            {
+                UsbControllerErrorEventArgs errorArgs = e as UsbControllerErrorEventArgs;
+                statusLabel.Text = $"Error on Device {errorArgs.ControllerAddress}: {errorArgs.Message}";
+                SetErrorIcon(true);
+                ShowTaskbarNotification("Device Error", statusLabel.Text);
+            }
+        }
 
         private async void FormUpdateTimer_Tick(object sender, EventArgs e)
         {
-            if(usbDeviceManager.DeviceCount > cbo_DeviceAddress.Items.Count)
+            // Update dropdown UI if new controllers have been connected
+            if(deviceAddressList.Count > cbo_DeviceAddress.Items.Count)
             {
-                var activeDevices = usbDeviceManager.UsbDevices.Where(dev => dev.UsbDevice.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true);
-                var newDevices = activeDevices.Where(dev => !deviceAddressList.Select(d => d.Text).Contains(dev.AppData.DeviceControllerData.DeviceAddress.ToString()))
-                    .Select((dev) => new ComboBoxItem
-                        {
-                            Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString() +
-                                $" ({userSettings.Controllers.Where(c => c.Address == dev.AppData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name ?? ""})",
-                            Value = usbDeviceManager.UsbDevices.IndexOf(dev)})
-                    .ToList();
-                newDevices.ForEach(dev =>
-                {
-                    deviceAddressList.Add(dev);
-                });
-                if(newDevices.Count > 0)
-                {
-                    var lastSelected = cbo_DeviceAddress.SelectedValue;
-                    cbo_DeviceAddress.Items.Clear();
-                    cbo_DeviceAddress.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
-                    cbo_DeviceAddress.SelectedValue = lastSelected;
-                }
-                if(cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
+                var lastSelected = cbo_DeviceAddress.SelectedValue;
+                cbo_DeviceAddress.Items.Clear();
+                cbo_DeviceAddress.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
+                cbo_DeviceAddress.SelectedValue = lastSelected;
+
+                if (cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
                 {
                     cbo_DeviceAddress.SelectedIndex = 0;
                 }
@@ -184,23 +201,11 @@ namespace ArchonLightingSystem
                     //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
                     if (usbDevice.UsbDevice.IsAttached == true && usbDevice.AppIsInitialized)
                     {
-                        //Device is connected and ready to communicate, enable user interface on the form 
-                        string addr = usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress.ToString();
-                        string bootVer = usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.BootloaderVersion?.ToString();
-                        string AppVer = usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.ApplicationVersion?.ToString();
-                        statusLabel.Text = $"Device {addr} Found. BootVer: {bootVer}   AppVer: {AppVer}  Temp: {temperatureString}";
-
                         if (!FormIsInitialized && usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
                         {
                             UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
                             FormIsInitialized = true;
-                            SetErrorIcon(true);
                         }
-                    }
-                    if ((usbDevice.UsbDevice.IsAttached == false) || (usbDevice.UsbDevice.IsAttachedButBroken == true))
-                    {
-                        //Device not available to communicate. Disable user interface on the form.
-                        statusLabel.Text = $"Device Not Detected: Verify Connection/Correct Firmware.  Temp: {temperatureString}";
                     }
                 }
                 catch(Exception ex)
@@ -216,13 +221,27 @@ namespace ArchonLightingSystem
 
         private void ShowTaskbarNotification(string title, string content, int duration = 5000)
         {
-            notifyIcon1.BalloonTipTitle = title;
+            // simple skip to ignore repeating notifications (failed device retrying, for example)
+            if (title == lastNotification) return;
+            
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<string, string, int>(ShowTaskbarNotification), new object[] { title, content, duration });
+                return;
+            }
+            notifyIcon1.BalloonTipTitle = "Archon Lighting: " + title;
             notifyIcon1.BalloonTipText = content;
             notifyIcon1.ShowBalloonTip(duration);
+            lastNotification = title;
         }
 
         private void SetErrorIcon(bool error)
         {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<bool>(SetErrorIcon), new object[] { error });
+                return;
+            }
             notifyIcon1.Icon = error ? Resources.darkarchon : Resources.archon;
             this.Icon = notifyIcon1.Icon;
         }

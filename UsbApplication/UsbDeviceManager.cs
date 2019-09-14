@@ -7,22 +7,28 @@ using System.Threading.Tasks;
 
 namespace ArchonLightingSystem.UsbApplication
 {
-    public class UsbDeviceEventArgs : EventArgs
-    {
-        public bool DeviceAdded { get; set; }
-        public bool DeviceRemoved { get; set; }
-        public UsbControllerInstance ControllerInstance { get; internal set; }
-    }
+
 
     public class UsbDeviceManager
     {
-        public event EventHandler<UsbDeviceEventArgs> UsbControllerEvent;
+        public event EventHandler<UsbControllerEventArgs> UsbControllerEvent;
 
         private List<UsbControllerInstance> usbControllerInstances = new List<UsbControllerInstance>();
+        private bool connected = false;
 
-        public UsbDeviceManager(IntPtr handle, string vid, string pid)
+        public UsbDeviceManager()
         {
             UsbApp.usbDriver.UsbDriverEvent += HandleUsbDriverEvent;
+        }
+
+        public void Connect(IntPtr handle, string vid, string pid)
+        {
+            if(connected)
+            {
+                throw new Exception("Connect() can only be called once.");
+            }
+
+            connected = true;
             UsbApp.Register(handle, vid, pid);
         }
 
@@ -56,7 +62,7 @@ namespace ArchonLightingSystem.UsbApplication
             UsbApp.HandleWindowEvent(ref m);
         }
 
-        protected virtual void OnUsbDeviceEvent(UsbDeviceEventArgs e)
+        protected virtual void OnUsbDeviceEvent(UsbControllerEventArgs e)
         {
             UsbControllerEvent?.Invoke(this, e);
         }
@@ -71,18 +77,28 @@ namespace ArchonLightingSystem.UsbApplication
                     if(!dev.IsAttached)
                     {
                         usbControllerInstances.Remove(controller);
-                        OnUsbDeviceEvent(new UsbDeviceEventArgs() { ControllerInstance = controller, DeviceAdded = false, DeviceRemoved = true });
+                        OnUsbDeviceEvent(new UsbControllerRemovedEventArgs() { ControllerInstance = controller});
                     }
                 }
                 else
                 {
                     var newController = new UsbControllerInstance(dev);
+                    newController.ControllerReadyEvent += ControllerReadyEventHandler;
+                    newController.ControllerErrorEvent += ControllerErrorEventHandler;
                     usbControllerInstances.Add(newController);
-                    OnUsbDeviceEvent(new UsbDeviceEventArgs() { ControllerInstance = newController, DeviceAdded = true, DeviceRemoved = false });
                 }
             });
         }
 
+        private void ControllerReadyEventHandler(object sender, EventArgs e)
+        {
+            OnUsbDeviceEvent(new UsbControllerAddedEventArgs() { ControllerInstance = (UsbControllerInstance)sender});
+        }
+
+        private void ControllerErrorEventHandler(object sender, UsbControllerErrorEventArgs e)
+        {
+            OnUsbDeviceEvent(e);
+        }
 
         public ApplicationData GetAppData(int deviceIdx)
         {

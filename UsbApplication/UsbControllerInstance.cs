@@ -13,12 +13,17 @@ namespace ArchonLightingSystem.UsbApplication
     public class UsbControllerInstance
     {
         public ApplicationData AppData { get; set; }
-        public bool IsPaused { get; set; }
-        public bool AppIsInitialized { get; set; }
-        public bool IsDisconnected { get; set; }
+        public bool IsPaused { get; set; } = false;
+        public bool AppIsInitialized { get; set; } = false;
+        public bool IsDisconnected { get; set; } = false;
+        public bool IsReady { get; set; } = false;
         public SemaphoreSlim semaphore { get; set; }
         public UsbDevice UsbDevice {get; internal set; }
         private BackgroundWorker ReadWriteThread;
+        private int consecutiveErrors = 0;
+
+        public event EventHandler<EventArgs> ControllerReadyEvent;
+        public event EventHandler<UsbControllerErrorEventArgs> ControllerErrorEvent;
 
         public UsbControllerInstance(UsbDevice usbDevice)
         {
@@ -61,6 +66,13 @@ namespace ArchonLightingSystem.UsbApplication
                     {
                         await UsbApp.DeviceDoWork(this);
 
+                        if(!IsReady && (this?.AppData?.DeviceControllerData?.IsInitialized ?? false))
+                        {
+                            IsReady = true;
+                            ControllerReadyEvent?.Invoke(this, null);
+                        }
+                        consecutiveErrors = 0;
+
                         Thread.Sleep(1);    //Add a small delay.  Otherwise, this while(true) loop can execute very fast and cause 
                                             //high CPU utilization, with no particular benefit to the application.
 
@@ -72,18 +84,18 @@ namespace ArchonLightingSystem.UsbApplication
                     }
 
                 }
+                // todo - use different exception types to handle various errors
                 catch (Exception exc)
                 {
-                    //Exceptions can occur during the read or write operations.  For example,
-                    //exceptions may occur if for instance the USB device is physically unplugged
-                    //from the host while the above read/write functions are executing.
-
-                    //Don't need to do anything special in this case.  The application will automatically
-                    //re-establish communications based on the global IsAttached boolean variable used
-                    //in conjunction with the WM_DEVICECHANGE messages to dyanmically respond to Plug and Play
-                    //USB connection events.
+                    ControllerErrorEvent?.Invoke(this, new UsbControllerErrorEventArgs
+                    {
+                        Message = exc.Message
+                    });
                     Trace.WriteLine($"ReadWriteThread Error: {exc.ToString()}");
-                    Thread.Sleep(3000);
+
+                    // exponential retry backoff on consecutive errors
+                    consecutiveErrors++;
+                    Thread.Sleep(1000 * consecutiveErrors * consecutiveErrors);
                 }
             }
         }
