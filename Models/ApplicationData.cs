@@ -19,10 +19,13 @@ namespace ArchonLightingSystem.Models
         public bool ReadDebugPending;
         public bool ResetToBootloaderPending;
         public bool UpdateFanSpeedPending;
+        public bool SendTimePending;
         public bool WriteLedFrame;
         public uint EepromAddress;
         public uint EepromLength;
         public string Debug;
+
+        public Byte[] TimeValue { get; set; }           // 3  bytes: hour, minute, second
 
         public DeviceControllerData DeviceControllerData { get; set; }
 
@@ -43,6 +46,7 @@ namespace ArchonLightingSystem.Models
             EepromAddress = 1;
             EepromLength = 1;
             Debug = "";
+            TimeValue = new byte[3];
             DeviceControllerData = new DeviceControllerData();
         }
     }

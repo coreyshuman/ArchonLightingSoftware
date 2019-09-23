@@ -29,6 +29,22 @@ namespace ArchonLightingSystem.Services
             }
         }
 
+        /// <summary>
+        /// Amount of delay in milliseconds between each run of the task
+        /// </summary>
+        public int TaskPeriod
+        {
+            get
+            {
+                return period;
+            }
+            set
+            {
+                frequency = 0;  // todo make this better?
+                period = value;
+            }
+        }
+
         private int frequency = 2;
         private int period = 500;
         private UserSettings userSettings = null;

@@ -20,6 +20,7 @@ namespace ArchonLightingSystem.Models
         public Version ApplicationVersion { get; set; }
         public UInt32 BootStatusFlag { get; set; }
         public Byte[] AutoFanSpeedValue { get; set; }
+        public Byte[] TemperatureValue { get; set; }
 
         private bool isInitialized;
 
@@ -32,6 +33,7 @@ namespace ArchonLightingSystem.Models
             BootloaderVersion = new Version();
             ApplicationVersion = new Version();
             AutoFanSpeedValue = new byte[DeviceControllerDefinitions.DevicePerController];
+            TemperatureValue = new byte[DeviceControllerDefinitions.DevicePerController];
             isInitialized = false;
         }
 

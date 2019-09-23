@@ -180,6 +180,7 @@
     <Compile Include="Services\HardwareUpdateService.cs" />
     <Compile Include="Services\LightControllerService.cs" />
     <Compile Include="Services\ServiceManager.cs" />
+    <Compile Include="Services\TimeService.cs" />
     <Compile Include="SubformBase.cs">
       <SubType>Form</SubType>
     </Compile>

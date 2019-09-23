@@ -30,6 +30,7 @@
             CMD_DEFAULT_CONFIG = 0x33,
             CMD_READ_FANSPEED = 0x35,
             CMD_WRITE_FANSPEED = 0x36,
+            CMD_SET_TIME = 0x37,
             CMD_READ_EEPROM = 0x38,
             CMD_WRITE_EEPROM = 0x39,
             CMD_ERROR_OCCURED = 0x40

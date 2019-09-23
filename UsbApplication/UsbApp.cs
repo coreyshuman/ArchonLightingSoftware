@@ -74,7 +74,11 @@ namespace ArchonLightingSystem.UsbApplication
                         // stop general tasks when paused
                         if (!controllerInstance.IsPaused)
                         {
-                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, 0) > 0)
+                            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+                            {
+                                rxtxBuffer[i] = controllerInstance.AppData.DeviceControllerData.TemperatureValue[i];
+                            }
+                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController) > 0)
                             {
                                 //await Task.Delay(2);
                                 ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED);
@@ -188,6 +192,12 @@ namespace ArchonLightingSystem.UsbApplication
                         {
                             controllerInstance.AppData.ReadDebugPending = false;
                             await ReadDebug(controllerInstance);
+                        }
+
+                        if (controllerInstance.AppData.SendTimePending)
+                        {
+                            controllerInstance.AppData.SendTimePending = false;
+                            await SetTime(controllerInstance, controllerInstance.AppData.TimeValue);
                         }
                     }
                 }
@@ -387,6 +397,16 @@ namespace ArchonLightingSystem.UsbApplication
                     }
                     controllerInstance.AppData.Debug += (Environment.NewLine + "_________________________" + Environment.NewLine);
                 }
+            }
+            return null;
+        }
+
+        private static async Task<ControlPacket> SetTime(UsbControllerInstance controllerInstance, byte[] timeValue)
+        {
+            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_SET_TIME, timeValue, 3) > 0)
+            {
+                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_SET_TIME);
+                return response;
             }
             return null;
         }

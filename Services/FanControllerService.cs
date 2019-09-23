@@ -22,8 +22,8 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
-                byte[] speedValues = CalculateFanSpeeds(applicationData, controllerSettings, hardwareManager);
-                SendFanSpeeds(applicationData, speedValues);
+                Tuple<byte[], byte[]> values = CalculateFanSpeeds(applicationData, controllerSettings, hardwareManager);
+                SendFanSpeeds(applicationData, values);
             }
             catch (Exception ex)
             {
@@ -38,16 +38,18 @@ namespace ArchonLightingSystem.Services
         /// <param name="controllerSettings"></param>
         /// <param name="hardwareManager"></param>
         /// <returns>Array of bytes containing speed values</returns>
-        private byte[] CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
+        private Tuple<byte[], byte[]> CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
+            byte[] temperatureValues = new byte[DeviceControllerDefinitions.DevicePerController];
 
             for (int devIdx = 0; devIdx < DeviceControllerDefinitions.DevicePerController; devIdx++)
             {
                 speedValues[devIdx] = 0xFF;
+                temperatureValues[devIdx] = 0xFF;
 
                 var deviceSetting = controllerSettings.Devices.Where(d => d.Index == devIdx).FirstOrDefault();
-                if (deviceSetting != null && deviceSetting.UseFanCurve)
+                if (deviceSetting != null)
                 {
                     var sensor = hardwareManager.GetSensorByIdentifier(deviceSetting.Sensor);
                     if (sensor == null || !sensor.Value.HasValue)
@@ -60,46 +62,61 @@ namespace ArchonLightingSystem.Services
                     if (temperature < 0) temperature = 0;
                     if (temperature > 100) temperature = 100;
 
-                    int lowerBoundValue = 0;
-                    int calculatedFanSpeed = 0;
-                    List<int> fanCurveValues = deviceSetting.FanCurveValues;
-                    for (int i = 0; i < fanCurveValues.Count; i++)
+                    temperatureValues[devIdx] = (byte)ScaleValue(100f, 132f, 0f, 0f, temperature);
+
+                    if (deviceSetting != null && deviceSetting.UseFanCurve)
                     {
-                        int comparedTemperature = i * 10;
-                        if (temperature > comparedTemperature)
+                        int lowerBoundValue = 0;
+                        int calculatedFanSpeed = 0;
+                        List<int> fanCurveValues = deviceSetting.FanCurveValues;
+                        for (int i = 0; i < fanCurveValues.Count; i++)
                         {
-                            lowerBoundValue = fanCurveValues[i];
-                        }
-                        else
-                        {
-                            if (temperature != comparedTemperature)
+                            int comparedTemperature = i * 10;
+                            if (temperature > comparedTemperature)
                             {
-                                calculatedFanSpeed = ((fanCurveValues[i] - lowerBoundValue) / 10) * (temperature - (comparedTemperature - 10)) + lowerBoundValue; // y = (y2-y1)/(x2-x1)*(x-x1) + y1
+                                lowerBoundValue = fanCurveValues[i];
                             }
                             else
                             {
-                                calculatedFanSpeed = fanCurveValues[i];
+                                if (temperature != comparedTemperature)
+                                {
+                                    calculatedFanSpeed = ((fanCurveValues[i] - lowerBoundValue) / 10) * (temperature - (comparedTemperature - 10)) + lowerBoundValue; // y = (y2-y1)/(x2-x1)*(x-x1) + y1
+                                }
+                                else
+                                {
+                                    calculatedFanSpeed = fanCurveValues[i];
+                                }
+                                break; // found our value, break from loop
                             }
-                            break; // found our value, break from loop
                         }
+                        speedValues[devIdx] = (byte)calculatedFanSpeed;
                     }
-                    speedValues[devIdx] = (byte)calculatedFanSpeed;
                 }
             }
-            return speedValues;
+            return new Tuple<byte[], byte[]>(speedValues, temperatureValues);
         }
 
         /// <summary>
         /// Send fan speed control values to the fan controller. Accepts array of 5 values for each fan output.
         /// 0-100 for override control, or 255 to use interval config speed.
         /// </summary>
-        private void SendFanSpeeds(ApplicationData applicationData, byte[] speedValues)
+        private void SendFanSpeeds(ApplicationData applicationData, Tuple<byte[], byte[]> values)
         {
             for(int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
-                applicationData.DeviceControllerData.AutoFanSpeedValue[i] = speedValues[i];
+                applicationData.DeviceControllerData.AutoFanSpeedValue[i] = values.Item1[i];
+                applicationData.DeviceControllerData.TemperatureValue[i] = values.Item2[i];
             }
             applicationData.UpdateFanSpeedPending = true;
+        }
+
+        private float ScaleValue(float fromHigher, float toHigher, float fromLower, float toLower, float value)
+        {
+            if (value <= fromLower)
+                return fromHigher;
+            else if (value >= toLower)
+                return toHigher;
+            return (toHigher - fromHigher) * ((value - fromLower) / (toLower - fromLower)) + fromHigher;
         }
     }
 }
