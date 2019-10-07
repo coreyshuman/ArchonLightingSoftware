@@ -13,7 +13,7 @@ namespace ArchonLightingSystem
         [STAThread]
         static void Main()
         {
-            Application.EnableVisualStyles();
+            //Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
             string[] args = Environment.GetCommandLineArgs();

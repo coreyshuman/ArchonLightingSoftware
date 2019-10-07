@@ -150,24 +150,40 @@ namespace ArchonLightingSystem
                 case FirmwareDevice.StatusCode.Canceled:
                 case FirmwareDevice.StatusCode.Failed:
                 case FirmwareDevice.StatusCode.Disconnected:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Red;
                     listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Error;
                     break;
 
                 case FirmwareDevice.StatusCode.Canceling:
                 case FirmwareDevice.StatusCode.Connecting:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Blue;
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Processing;
+                    break;
+
                 case FirmwareDevice.StatusCode.Erasing:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.OrangeRed;
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Processing;
+                    break;
+
                 case FirmwareDevice.StatusCode.Updating:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Yellow;
+                    listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Processing;
+                    break;
+
                 case FirmwareDevice.StatusCode.Verifying:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Green;
                     listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Processing;
                     break;
 
                 case FirmwareDevice.StatusCode.Completed:
                 case FirmwareDevice.StatusCode.Ready:
                 case FirmwareDevice.StatusCode.StartingApp:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Green;
                     listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Checkmark;
                     break;
 
                 default:
+                    ((ProgressBar)listView1.Controls[$"progressBar_{device.DeviceIndex}"]).ForeColor = Color.Red;
                     listView1.Items[device.DeviceIndex].ImageIndex = (int)Image.Error;
                     break;
             }

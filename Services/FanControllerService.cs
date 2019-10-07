@@ -113,10 +113,16 @@ namespace ArchonLightingSystem.Services
         private float ScaleValue(float fromHigher, float toHigher, float fromLower, float toLower, float value)
         {
             if (value <= fromLower)
-                return fromHigher;
-            else if (value >= toLower)
+                return toLower;
+            else if (value >= fromHigher)
                 return toHigher;
-            return (toHigher - fromHigher) * ((value - fromLower) / (toLower - fromLower)) + fromHigher;
+            if (fromHigher - fromLower == 0)
+            {
+                return (toHigher - toLower)  * value;
+            } else
+            {
+                return ((toHigher - toLower) / (fromHigher - fromLower)) * (value - fromLower) + toLower;
+            }
         }
     }
 }

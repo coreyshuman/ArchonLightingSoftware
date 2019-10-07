@@ -194,14 +194,14 @@ namespace ArchonLightingSystem.Components
             txtDeviceName.Show();
             txtDeviceName.Leave += TextNameChangedEventHandler(compNum - 1);
 
-            Util.CopyObjectProperties<ComboBox>(lightingMode, cboModeTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
+            Util.CopyObjectProperties<ComboBox>(lightingMode, cboModeTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height", "MaxDropDownItems" });
             lightingMode.Parent = grpDev;
             lightingMode.Show();
             lightingMode.Items.AddRange(LightingModes.GetLightingModes());
             lightingMode.SelectedIndexChanged += LightingModeChangedEventHandler(compNum - 1);
 
 
-            Util.CopyObjectProperties<ComboBox>(lightingSpeed, cboSpeedTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height" });
+            Util.CopyObjectProperties<ComboBox>(lightingSpeed, cboSpeedTemplate, new string[] { "FlatStyle", "ForeColor", "BackColor", "Top", "Width", "Left", "Height", "MaxDropDownItems" });
             lightingSpeed.Parent = grpDev;
             lightingSpeed.Show();
             lightingSpeed.Items.AddRange(LightingModes.GetLightingSpeeds());

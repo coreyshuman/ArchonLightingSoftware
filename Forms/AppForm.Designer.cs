@@ -348,6 +348,7 @@ namespace ArchonLightingSystem
             this.cbo_LightMode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightMode.FormattingEnabled = true;
             this.cbo_LightMode.Location = new System.Drawing.Point(78, 93);
+            this.cbo_LightMode.MaxDropDownItems = 30;
             this.cbo_LightMode.Name = "cbo_LightMode";
             this.cbo_LightMode.Size = new System.Drawing.Size(155, 28);
             this.cbo_LightMode.TabIndex = 70;
@@ -473,6 +474,7 @@ namespace ArchonLightingSystem
             this.cbo_LightSpeed.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_LightSpeed.FormattingEnabled = true;
             this.cbo_LightSpeed.Location = new System.Drawing.Point(78, 151);
+            this.cbo_LightSpeed.MaxDropDownItems = 30;
             this.cbo_LightSpeed.Name = "cbo_LightSpeed";
             this.cbo_LightSpeed.Size = new System.Drawing.Size(155, 28);
             this.cbo_LightSpeed.TabIndex = 73;
@@ -508,6 +510,7 @@ namespace ArchonLightingSystem
             this.cbo_DeviceAddress.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.cbo_DeviceAddress.FormattingEnabled = true;
             this.cbo_DeviceAddress.Location = new System.Drawing.Point(29, 68);
+            this.cbo_DeviceAddress.MaxDropDownItems = 30;
             this.cbo_DeviceAddress.Name = "cbo_DeviceAddress";
             this.cbo_DeviceAddress.Size = new System.Drawing.Size(322, 28);
             this.cbo_DeviceAddress.TabIndex = 77;
