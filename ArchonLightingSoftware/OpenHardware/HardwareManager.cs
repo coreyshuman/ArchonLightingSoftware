@@ -18,7 +18,7 @@ using System.IO;
 using System.Windows.Forms;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Properties;
-using OpenHardwareMonitor.Hardware;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.OpenHardware
 {
@@ -53,11 +53,11 @@ namespace ArchonLightingSystem.OpenHardware
 
             computer.Open();
 
-            computer.MainboardEnabled = true;
-            computer.CPUEnabled = true;
-            computer.GPUEnabled = true;
-            computer.HDDEnabled = true;
-            computer.RAMEnabled = true;
+            computer.IsMotherboardEnabled = true;
+            computer.IsCpuEnabled = true;
+            computer.IsGpuEnabled = true;
+            computer.IsStorageEnabled = true;
+            computer.IsMemoryEnabled = true;
         }
 
         public Collection<Node> Nodes

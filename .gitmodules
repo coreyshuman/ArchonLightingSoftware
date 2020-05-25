@@ -1,0 +1,3 @@
+[submodule "LibreHardwareMonitor"]
+	path = LibreHardwareMonitor
+	url = git@github.com:coreyshuman/LibreHardwareMonitor.git

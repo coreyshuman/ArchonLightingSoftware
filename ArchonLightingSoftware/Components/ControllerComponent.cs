@@ -9,7 +9,7 @@ using ArchonLightingSystem.Common;
 using System.Drawing;
 using System.Diagnostics;
 using ArchonLightingSystem.OpenHardware;
-using OpenHardwareMonitor.Hardware;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.Components
 {

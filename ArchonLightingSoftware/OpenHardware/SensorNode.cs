@@ -11,7 +11,7 @@
 
 using System;
 using System.Drawing;
-using OpenHardwareMonitor.Hardware;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.OpenHardware
 {

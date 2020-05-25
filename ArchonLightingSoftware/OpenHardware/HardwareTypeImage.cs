@@ -11,7 +11,7 @@
 
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Properties;
-using OpenHardwareMonitor.Hardware;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.OpenHardware
 {
@@ -32,22 +32,22 @@ namespace ArchonLightingSystem.OpenHardware
 
             switch (hardwareType)
             {
-                case HardwareType.CPU:
+                case HardwareType.Cpu:
                     image = Util.GetPropertyName(() => Resources .cpu);
                     break;
                 case HardwareType.GpuNvidia:
                     image = Util.GetPropertyName(() => Resources .nvidia);
                     break;
-                case HardwareType.GpuAti:
+                case HardwareType.GpuAmd:
                     image = Util.GetPropertyName(() => Resources .ati);
                     break;
-                case HardwareType.HDD:
+                case HardwareType.Storage:
                     image = Util.GetPropertyName(() => Resources .hdd);
                     break;
                 case HardwareType.Heatmaster:
                     image = Util.GetPropertyName(() => Resources .bigng);
                     break;
-                case HardwareType.Mainboard:
+                case HardwareType.Motherboard:
                     image = Util.GetPropertyName(() => Resources .mainboard);
                     break;
                 case HardwareType.SuperIO:
@@ -56,13 +56,13 @@ namespace ArchonLightingSystem.OpenHardware
                 case HardwareType.TBalancer:
                     image = Util.GetPropertyName(() => Resources .bigng);
                     break;
-                case HardwareType.RAM:
+                case HardwareType.Memory:
                     image = Util.GetPropertyName(() => Resources .ram);
                     break;
-                case HardwareType.Aquacomputer:
+                case HardwareType.AquaComputer:
                     image = Util.GetPropertyName(() => Resources .acicon);
                     break;
-                case HardwareType.NIC:
+                case HardwareType.Network:
                     image = Util.GetPropertyName(() => Resources .nic);
                     break;
 

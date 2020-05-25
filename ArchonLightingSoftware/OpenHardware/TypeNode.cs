@@ -11,7 +11,7 @@
 
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Properties;
-using OpenHardwareMonitor.Hardware;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.OpenHardware
 {

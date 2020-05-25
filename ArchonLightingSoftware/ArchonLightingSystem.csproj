@@ -251,6 +251,7 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
+    <Folder Include="ArchonSDKIntegration\" />
     <Folder Include="Properties\DataSources\" />
   </ItemGroup>
   <ItemGroup>
@@ -285,9 +286,10 @@
     <None Include="Resources\ati.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\LibreHardwareMonitor\OpenHardwareMonitorLib.csproj">
-      <Project>{7c70b74d-3565-416b-9f04-ef3a00bb2095}</Project>
-      <Name>OpenHardwareMonitorLib</Name>
+    <ProjectReference Include="..\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj">
+      <Project>{429b4498-de08-4511-8fca-85e6e4d3cf05}</Project>
+      <Name>LibreHardwareMonitorLib</Name>
+      <EmbedInteropTypes>False</EmbedInteropTypes>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
