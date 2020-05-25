@@ -99,6 +99,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArchonLightingSDKIntegration\MappedFileManager.cs" />
     <Compile Include="Bootloader\Bootloader.cs" />
     <Compile Include="Bootloader\FirmwareUpdateManager.cs" />
     <Compile Include="Bootloader\HexManager.cs" />
@@ -227,7 +228,6 @@
       <DependentUpon>Resources.resx</DependentUpon>
       <DesignTime>True</DesignTime>
     </Compile>
-    <None Include=".gitignore" />
     <None Include="app.config" />
     <BaseApplicationManifest Include="Properties\app.manifest" />
     <None Include="Firmware\latest.hex">
@@ -251,7 +251,6 @@
     </BootstrapperPackage>
   </ItemGroup>
   <ItemGroup>
-    <Folder Include="ArchonSDKIntegration\" />
     <Folder Include="Properties\DataSources\" />
   </ItemGroup>
   <ItemGroup>
@@ -286,6 +285,10 @@
     <None Include="Resources\ati.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\ArchonLightingSDKCommon\ArchonLightingSDKCommon.csproj">
+      <Project>{0fc2c4f0-e8ef-4fad-a05e-ac0680fb0043}</Project>
+      <Name>ArchonLightingSDKCommon</Name>
+    </ProjectReference>
     <ProjectReference Include="..\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj">
       <Project>{429b4498-de08-4511-8fca-85e6e4d3cf05}</Project>
       <Name>LibreHardwareMonitorLib</Name>

@@ -36,6 +36,7 @@
             this.btn_ClearScreen = new System.Windows.Forms.Button();
             this.cbo_DeviceAddress = new System.Windows.Forms.ComboBox();
             this.btn_Close = new System.Windows.Forms.Button();
+            this.button1 = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // btn_ReadDebug
@@ -99,7 +100,7 @@
             // 
             this.btn_Close.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_Close.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Close.Location = new System.Drawing.Point(434, 13);
+            this.btn_Close.Location = new System.Drawing.Point(434, 15);
             this.btn_Close.Margin = new System.Windows.Forms.Padding(4);
             this.btn_Close.Name = "btn_Close";
             this.btn_Close.Size = new System.Drawing.Size(109, 46);
@@ -108,12 +109,26 @@
             this.btn_Close.UseVisualStyleBackColor = false;
             this.btn_Close.Click += new System.EventHandler(this.btn_Close_Click);
             // 
+            // button1
+            // 
+            this.button1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.button1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.button1.Location = new System.Drawing.Point(661, 15);
+            this.button1.Margin = new System.Windows.Forms.Padding(4);
+            this.button1.Name = "button1";
+            this.button1.Size = new System.Drawing.Size(109, 46);
+            this.button1.TabIndex = 5;
+            this.button1.Text = "Test Map Read";
+            this.button1.UseVisualStyleBackColor = false;
+            this.button1.Click += new System.EventHandler(this.button1_Click);
+            // 
             // DebugForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(783, 496);
+            this.Controls.Add(this.button1);
             this.Controls.Add(this.btn_Close);
             this.Controls.Add(this.cbo_DeviceAddress);
             this.Controls.Add(this.btn_ClearScreen);
@@ -141,5 +156,6 @@
         private System.Windows.Forms.Button btn_ClearScreen;
         private System.Windows.Forms.ComboBox cbo_DeviceAddress;
         private System.Windows.Forms.Button btn_Close;
+        private System.Windows.Forms.Button button1;
     }
 }

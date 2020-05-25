@@ -13,7 +13,7 @@ namespace ArchonLightingSystem.Services
         {
             services.Add(new HardwareUpdateService(4));
             services.Add(new FanControllerService(2));
-            services.Add(new LightControllerService(1));
+            services.Add(new LightControllerService(200));
             services.Add(new TimeServiceController(2000));
         }
 

@@ -59,6 +59,7 @@ namespace ArchonLightingSystem.Services
             usbDeviceManager = ap;
             hardwareManager = hw;
             serviceThread = new BackgroundWorker();
+            serviceThread.WorkerSupportsCancellation = true;
             serviceThread.WorkerReportsProgress = false;
             serviceThread.DoWork += new DoWorkEventHandler(ServiceThread_DoWork);
             serviceThread.RunWorkerAsync();
@@ -71,7 +72,7 @@ namespace ArchonLightingSystem.Services
 
         private void ServiceThread_DoWork(object sender, DoWorkEventArgs e)
         {
-            while (true)
+            while (!serviceThread.CancellationPending)
             {
                 try
                 {

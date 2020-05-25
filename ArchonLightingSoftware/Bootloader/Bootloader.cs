@@ -41,7 +41,7 @@ namespace ArchonLightingSystem.Bootloader
         public Version ApplicationVersion { get; set; }
         public UInt32 BootStatus { get; set; }
         public byte Address { get; set; }
-        public bool IsEnabled { get; set; }
+        public bool IsTxRxInProgress { get; set; }
         public bool IsInitialized { get; set; }
         public bool NoResponseFromDevice { get; set; }
         public bool Success { get; set; }
@@ -133,7 +133,7 @@ namespace ArchonLightingSystem.Bootloader
                 {
                     for(uint i = 0; i < DeviceCount; i++)
                     {
-                        if (bootState[i].bootloaderStatus.IsEnabled)
+                        if (bootState[i].bootloaderStatus.IsTxRxInProgress)
                         {
                             ReceiveTask(i);
                             TransmitTask(i);
@@ -231,6 +231,7 @@ namespace ArchonLightingSystem.Bootloader
                     // Notify main window that there was no reponse.
                     bootState[deviceIdx].bootloaderStatus.Length = 0;
                     bootState[deviceIdx].bootloaderStatus.Failed = true;
+                    bootState[deviceIdx].bootloaderStatus.IsTxRxInProgress = false;
                     bootloaderTaskWorker.ReportProgress(0, bootState[deviceIdx].bootloaderStatus);
                     break;
             }
@@ -255,6 +256,7 @@ namespace ArchonLightingSystem.Bootloader
                     Util.CopyArray(ref bootState[deviceIdx].bootloaderStatus.Data, 0, ref bootState[deviceIdx].RxPacket, 0, bootState[deviceIdx].RxPacketLen);
                     bootState[deviceIdx].bootloaderStatus.Length = bootState[deviceIdx].RxPacketLen;
                     bootState[deviceIdx].bootloaderStatus.Success = true;
+                    bootState[deviceIdx].bootloaderStatus.IsTxRxInProgress = false;
                     bootloaderTaskWorker.ReportProgress(0, bootState[deviceIdx].bootloaderStatus);
                     break;
 
@@ -268,6 +270,7 @@ namespace ArchonLightingSystem.Bootloader
                         Util.CopyArray(ref bootState[deviceIdx].bootloaderStatus.Data, 0, ref bootState[deviceIdx].RxPacket, 0, bootState[deviceIdx].RxPacketLen);
                         bootState[deviceIdx].bootloaderStatus.Length = bootState[deviceIdx].RxPacketLen;
                         bootState[deviceIdx].bootloaderStatus.Success = true;
+                        bootState[deviceIdx].bootloaderStatus.IsTxRxInProgress = false;
                         bootloaderTaskWorker.ReportProgress(0, bootState[deviceIdx].bootloaderStatus);
                     }
                     bootState[deviceIdx].resetHexFilePtr = true;
@@ -439,7 +442,7 @@ namespace ArchonLightingSystem.Bootloader
             UInt16 HexRecLen = 0;
             UInt32 totalRecords = 10;
 
-            bootState[deviceIdx].bootloaderStatus.IsEnabled = true;
+            bootState[deviceIdx].bootloaderStatus.IsTxRxInProgress = true;
             bootState[deviceIdx].bootloaderStatus.Success = false;
             bootState[deviceIdx].bootloaderStatus.Failed = false;
 

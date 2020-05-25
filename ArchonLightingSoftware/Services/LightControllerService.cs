@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
+using System.Globalization;
+using ArchonLightingSystem.ArchonLightingSDKIntegration;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
 
@@ -8,6 +10,8 @@ namespace ArchonLightingSystem.Services
 {
     class LightControllerService : ControllerServiceBase
     {
+        private MappedFileManager mappedFileManager = MappedFileManager.Instance;
+        private byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
 
         /// <summary>
         /// Service which periodically updates leds based on dynamic lighting options.
@@ -23,7 +27,21 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
-                Console.WriteLine("light controller service tick");
+                if(mappedFileManager.IsUpdateReceived)
+                {
+                    for(int devIdx = 0; devIdx < DeviceControllerDefinitions.DevicePerController; devIdx ++)
+                    {
+                        for(int ledIdx = 0; ledIdx < DeviceControllerDefinitions.LedCountPerDevice; ledIdx++)
+                        {
+                            ledFrame[devIdx, ledIdx * 3] = mappedFileManager.Lights[ledIdx].Green;
+                            ledFrame[devIdx, ledIdx * 3 + 1] = mappedFileManager.Lights[ledIdx].Red;
+                            ledFrame[devIdx, ledIdx * 3 + 2] = mappedFileManager.Lights[ledIdx].Blue;
+                        }
+                    }
+
+                    applicationData.LedFrameData = ledFrame;
+                    applicationData.WriteLedFrame = true;
+                }
             }
             catch (Exception ex)
             {

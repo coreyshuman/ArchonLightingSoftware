@@ -11,6 +11,7 @@ using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Interfaces;
 using ArchonLightingSystem.Components;
 using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.ArchonLightingSDKIntegration;
 
 namespace ArchonLightingSystem
 {
@@ -77,6 +78,12 @@ namespace ArchonLightingSystem
         private void btn_Close_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void button1_Click(object sender, EventArgs e)
+        {
+            var mappedFileManager = MappedFileManager.Instance;
+            mappedFileManager.ReadFile();
         }
     }
 }
