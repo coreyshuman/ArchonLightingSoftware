@@ -126,6 +126,11 @@ namespace ArchonLightingSystem
             {
                 SetFormIsIdle();
             }
+
+            if(args.Status == FirmwareUpdateManager.ManagerStatus.NoFile)
+            {
+                SetFormNotReady();
+            }
         }
 
         private void AddDeviceToList()
@@ -190,10 +195,18 @@ namespace ArchonLightingSystem
             
         }
 
+        private void SetFormNotReady()
+        {
+            btn_UpdateAll.Enabled = false;
+            btn_UpdateSelected.Enabled = false;
+        }
+
         private void SetFormIsUpdating()
         {
             btn_UpdateAll.Enabled = false;
             btn_StartApp.Enabled = false;
+            btn_OpenHexFile.Enabled = false;
+            btn_Cancel.Text = "Cancel";
             isBusy = true;
             this.Cursor = Cursors.AppStarting;
         }
@@ -201,7 +214,9 @@ namespace ArchonLightingSystem
         private void SetFormIsIdle()
         {
             btn_UpdateAll.Enabled = true;
+            btn_UpdateSelected.Enabled = true;
             btn_StartApp.Enabled = true;
+            btn_Cancel.Text = "Close";
             isBusy = false;
             this.Cursor = Cursors.Default;
         }
@@ -266,6 +281,8 @@ namespace ArchonLightingSystem
                     }
                     else
                     {
+                        btn_UpdateAll.Enabled = false;
+                        btn_UpdateSelected.Enabled = false;
                         MessageBox.Show("Error: The file was invalid.");
                     }
                 }

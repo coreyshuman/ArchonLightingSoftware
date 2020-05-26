@@ -278,7 +278,7 @@ namespace ArchonLightingSystem.Bootloader
             try
             {
                 bool verified = false;
-                if (bootloader.LoadHexFile(filepath + @"firmware\latest.hex"))
+                if (bootloader.LoadHexFile(filepath + @"FirmwareBinaries\latest.hex"))
                 {
                     firmwareCRC = bootloader.CalculateFlashCRC(0);
                     verified = true;
@@ -382,32 +382,36 @@ namespace ArchonLightingSystem.Bootloader
                 }
             }
 
-            int erasingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Erasing).Count();
-
-            if (erasingDevices > 0)
+            if (Status != ManagerStatus.NoFile)
             {
-                Status = ManagerStatus.Erasing;
-            }
 
-            int updatingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Updating).Count();
+                int erasingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Erasing).Count();
 
-            if (updatingDevices > 0)
-            {
-                Status = ManagerStatus.Updating;
-            }
+                if (erasingDevices > 0)
+                {
+                    Status = ManagerStatus.Erasing;
+                }
 
-            int verifyingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Verifying).Count();
+                int updatingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Updating).Count();
 
-            if(verifyingDevices > 0)
-            {
-                Status = ManagerStatus.Verifying;
-            }
+                if (updatingDevices > 0)
+                {
+                    Status = ManagerStatus.Updating;
+                }
 
-            int busyDevices = firmwareDevices.Where(device => IsDeviceBusy(device.DeviceStatus)).Count();
+                int verifyingDevices = firmwareDevices.Where(device => device.DeviceStatus == FirmwareDevice.StatusCode.Verifying).Count();
 
-            if(busyDevices == 0)
-            {
-                Status = ManagerStatus.Completed;
+                if (verifyingDevices > 0)
+                {
+                    Status = ManagerStatus.Verifying;
+                }
+
+                int busyDevices = firmwareDevices.Where(device => IsDeviceBusy(device.DeviceStatus)).Count();
+
+                if (busyDevices == 0)
+                {
+                    Status = ManagerStatus.Completed;
+                }
             }
             OnFirmwareEvent();
         }

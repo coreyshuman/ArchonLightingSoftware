@@ -8,6 +8,7 @@ using System.ComponentModel;
 using System.Threading;
 using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.Models;
+using System.Linq.Expressions;
 
 namespace ArchonLightingSystem.Bootloader
 {
@@ -133,10 +134,19 @@ namespace ArchonLightingSystem.Bootloader
                 {
                     for(uint i = 0; i < DeviceCount; i++)
                     {
-                        if (bootState[i].bootloaderStatus.IsTxRxInProgress)
+                        try
                         {
-                            ReceiveTask(i);
-                            TransmitTask(i);
+                            if (bootState[i].bootloaderStatus.IsTxRxInProgress)
+                            {
+                                ReceiveTask(i);
+                                TransmitTask(i);
+                            }
+                        }
+                        catch(Exception ex)
+                        {
+                            bootState[i].bootloaderStatus.IsTxRxInProgress = false;
+                            bootState[i].bootloaderStatus.Failed = true;
+                            throw ex;
                         }
                     }
                     Thread.Sleep(2);
