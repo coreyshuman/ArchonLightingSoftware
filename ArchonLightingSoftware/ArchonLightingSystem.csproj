@@ -99,6 +99,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="ArchonLightingSDKIntegration\AIDA64Integration.cs" />
     <Compile Include="ArchonLightingSDKIntegration\MappedFileManager.cs" />
     <Compile Include="Bootloader\Bootloader.cs" />
     <Compile Include="Bootloader\FirmwareUpdateManager.cs" />

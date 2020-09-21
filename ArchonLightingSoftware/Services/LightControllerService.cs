@@ -12,6 +12,7 @@ namespace ArchonLightingSystem.Services
     {
         private MappedFileManager mappedFileManager = MappedFileManager.Instance;
         private byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
+        private DateTime tick = DateTime.Now;
 
         /// <summary>
         /// Service which periodically updates leds based on dynamic lighting options.
@@ -46,6 +47,11 @@ namespace ArchonLightingSystem.Services
             catch (Exception ex)
             {
                 Trace.WriteLine($"LightServiceThread Error: {ex.ToString()}");
+            }
+            if(applicationData.DeviceControllerData.DeviceAddress == 1)
+            {
+                //Console.WriteLine((DateTime.Now - tick).TotalMilliseconds);
+                tick = DateTime.Now;
             }
         }
     }

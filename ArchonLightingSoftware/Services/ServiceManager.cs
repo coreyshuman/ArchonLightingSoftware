@@ -11,10 +11,10 @@ namespace ArchonLightingSystem.Services
 
         public ServiceManager()
         {
-            services.Add(new HardwareUpdateService(4));
+            services.Add(new HardwareUpdateService(200));
             services.Add(new FanControllerService(2));
-            services.Add(new LightControllerService(200));
-            services.Add(new TimeServiceController(2000));
+            services.Add(new LightControllerService(1000));
+            services.Add(new TimeServiceController(30000));
         }
 
         public void StartServices(UserSettings userSettings, UsbDeviceManager usbDeviceManager, HardwareManager hardwareManager)
