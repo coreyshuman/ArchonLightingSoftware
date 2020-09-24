@@ -51,7 +51,6 @@ namespace ArchonLightingSystem
 
             protected override void OnCreateMainForm()
             {
-                var test = ArchonLightingSDKIntegration.AIDA64Integration.ReadData();
                 MainForm = new AppForm(startInBackground);
             }
 

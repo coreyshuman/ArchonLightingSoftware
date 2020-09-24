@@ -24,7 +24,7 @@ namespace ArchonLightingSystem.Services
         }
 
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
+        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
         {
             try
             {

@@ -49,11 +49,11 @@ namespace ArchonLightingSystem.Services
         private int period = 500;
         private UserSettings userSettings = null;
         private UsbDeviceManager usbDeviceManager = null;
-        private HardwareManager hardwareManager = null;
+        private SensorMonitorManager hardwareManager = null;
         private BackgroundWorker serviceThread;
         private int controllerIdx = 0;
 
-        public void BeginService(UserSettings us, UsbDeviceManager ap, HardwareManager hw)
+        public void BeginService(UserSettings us, UsbDeviceManager ap, SensorMonitorManager hw)
         {
             userSettings = us;
             usbDeviceManager = ap;
@@ -94,9 +94,9 @@ namespace ArchonLightingSystem.Services
         /// <param name="applicationData"></param>
         /// <param name="controllerSettings"></param>
         /// <param name="hardwareManager"></param>
-        public abstract void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager);
+        public abstract void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager);
 
-        public Tuple<ApplicationData, ControllerSettings, HardwareManager> GetNextControllerContext()
+        public Tuple<ApplicationData, ControllerSettings, SensorMonitorManager> GetNextControllerContext()
         {
             try
             {
@@ -117,7 +117,7 @@ namespace ArchonLightingSystem.Services
                     return null;
                 }
 
-                return new Tuple<ApplicationData, ControllerSettings, HardwareManager>(appData, controllerSettings, hardwareManager);
+                return new Tuple<ApplicationData, ControllerSettings, SensorMonitorManager>(appData, controllerSettings, hardwareManager);
             }
             catch(Exception ex)
             {

@@ -9,21 +9,22 @@ using ArchonLightingSystem.OpenHardware;
 
 namespace ArchonLightingSystem.Services
 {
-    class HardwareUpdateService : ControllerServiceBase
+    class SensorUpdateService : ControllerServiceBase
     {
         /// <summary>
         /// Service which periodically reads internal temperature sensors.
         /// </summary>
         /// <param name="taskFrequency">Task execution frequency in Hz. One controller updated per execution.</param>
-        public HardwareUpdateService(int taskFrequency)
+        public SensorUpdateService(int taskFrequency)
         {
             TaskFrequency = taskFrequency;
         }
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
+        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
         {
             try
             {
+                var test = ArchonLightingSDKIntegration.AIDA64Integration.ReadData();
                 hardwareManager.UpdateReadings();
             }
             catch (Exception ex)

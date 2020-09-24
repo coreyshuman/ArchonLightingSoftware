@@ -18,7 +18,7 @@ namespace ArchonLightingSystem.Services
             TaskFrequency = taskFrequency;
         }
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
+        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
         {
             try
             {
@@ -38,7 +38,7 @@ namespace ArchonLightingSystem.Services
         /// <param name="controllerSettings"></param>
         /// <param name="hardwareManager"></param>
         /// <returns>Array of bytes containing speed values</returns>
-        private Tuple<byte[], byte[]> CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, HardwareManager hardwareManager)
+        private Tuple<byte[], byte[]> CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
             byte[] temperatureValues = new byte[DeviceControllerDefinitions.DevicePerController];

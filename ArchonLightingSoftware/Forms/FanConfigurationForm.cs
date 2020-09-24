@@ -23,7 +23,7 @@ namespace ArchonLightingSystem.Forms
     public partial class FanConfigurationForm : Form
     {
         private const string fanCurveCopyPasteKey = "fanCurve";
-        private HardwareManager hardwareManager;
+        private SensorMonitorManager hardwareManager;
         private ApplicationData appData;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private Node currentNode = null;
@@ -46,7 +46,7 @@ namespace ArchonLightingSystem.Forms
             dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(ApplicationData ad, HardwareManager hm, DeviceSettings settings)
+        public void InitializeForm(ApplicationData ad, SensorMonitorManager hm, DeviceSettings settings)
         {
             appData = ad;
             hardwareManager = hm;

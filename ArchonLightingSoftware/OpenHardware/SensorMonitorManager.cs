@@ -7,7 +7,7 @@
   Copyright (C) 2009-2013 Michael Möller <mmoeller@openhardwaremonitor.org>
   Copyright (C) 2010 Paul Werelds <paul@werelds.net>
   Copyright (C) 2012 Prince Samuel <prince.samuel@gmail.com>
-  Copyright (C) 2018-2019 Corey Shuman <ctshumancode@gmail.com>
+  Copyright (C) 2018-2020 Corey Shuman <ctshumancode@gmail.com>
 	
 */
 
@@ -22,25 +22,25 @@ using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.OpenHardware
 {
-    public class HardwareManager
+    public class SensorMonitorManager
     {
         private UpdateVisitor updateVisitor = new UpdateVisitor();
 
         private HardwareSettings settings;
         private string settingsFilename;
-        private UnitManager unitManager;
+        private TemperatureUnitManager unitManager;
         private Computer computer;
         private Node rootNode;
         
 
-        public HardwareManager()
+        public SensorMonitorManager()
         {
             this.settings = new HardwareSettings();
             settingsFilename = Path.ChangeExtension(
                 System.Windows.Forms.Application.ExecutablePath, ".config");
             this.settings.Load(settingsFilename);
 
-            this.unitManager = new UnitManager(settings);
+            this.unitManager = new TemperatureUnitManager(settings);
 
             rootNode = new Node(System.Environment.MachineName);
             //rootNode.Image = Resources.computer;

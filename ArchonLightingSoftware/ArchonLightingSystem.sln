@@ -7,11 +7,11 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchonLightingSystem", "Arc
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LibreHardwareMonitorLib", "..\LibreHardwareMonitor\LibreHardwareMonitorLib\LibreHardwareMonitorLib.csproj", "{429B4498-DE08-4511-8FCA-85E6E4D3CF05}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchonLightingSDK", "..\ArchonLightingSDK\ArchonLightingSDK.csproj", "{18F14CE1-33A5-406B-B500-595C59DBDE58}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchonLightingSDK", "..\ArchonLightingSDK\ArchonLightingSDK.csproj", "{18F14CE1-33A5-406B-B500-595C59DBDE58}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchonLightingSDKTest", "..\ArchonLightingSDKTest\ArchonLightingSDKTest.csproj", "{AC3FFDF6-A10F-4969-9B98-80ACC45C5F38}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchonLightingSDKTest", "..\ArchonLightingSDKTest\ArchonLightingSDKTest.csproj", "{AC3FFDF6-A10F-4969-9B98-80ACC45C5F38}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArchonLightingSDKCommon", "..\ArchonLightingSDKCommon\ArchonLightingSDKCommon.csproj", "{0FC2C4F0-E8EF-4FAD-A05E-AC0680FB0043}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchonLightingSDKCommon", "..\ArchonLightingSDKCommon\ArchonLightingSDKCommon.csproj", "{0FC2C4F0-E8EF-4FAD-A05E-AC0680FB0043}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuroraScript", "..\AuroraScript\AuroraScript.csproj", "{F1FFF6CB-C82F-4D54-B192-36CAD752BC30}"
 EndProject
@@ -43,8 +43,8 @@ Global
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x64.ActiveCfg = Debug|Any CPU
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x64.Build.0 = Debug|Any CPU
-		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x86.ActiveCfg = Release|x86
-		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x86.Build.0 = Release|x86
+		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Debug|x86.Build.0 = Debug|Any CPU
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Release|Any CPU.Build.0 = Release|Any CPU
 		{429B4498-DE08-4511-8FCA-85E6E4D3CF05}.Release|x64.ActiveCfg = Release|Any CPU

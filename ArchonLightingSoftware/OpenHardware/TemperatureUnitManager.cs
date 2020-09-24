@@ -5,7 +5,7 @@
   file, You can obtain one at http://mozilla.org/MPL/2.0/.
  
   Copyright (C) 2009-2012 Michael Möller <mmoeller@openhardwaremonitor.org>
-  Copyright (C) 2018-2019 Corey Shuman <ctshumancode@gmail.com>
+  Copyright (C) 2018-2020 Corey Shuman <ctshumancode@gmail.com>
 	
 */
 
@@ -17,12 +17,12 @@ namespace ArchonLightingSystem.OpenHardware
         Fahrenheit = 1
     }
 
-    public class UnitManager
+    public class TemperatureUnitManager
     {
         private HardwareSettings settings;
         private TemperatureUnit temperatureUnit;
 
-        public UnitManager(HardwareSettings settings)
+        public TemperatureUnitManager(HardwareSettings settings)
         {
             this.settings = settings;
             this.temperatureUnit = (TemperatureUnit)settings.GetValue("TemperatureUnit",

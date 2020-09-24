@@ -20,7 +20,7 @@ namespace ArchonLightingSystem.Components
         private static ColorDialog colorDialog = new ColorDialog();
 
         private ApplicationData applicationData;
-        private HardwareManager hardwareManager;
+        private SensorMonitorManager hardwareManager;
         private Form parentForm;
         private Control parentControl;
         private GroupBox grpDev;
@@ -131,7 +131,7 @@ namespace ArchonLightingSystem.Components
             };
         }
 
-        public void InitializeComponent(Form parent, HardwareManager hm, int compNum)
+        public void InitializeComponent(Form parent, SensorMonitorManager hm, int compNum)
         {
             parentForm = parent;
             hardwareManager = hm;

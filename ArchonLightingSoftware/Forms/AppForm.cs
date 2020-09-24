@@ -24,7 +24,7 @@ namespace ArchonLightingSystem
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
         private FirmwareUpdateForm firmwareForm = null;
-        private HardwareManager hardwareManager = null;
+        private SensorMonitorManager hardwareManager = null;
         private SequencerForm sequencerForm = null;
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
@@ -51,7 +51,7 @@ namespace ArchonLightingSystem
             dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
 
             userSettings = settingsManager.GetSettings();
-            hardwareManager = new HardwareManager();
+            hardwareManager = new SensorMonitorManager();
             if (Settings.Default.MainWindowLocation.X >= 0)
             {
                 this.Location = Settings.Default.MainWindowLocation;

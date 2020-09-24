@@ -20,7 +20,7 @@ namespace ArchonLightingSystem.OpenHardware
 
         private ISensor sensor;
         private HardwareSettings settings;
-        private UnitManager unitManager;
+        private TemperatureUnitManager unitManager;
         public string format;
         private bool plot = false;
         private Color? penColor = null;
@@ -85,7 +85,7 @@ namespace ArchonLightingSystem.OpenHardware
         }
 
         public SensorNode(ISensor sensor, HardwareSettings settings,
-          UnitManager unitManager) : base()
+          TemperatureUnitManager unitManager) : base()
         {
             this.sensor = sensor;
             this.settings = settings;

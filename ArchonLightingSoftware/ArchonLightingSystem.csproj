@@ -164,7 +164,7 @@
     <Compile Include="Models\FrameInfo.cs" />
     <Compile Include="Models\LightingModes.cs" />
     <Compile Include="Models\UserSettings.cs" />
-    <Compile Include="OpenHardware\HardwareManager.cs" />
+    <Compile Include="OpenHardware\SensorMonitorManager.cs" />
     <Compile Include="OpenHardware\HardwareNode.cs" />
     <Compile Include="OpenHardware\HardwareSettings.cs" />
     <Compile Include="OpenHardware\HardwareTypeImage.cs" />
@@ -173,13 +173,13 @@
     <Compile Include="OpenHardware\Startup\StartupManager.cs" />
     <Compile Include="OpenHardware\Startup\TaskScheduler.cs" />
     <Compile Include="OpenHardware\TypeNode.cs" />
-    <Compile Include="OpenHardware\UnitManager.cs" />
+    <Compile Include="OpenHardware\TemperatureUnitManager.cs" />
     <Compile Include="OpenHardware\UpdateVisitor.cs" />
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Services\ControllerServiceBase.cs" />
     <Compile Include="Services\FanControllerService.cs" />
-    <Compile Include="Services\HardwareUpdateService.cs" />
+    <Compile Include="Services\SensorUpdateService.cs" />
     <Compile Include="Services\LightControllerService.cs" />
     <Compile Include="Services\ServiceManager.cs" />
     <Compile Include="Services\TimeService.cs" />

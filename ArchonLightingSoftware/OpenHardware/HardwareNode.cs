@@ -19,13 +19,13 @@ namespace ArchonLightingSystem.OpenHardware
     {
 
         private HardwareSettings settings;
-        private UnitManager unitManager;
+        private TemperatureUnitManager unitManager;
         private IHardware hardware;
 
         private List<TypeNode> typeNodes = new List<TypeNode>();
 
         public HardwareNode(IHardware hardware, HardwareSettings settings,
-          UnitManager unitManager) : base()
+          TemperatureUnitManager unitManager) : base()
         {
             this.settings = settings;
             this.unitManager = unitManager;

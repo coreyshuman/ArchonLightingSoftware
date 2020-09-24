@@ -5,7 +5,7 @@
   file, You can obtain one at http://mozilla.org/MPL/2.0/.
  
   Copyright (C) 2009-2012 Michael Möller <mmoeller@openhardwaremonitor.org>
-  Copyright (C) 2018-2019 Corey Shuman <ctshumancode@gmail.com>
+  Copyright (C) 2018-2020 Corey Shuman <ctshumancode@gmail.com>
 	
 */
 
@@ -17,7 +17,7 @@ namespace ArchonLightingSystem.OpenHardware
 {
     public class HardwareTypeImage
     {
-        private static HardwareTypeImage instance = new HardwareTypeImage();
+        private static readonly HardwareTypeImage instance = new HardwareTypeImage();
 
         private HardwareTypeImage() { }
 
@@ -44,23 +44,17 @@ namespace ArchonLightingSystem.OpenHardware
                 case HardwareType.Storage:
                     image = Util.GetPropertyName(() => Resources .hdd);
                     break;
-                case HardwareType.Heatmaster:
-                    image = Util.GetPropertyName(() => Resources .bigng);
-                    break;
                 case HardwareType.Motherboard:
                     image = Util.GetPropertyName(() => Resources .mainboard);
                     break;
                 case HardwareType.SuperIO:
                     image = Util.GetPropertyName(() => Resources .chip);
                     break;
-                case HardwareType.TBalancer:
-                    image = Util.GetPropertyName(() => Resources .bigng);
-                    break;
                 case HardwareType.Memory:
                     image = Util.GetPropertyName(() => Resources .ram);
                     break;
-                case HardwareType.AquaComputer:
-                    image = Util.GetPropertyName(() => Resources .acicon);
+                case HardwareType.Cooler:
+                    image = Util.GetPropertyName(() => Resources .fan);
                     break;
                 case HardwareType.Network:
                     image = Util.GetPropertyName(() => Resources .nic);
