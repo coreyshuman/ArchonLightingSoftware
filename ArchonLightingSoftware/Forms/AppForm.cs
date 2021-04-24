@@ -369,6 +369,10 @@ namespace ArchonLightingSystem
             Hide();
             FormUpdateTimer.Enabled = false;
             isHidden = true;
+            foreach (var deviceComponent in deviceComponents)
+            {
+                deviceComponent.Hide();
+            }
         }
 
         public void ShowForm()
@@ -379,6 +383,10 @@ namespace ArchonLightingSystem
                 Show();
                 FormUpdateTimer.Enabled = true;
                 isHidden = false;
+                foreach (var deviceComponent in deviceComponents)
+                {
+                    deviceComponent.Show();
+                }
             }
         }
 
@@ -419,6 +427,12 @@ namespace ArchonLightingSystem
                 sequencerForm.WindowState = FormWindowState.Normal;
             }
             sequencerForm.Focus();
+        }
+
+        private void AppForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            serviceManager.StopServices();
+            hardwareManager.Close();
         }
     }
 } 

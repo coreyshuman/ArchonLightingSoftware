@@ -51,13 +51,20 @@ namespace ArchonLightingSystem.OpenHardware
             computer.HardwareAdded += new HardwareEventHandler(HardwareAdded);
             computer.HardwareRemoved += new HardwareEventHandler(HardwareRemoved);
 
-            computer.Open();
-
             computer.IsMotherboardEnabled = true;
             computer.IsCpuEnabled = true;
             computer.IsGpuEnabled = true;
             computer.IsStorageEnabled = true;
             computer.IsMemoryEnabled = true;
+
+            computer.Open();
+
+            // disable sensor history collection
+            computer.Accept(new SensorVisitor(delegate (ISensor sensor)
+            {
+                sensor.ValuesTimeWindow = TimeSpan.Zero;
+            }));
+
         }
 
         public Collection<Node> Nodes

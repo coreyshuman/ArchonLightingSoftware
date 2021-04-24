@@ -24,7 +24,7 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
-                var test = ArchonLightingSDKIntegration.AIDA64Integration.ReadData();
+                //var test = ArchonLightingSDKIntegration.AIDA64Integration.ReadData();
                 hardwareManager.UpdateReadings();
             }
             catch (Exception ex)

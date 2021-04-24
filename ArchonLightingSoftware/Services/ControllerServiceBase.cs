@@ -77,14 +77,18 @@ namespace ArchonLightingSystem.Services
                 try
                 {
                     var controllerContext = GetNextControllerContext();
-                    if (controllerContext == null) throw new Exception("Failed to find next controller context.");
+                    if (controllerContext == null) return;
                     ServiceTask(controllerContext.Item1, controllerContext.Item2, controllerContext.Item3);
                 }
                 catch (Exception ex)
                 {
                     Trace.TraceError($"ServiceThread Error: {ex.ToString()}");
                 }
-                Thread.Sleep(period);
+                finally
+                {
+                    Thread.Sleep(period);
+                }
+                
             }
         }
 

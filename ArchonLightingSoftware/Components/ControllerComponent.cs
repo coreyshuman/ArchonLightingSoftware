@@ -239,7 +239,7 @@ namespace ArchonLightingSystem.Components
             fanBar.ForeColor = grpFan.ForeColor;
             fanBar.UseAverage = true;
             fanBar.Minimum = 0;
-            fanBar.Maximum = 2500;
+            fanBar.Maximum = 3000;
             fanBar.Value = 0;
             fanBar.Parent = grpFan;
             fanBar.Show();
@@ -267,6 +267,18 @@ namespace ArchonLightingSystem.Components
             fanUpdateTimer.Tick += FanUpdateTimerTickHandler(compNum - 1);
 
             ControlsEnabled(false);
+        }
+
+        public void Show()
+        {
+            fanBar.Show();
+            tempBar.Show();
+        }
+
+        public void Hide()
+        {
+            fanBar.Hide();
+            tempBar.Hide();
         }
 
         private EventHandler OpenConfigFormEventHandler(int deviceIdx)
