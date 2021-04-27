@@ -77,7 +77,7 @@ namespace ArchonLightingSystem.Services
                 try
                 {
                     var controllerContext = GetNextControllerContext();
-                    if (controllerContext == null) return;
+                    if (controllerContext == null) continue;
                     ServiceTask(controllerContext.Item1, controllerContext.Item2, controllerContext.Item3);
                 }
                 catch (Exception ex)
