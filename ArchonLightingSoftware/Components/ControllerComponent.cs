@@ -112,9 +112,11 @@ namespace ArchonLightingSystem.Components
             {
                 if(!isInitialized && applicationData?.DeviceControllerData?.IsInitialized == true)
                 {
-                    isInitialized = true;
+                    fanUpdateTimer.Enabled = false;
                     UpdatePeripheralSettings(deviceIdx);
                     ControlsEnabled(true);
+                    isInitialized = true;
+                    fanUpdateTimer.Enabled = true;
                 }
                 if(isInitialized)
                 {
@@ -126,6 +128,11 @@ namespace ArchonLightingSystem.Components
                     else
                     {
                         tempBar.Value = 0;
+                    }
+                    if(GetDeviceSettings().UseFanCurve)
+                    {
+                        var calculatedFanSpeed = applicationData.DeviceControllerData.AutoFanSpeedValue[deviceIdx];
+                        fanCtrl.Value = calculatedFanSpeed == 0xFF ? fanCtrl.Value : calculatedFanSpeed;
                     }
                 }
             };
@@ -285,6 +292,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
                 form.InitializeForm(applicationData, hardwareManager, GetDeviceSettings());
                 form.Location = parentForm.Location;
@@ -335,6 +345,7 @@ namespace ArchonLightingSystem.Components
             var deviceSettings = GetDeviceSettings();
 
             fanCtrl.Enabled = !deviceSettings.UseFanCurve;
+            fanCtrl.BackColor = fanCtrl.Enabled ? grpFan.BackColor : Color.FromArgb(unchecked((int)0xFF661111));
             btnFanConfig.Text = deviceSettings.SensorName.IsNotNullOrEmpty() ? deviceSettings.SensorName : "Configure";
             sensor = hardwareManager.GetSensorByIdentifier(deviceSettings.Sensor);
         }
@@ -364,6 +375,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 applicationData.DeviceControllerData.DeviceConfig.FanSpeed[deviceIdx] = (byte)((TrackBar)sender).Value;
                 applicationData.UpdateConfigPending = true;
             };
@@ -373,6 +387,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 try
                 {
                     TextBox txt = (TextBox)sender;
@@ -394,6 +411,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 ComboBox cbox = (ComboBox)sender;
                 applicationData.DeviceControllerData.DeviceConfig.LedMode[deviceIdx] = (byte)cbox.SelectedIndex;
                 applicationData.UpdateConfigPending = true;
@@ -404,6 +424,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 ComboBox cbox = (ComboBox)sender;
                 applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx] = (byte)(cbox.SelectedIndex + 1);
                 applicationData.UpdateConfigPending = true;
@@ -414,6 +437,9 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
+                if (!isInitialized)
+                    return;
+
                 var color = lastColor;
                 Button btn = (Button)sender;
 
