@@ -15,8 +15,6 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ArchonLightingSDKCommon", "
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AuroraScript", "..\AuroraScript\AuroraScript.csproj", "{F1FFF6CB-C82F-4D54-B192-36CAD752BC30}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Project-Aurora", "..\..\..\RGB\aurora-dev\Project-Aurora\Project-Aurora\Project-Aurora.csproj", "{18D2D471-3F57-4ECE-9C62-836A801473D8}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -99,14 +97,6 @@ Global
 		{F1FFF6CB-C82F-4D54-B192-36CAD752BC30}.Release|x64.Build.0 = Release|Any CPU
 		{F1FFF6CB-C82F-4D54-B192-36CAD752BC30}.Release|x86.ActiveCfg = Release|Any CPU
 		{F1FFF6CB-C82F-4D54-B192-36CAD752BC30}.Release|x86.Build.0 = Release|Any CPU
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Debug|Any CPU.ActiveCfg = Debug|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Debug|x64.ActiveCfg = Debug|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Debug|x64.Build.0 = Debug|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Debug|x86.ActiveCfg = Debug|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Release|Any CPU.ActiveCfg = Release|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Release|x64.ActiveCfg = Release|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Release|x64.Build.0 = Release|x64
-		{18D2D471-3F57-4ECE-9C62-836A801473D8}.Release|x86.ActiveCfg = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

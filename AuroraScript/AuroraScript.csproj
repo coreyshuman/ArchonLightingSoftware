@@ -43,10 +43,6 @@
     <Reference Include="System.Drawing" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\..\..\RGB\aurora-dev\Project-Aurora\Project-Aurora\Project-Aurora.csproj">
-      <Project>{18d2d471-3f57-4ece-9c62-836a801473d8}</Project>
-      <Name>Project-Aurora</Name>
-    </ProjectReference>
     <ProjectReference Include="..\ArchonLightingSDKCommon\ArchonLightingSDKCommon.csproj">
       <Project>{0fc2c4f0-e8ef-4fad-a05e-ac0680fb0043}</Project>
       <Name>ArchonLightingSDKCommon</Name>
