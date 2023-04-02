@@ -2,6 +2,7 @@
 using System.Diagnostics;
 using System.Globalization;
 using ArchonLightingSystem.ArchonLightingSDKIntegration;
+using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
 
@@ -46,8 +47,9 @@ namespace ArchonLightingSystem.Services
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"LightServiceThread Error: {ex.ToString()}");
+                Logger.Write(Level.Error, $"LightServiceThread Error: {ex}");
             }
+
             if(applicationData.DeviceControllerData.DeviceAddress == 1)
             {
                 //Console.WriteLine((DateTime.Now - tick).TotalMilliseconds);

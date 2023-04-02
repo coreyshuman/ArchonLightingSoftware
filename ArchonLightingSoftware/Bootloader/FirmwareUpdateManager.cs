@@ -123,13 +123,13 @@ namespace ArchonLightingSystem.Bootloader
         {
             if(!IsManagerBusy())
             {
-                WriteLog("--Erase Flash--");
+                WriteLog(Level.Information, "--Erase Flash--");
                 firmwareDevices.ForEach((device) => {
                     if(!IsDeviceBusy(device.DeviceStatus) && (deviceIds == null || deviceIds.Contains((byte)device.DeviceAddress)))
                     {
                         bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.ERASE_FLASH, 3, 5000);
                         device.DeviceStatus = FirmwareDevice.StatusCode.Erasing;
-                        WriteLog("  Send erase cmd, device " + device.DeviceAddress);
+                        WriteLog(Level.Trace, "  Send erase cmd, device " + device.DeviceAddress);
                     }
                 });
 
@@ -145,13 +145,13 @@ namespace ArchonLightingSystem.Bootloader
         {
             if (!IsManagerBusy())
             {
-                WriteLog("--Program Flash--");
+                WriteLog(Level.Information, "--Program Flash--");
                 firmwareDevices.ForEach((device) => {
                     if (!IsDeviceBusy(device.DeviceStatus))
                     {
                         bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.PROGRAM_FLASH, 3, 5000);
                         device.DeviceStatus = FirmwareDevice.StatusCode.Updating;
-                        WriteLog("  Send write cmd, device " + device.DeviceAddress);
+                        WriteLog(Level.Trace, "  Send write cmd, device " + device.DeviceAddress);
                     }
                 });
 
@@ -169,13 +169,13 @@ namespace ArchonLightingSystem.Bootloader
         {
             if (!IsManagerBusy())
             {
-                WriteLog("--Verify Flash--");
+                WriteLog(Level.Information, "--Verify Flash--");
                 firmwareDevices.ForEach((device) => {
                     if (!IsDeviceBusy(device.DeviceStatus))
                     {
                         bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.READ_CRC, 3, 5000);
                         device.DeviceStatus = FirmwareDevice.StatusCode.Verifying;
-                        WriteLog("  Send verify cmd, device " + device.DeviceAddress);
+                        WriteLog(Level.Trace, "  Send verify cmd, device " + device.DeviceAddress);
                     }
                 });
 
@@ -191,13 +191,13 @@ namespace ArchonLightingSystem.Bootloader
         {
             if (!IsManagerBusy())
             {
-                WriteLog("--Start App--");
+                WriteLog(Level.Information, "--Start App--");
                 firmwareDevices.ForEach((device) => {
                     if (!IsDeviceBusy(device.DeviceStatus))
                     {
                         bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.JMP_TO_APP, 1, 1000);
                         device.DeviceStatus = FirmwareDevice.StatusCode.StartingApp;
-                        WriteLog("  Send start cmd, device " + device.DeviceAddress);
+                        WriteLog(Level.Trace, "  Send start cmd, device " + device.DeviceAddress);
                     }
                 });
 
@@ -212,31 +212,32 @@ namespace ArchonLightingSystem.Bootloader
         public void CancelFirmwareActions()
         {
             // todo
-            WriteLog("--Cancel Operations--");
+            WriteLog(Level.Information, "--Cancel Operations--");
             Status = ManagerStatus.Idle;
             OnFirmwareEvent();
         }
 
         public bool OpenCustomHexFile(string filepath)
         {
-            bool verified = false;
             if (bootloader.LoadHexFile(filepath))
             {
-                firmwareCRC = bootloader.CalculateFlashCRC(0);
-                verified = true;
+                try
+                {
+                    firmwareCRC = bootloader.CalculateFlashCRC();
+                    hexFirmwareVersion = bootloader.GetApplicationVersion().ToString();
+                    WriteLog(Level.Information, $"Opened file. CRC={firmwareCRC.ToString("X4")} Ver={hexFirmwareVersion}");
+                    Status = ManagerStatus.Idle;
+                    OnFirmwareEvent();
+                    return true;
+                }
+                catch (Exception ex)
+                {
+                    WriteLog(Level.Error, $"Couldn't open firmware file, an error occurred: {ex.Message}");
+                }
             }
 
-            // todo - validate crc of result
-            if (verified)
-            {
-                hexFirmwareVersion = bootloader.GetApplicationVersion().ToString();
-                WriteLog($"Opened file. CRC={firmwareCRC.ToString("X4")} Ver={hexFirmwareVersion}");
-                Status = ManagerStatus.Idle;
-                OnFirmwareEvent();
-                return true;
-            }
-
-            WriteLog("Open file failed.");
+            WriteLog(Level.Information, "Open file failed.");
+            hexFirmwareVersion = "v?.?";
             Status = ManagerStatus.NoFile;
             OnFirmwareEvent();
             return false;
@@ -247,14 +248,14 @@ namespace ArchonLightingSystem.Bootloader
             FirmwareEventHandler = null;
             FirmwareLogHandler = null;
             bootloader.ShutdownThread();
-            WriteLog("--Closing Manager--");
+            WriteLog(Level.Information, "--Closing Manager--");
         }
 
         private void UsbPollTick(object sender, EventArgs e)
         {
             while (bootUsbDriver.DeviceCount > firmwareDevices.Count)
             {
-                WriteLog("Bootloader found, getting info...");
+                WriteLog(Level.Information, "Bootloader found, getting info...");
                 var device = new FirmwareDevice
                 {
                     DeviceIndex = firmwareDevices.Count
@@ -265,7 +266,7 @@ namespace ArchonLightingSystem.Bootloader
 
             if (Status == ManagerStatus.Disconnected)
             {
-                bootUsbDriver.InitializeDevice(Consts.BootloaderVid, Consts.BootloaderPid);
+                bootUsbDriver.InitializeDevice(Definitions.BootloaderVid, Definitions.BootloaderPid);
                 Status = LoadFirmware() ? ManagerStatus.Idle : ManagerStatus.NoFile;
                 OnFirmwareEvent();
             }
@@ -280,7 +281,7 @@ namespace ArchonLightingSystem.Bootloader
                 bool verified = false;
                 if (bootloader.LoadHexFile(filepath + @"FirmwareBinaries\latest.hex"))
                 {
-                    firmwareCRC = bootloader.CalculateFlashCRC(0);
+                    firmwareCRC = bootloader.CalculateFlashCRC();
                     verified = true;
                 }
 
@@ -288,7 +289,7 @@ namespace ArchonLightingSystem.Bootloader
                 if (verified)
                 {
                     hexFirmwareVersion = bootloader.GetApplicationVersion().ToString();
-                    WriteLog($"Opened file. CRC={firmwareCRC.ToString("X4")} Ver={hexFirmwareVersion}");
+                    WriteLog(Level.Information, $"Opened file. CRC={firmwareCRC.ToString("X4")} Ver={hexFirmwareVersion}");
                     Status = ManagerStatus.Idle;
                     OnFirmwareEvent();
                     return true;
@@ -297,10 +298,10 @@ namespace ArchonLightingSystem.Bootloader
             }
             catch (Exception ex)
             {
-                WriteLog($"Couldn't open latest firmware, an error occured: {ex.Message}");
+                WriteLog(Level.Error, $"Couldn't open latest firmware, an error occurred: {ex.Message}");
             }
 
-            WriteLog("Open file failed.");
+            WriteLog(Level.Error, "Open file failed.");
             Status = ManagerStatus.NoFile;
             OnFirmwareEvent();
             return false;
@@ -313,7 +314,7 @@ namespace ArchonLightingSystem.Bootloader
                 firmwareDevices.Where(device => device.DeviceIndex == status.DeviceIndex).ToList().ForEach((device) =>
                 {
                     device.DeviceStatus = FirmwareDevice.StatusCode.Failed;
-                    WriteLog($"!!Device {device.DeviceAddress} failed!!");
+                    WriteLog(Level.Error, $"!!Device {device.DeviceAddress} failed!!");
                 });
             }
 
@@ -333,9 +334,9 @@ namespace ArchonLightingSystem.Bootloader
                             device.ExceptionCode = Util.UInt32FromBytes(status.Data[14], status.Data[15], status.Data[16], status.Data[17]);
                             device.ExceptionAddress = Util.UInt32FromBytes(status.Data[18], status.Data[19], status.Data[20], status.Data[21]);
                             device.DeviceStatus = FirmwareDevice.StatusCode.Ready;
-                            WriteLog("--Device info:");
-                            WriteLog($"  BootVer: {device.BootloaderVersion} AppVer: {device.ApplicationVersion}  Address: [{device.DeviceAddress}]");
-                            WriteLog($"  Reset Status: [{device.ResetStatus.ToString("X8")}]");
+                            WriteLog(Level.Information, "--Device info:");
+                            WriteLog(Level.Information, $"  BootVer: {device.BootloaderVersion} AppVer: {device.ApplicationVersion}  Address: [{device.DeviceAddress}]");
+                            WriteLog(Level.Information, $"  Reset Status: [{device.ResetStatus.ToString("X8")}]");
                             string exStatSource = "(unknown)";
                             if(device.ExceptionStatus == 0xAAAAAAAA)
                             {
@@ -345,7 +346,7 @@ namespace ArchonLightingSystem.Bootloader
                             {
                                 exStatSource = "(app)";
                             }
-                            WriteLog($"  ExStat: [{device.ExceptionStatus.ToString("X8")}] {exStatSource}, ExAdr: [{device.ExceptionAddress.ToString("X8")}], ExCode: [{device.ExceptionCode.ToString("X8")}]");
+                            WriteLog(Level.Information, $"  ExStat: [{device.ExceptionStatus.ToString("X8")}] {exStatSource}, ExAdr: [{device.ExceptionAddress.ToString("X8")}], ExCode: [{device.ExceptionCode.ToString("X8")}]");
                         });
                         
                         break;
@@ -355,7 +356,7 @@ namespace ArchonLightingSystem.Bootloader
                         {
                             bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.READ_CRC, 3, 500);
                             device.DeviceStatus = FirmwareDevice.StatusCode.Verifying;
-                            WriteLog($"Device {device.DeviceAddress} Program Complete!");
+                            WriteLog(Level.Information, $"Device {device.DeviceAddress} Program Complete!");
                         });
 
                         break;
@@ -364,7 +365,7 @@ namespace ArchonLightingSystem.Bootloader
                         {
                             UInt16 crc = Util.UInt16FromBytes(status.Data[1], status.Data[2]);
                             device.DeviceStatus = (crc == firmwareCRC) ? FirmwareDevice.StatusCode.Completed : FirmwareDevice.StatusCode.Failed;
-                            WriteLog($"Device {device.DeviceAddress} CRC { ((crc == firmwareCRC) ? "Passed" : "FAILED")} read: [{crc.ToString("X2")}] expected: [{firmwareCRC.ToString("X2")}]");
+                            WriteLog(Level.Information, $"Device {device.DeviceAddress} CRC { ((crc == firmwareCRC) ? "Passed" : "FAILED")} read: [{crc.ToString("X2")}] expected: [{firmwareCRC.ToString("X2")}]");
                         });
                         break;
                     case BootloaderCmd.ERASE_FLASH:
@@ -372,12 +373,12 @@ namespace ArchonLightingSystem.Bootloader
                         {
                             bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.PROGRAM_FLASH, 3, 5000);
                             device.DeviceStatus = FirmwareDevice.StatusCode.Updating;
-                            WriteLog($"Device {device.DeviceAddress} Erase Complete.");
+                            WriteLog(Level.Information, $"Device {device.DeviceAddress} Erase Complete.");
                         });
                         break;
 
                     default:
-                        WriteLog($"!!Unknown command response [{cmd.ToString("X2")}]");
+                        WriteLog(Level.Error, $"!!Unknown command response [{cmd.ToString("X2")}]");
                         break;
                 }
             }
@@ -440,8 +441,9 @@ namespace ArchonLightingSystem.Bootloader
             FirmwareEventHandler?.Invoke(this, new FirmwareEventArgs(hexFirmwareVersion, Status, firmwareDevices.ToList()));
         }
 
-        private void WriteLog(string log)
+        private void WriteLog(Level lvl, string log)
         {
+            Logger.Write(lvl, log);
             FirmwareLogHandler?.Invoke(this, log + Environment.NewLine);
         }
     }

@@ -7,7 +7,7 @@ using System.IO.MemoryMappedFiles;
 using System.Security.AccessControl;
 using System.Runtime.InteropServices;
 
-namespace ArchonLightingSystem.ArchonLightingSDKIntegration
+namespace ArchonLightingSystem.ThirdParty
 {
     public static class AIDA64Integration
     {

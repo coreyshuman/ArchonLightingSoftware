@@ -42,14 +42,14 @@ namespace ArchonLightingSystem.UsbApplication
 
                     if (!controllerInstance.AppIsInitialized)
                     {
-                        Trace.WriteLine("Initialize ApplicationData");
+                        Logger.Write(Level.Trace, "Initialize ApplicationData");
                         controllerInstance.AppData = new ApplicationData();
                         controllerInstance.AppIsInitialized = true;
                     }
 
                     if (!controllerInstance.UsbDevice.IsAttached && controllerInstance.AppData.DeviceControllerData.IsInitialized)
                     {
-                        Trace.WriteLine("Initialize DeviceControllerData");
+                        Logger.Write(Level.Trace, "Initialize DeviceControllerData");
                         controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
                     }
 
@@ -57,12 +57,12 @@ namespace ArchonLightingSystem.UsbApplication
                     {
                         if (controllerInstance.AppData.DeviceControllerData == null)
                         {
-                            Trace.WriteLine("Reinitialize ApplicationData");
+                            Logger.Write(Level.Trace, "Reinitialize ApplicationData");
                             controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
                         }
                         if (!controllerInstance.AppData.DeviceControllerData.IsInitialized)
                         {
-                            Trace.WriteLine("Get Device Initialization");
+                            Logger.Write(Level.Trace, "Get Device Initialization");
                             await GetDeviceInitialization(controllerInstance);
                         }
 
@@ -203,7 +203,7 @@ namespace ArchonLightingSystem.UsbApplication
                 }
                 catch (Exception ex)
                 {
-                    Trace.WriteLine($"DeviceDoWork Error: {ex.ToString()}");
+                    Logger.Write(Level.Error, $"DeviceDoWork Error: {ex.ToString()}");
                     throw ex;
                 }
                 finally
@@ -224,12 +224,13 @@ namespace ArchonLightingSystem.UsbApplication
 
             bootResponse = await ReadBootloaderInfo(controllerInstance);
             if (bootResponse == null) throw new Exception("Couldn't read Bootloader info.");
-            Trace.WriteLine($"DeviceInit Boot: {bootResponse.Data[0].ToString()}.{bootResponse.Data[1].ToString()}");
+            Logger.Write(Level.Trace, $"DeviceInit Boot: {bootResponse.Data[0].ToString()}.{bootResponse.Data[1]}");
             appResponse = await ReadApplicationInfo(controllerInstance);
             if (appResponse == null) throw new Exception("Couldn't read Application info.");
-            Trace.WriteLine($"DeviceInit App: {appResponse.Data[0].ToString()}.{appResponse.Data[1].ToString()}");
+            Logger.Write(Level.Trace, $"DeviceInit App: {appResponse.Data[0].ToString()}.{appResponse.Data[1]}");
             controllerInstanceAddressResponse = await ReadControllerAddress(controllerInstance);
             if (controllerInstanceAddressResponse == null) throw new Exception("Couldn't read Address.");
+            Logger.Write(Level.Trace, $"DeviceInit Addr: {controllerInstanceAddressResponse.Data[0]}");
             bootStatusResponse = await ReadBootStatus(controllerInstance);
             if (bootStatusResponse == null) throw new Exception("Couldn't read boot status.");
             eepromResponse = await ReadEeprom(controllerInstance, 0, (UInt16)DeviceControllerDefinitions.EepromSize);

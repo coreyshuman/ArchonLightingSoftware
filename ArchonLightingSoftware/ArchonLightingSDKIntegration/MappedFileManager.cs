@@ -11,6 +11,7 @@ using ArchonLightingSDKCommon.Models;
 using System.Security.AccessControl;
 using System.Threading;
 using System.ComponentModel;
+using ArchonLightingSystem.Common;
 
 namespace ArchonLightingSystem.ArchonLightingSDKIntegration
 {
@@ -145,7 +146,7 @@ namespace ArchonLightingSystem.ArchonLightingSDKIntegration
                 }
                 catch (Exception ex)
                 {
-                    Debug.WriteLine(ex.Message);
+                    Logger.Write(Level.Error, $"SDK error: {ex.Message}");
                     Thread.Sleep(1000);
                 }
             }

@@ -15,7 +15,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-namespace ArchonLightingSystem.OpenHardware.Startup
+namespace ArchonLightingSystem.WindowsSystem.Startup
 {
 
     [StructLayout(LayoutKind.Sequential, Pack = 2)]

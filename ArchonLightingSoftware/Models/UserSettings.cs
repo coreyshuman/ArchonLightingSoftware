@@ -4,6 +4,10 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Xml.Serialization;
+using ArchonLightingSystem.Bootloader;
+using ArchonLightingSystem.Common;
+using static ArchonLightingSystem.Bootloader.FirmwareUpdateManager;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 
 namespace ArchonLightingSystem.Models
 {
@@ -69,9 +73,9 @@ namespace ArchonLightingSystem.Models
         public List<ControllerSettings> Controllers { get; private set; } = new List<ControllerSettings>();
 
         //public ControllerSettings[] Controllers { get; set; } = new ControllerSettings[DeviceControllerDefinitions.MaxControllers];
-        public string ComputerName { get; set; } = "Archon";
-        public string SoftwareVersion { get; set; } = ".101";
-        public string LatestFirmwareVersion { get; set; } = "1.10";
+        public string ComputerName { get; set; } = "XxX";
+        public VersionXml SoftwareVersion { get; set; } = new Version(0,0);
+        public VersionXml LatestFirmwareVersion { get; set; } = new Version(0, 0);
 
         public UserSettings()
         {
@@ -101,9 +105,19 @@ namespace ArchonLightingSystem.Models
 
         public void SaveSettings(UserSettings settings)
         {
-            XmlSerializer xs = new XmlSerializer(typeof(UserSettings));
-            TextWriter tw = new StreamWriter(UserSettingsFilePath);
-            xs.Serialize(tw, settings);
+            try
+            {
+                XmlSerializer xs = new XmlSerializer(typeof(UserSettings));
+                using (TextWriter tw = new StreamWriter(UserSettingsFilePath))
+                {
+                    xs.Serialize(tw, settings);
+                    tw.Close();
+                }
+            }
+            catch(Exception ex)
+            {
+                Logger.Write(Level.Error, $"Failed to write settings file: {ex.Message}");
+            }
         }
 
         public UserSettings GetSettings()
@@ -114,13 +128,15 @@ namespace ArchonLightingSystem.Models
                 using (var sr = new StreamReader(UserSettingsFilePath))
                 {
                     var settings = (UserSettings)xs.Deserialize(sr);
+                    sr.Close();
                     settings.Manager = this;
+                    LoadPlatformVariables(settings);
                     return settings;
                 }
             }
             catch (Exception ex)
             {
-                Trace.WriteLine(ex.Message);
+                Logger.Write(Level.Error, $"Failed to open settings file: {ex.Message}");
             }
             return GetDefaultSettings();
         }
@@ -139,7 +155,57 @@ namespace ArchonLightingSystem.Models
                 settings.Controllers.Add(controller);
             }
             settings.Manager = this;
+            LoadPlatformVariables(settings);
             return settings;
+        }
+
+        private void LoadPlatformVariables(UserSettings settings)
+        {
+            bool needsSave = false;
+            if(settings.SoftwareVersion < Definitions.SoftwareVersion)
+            {
+                // todo can run migrations on settings file
+                Logger.Write(Level.Trace, $"Update settings software version from {settings.SoftwareVersion} to {Definitions.SoftwareVersion}");
+                settings.SoftwareVersion = Definitions.SoftwareVersion;
+                needsSave = true;
+            }
+            Logger.Write(Level.Information, $"Software Version: {settings.SoftwareVersion}");
+
+            if (settings.ComputerName != System.Environment.MachineName)
+            {
+                Logger.Write(Level.Trace, $"Update settings computer name from {settings.ComputerName} to {System.Environment.MachineName}");
+                settings.ComputerName= System.Environment.MachineName;
+                needsSave = true;
+            }
+            Logger.Write(Level.Information, $"Computer Name: {settings.ComputerName}");
+
+            try
+            {
+                var bootloader = new Bootloader.Bootloader();
+                bootloader.InitializeBootloader(null, null);
+                if (bootloader.LoadHexFile(AppDomain.CurrentDomain.BaseDirectory + @"FirmwareBinaries\latest.hex"))
+                {
+                    var firmwareCRC = bootloader.CalculateFlashCRC();
+                    var firmwareVer = bootloader.GetApplicationVersion();
+                    if (settings.LatestFirmwareVersion != firmwareVer)
+                    {
+                        Logger.Write(Level.Trace, $"Update settings firmware version from {settings.LatestFirmwareVersion} to {firmwareVer}");
+                        settings.LatestFirmwareVersion = firmwareVer;
+                        needsSave = true;
+                    }
+                    Logger.Write(Level.Information, $"Latest firmware version: {settings.LatestFirmwareVersion}");
+                }
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, $"Couldn't open latest firmware, an error occurred: {ex.Message}");
+                settings.LatestFirmwareVersion = new Version(0,0);
+            }
+
+            if(needsSave)
+            {
+                SaveSettings(settings);
+            }
         }
     }
 }

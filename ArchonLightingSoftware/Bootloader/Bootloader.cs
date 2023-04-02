@@ -153,7 +153,7 @@ namespace ArchonLightingSystem.Bootloader
                 }
                 catch (Exception ex)
                 {
-                    Console.WriteLine(ex.Message);
+                    Logger.Write(Level.Error, $"Bootloader task: {ex.Message}");
                 }
             }
         }
@@ -172,9 +172,13 @@ namespace ArchonLightingSystem.Bootloader
         private void CreateBootloaderThread(ProgressChangedEventHandler progressEventHandler)
         {
             bootloaderTaskWorker = new BackgroundWorker();
-            bootloaderTaskWorker.WorkerReportsProgress = true;
+            bootloaderTaskWorker.WorkerReportsProgress = false;
             bootloaderTaskWorker.WorkerSupportsCancellation = true;
-            bootloaderTaskWorker.ProgressChanged += progressEventHandler;
+            if(progressEventHandler!= null)
+            {
+                bootloaderTaskWorker.WorkerReportsProgress = true;
+                bootloaderTaskWorker.ProgressChanged += progressEventHandler;
+            }   
             bootloaderTaskWorker.RunWorkerCompleted += new RunWorkerCompletedEventHandler(BootloaderTask_RunWorkerCompleted);
             bootloaderTaskWorker.DoWork += new DoWorkEventHandler(BootloaderTask_DoWork);
             bootloaderTaskWorker.RunWorkerAsync();
@@ -599,7 +603,7 @@ namespace ArchonLightingSystem.Bootloader
         /// Gets the locally calculated CRC
         /// </summary>
         /// <returns></returns>
-        public UInt16 CalculateFlashCRC(uint deviceIdx)
+        public UInt16 CalculateFlashCRC()
         {
             UInt32 StartAddress = 0, Len = 0;
             UInt16 crc = 0;
@@ -613,7 +617,7 @@ namespace ArchonLightingSystem.Bootloader
         /// <returns></returns>
         public Version GetApplicationVersion()
         {
-            uint versionLocation = HexManager.PA_TO_VFA(Consts.ApplicationVersionAddress);
+            uint versionLocation = HexManager.PA_TO_VFA(Definitions.ApplicationVersionAddress);
             return new Version(hexManager.GetFlashByte(versionLocation), hexManager.GetFlashByte(versionLocation + 1));
 
         }

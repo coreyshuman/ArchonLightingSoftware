@@ -99,12 +99,20 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="ArchonLightingSDKIntegration\AIDA64Integration.cs" />
+    <Compile Include="Common\Logger.cs" />
+    <Compile Include="Forms\LogForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\LogForm.Designer.cs">
+      <DependentUpon>LogForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Models\VersionXml.cs" />
+    <Compile Include="ThirdParty\AIDA64Integration.cs" />
     <Compile Include="ArchonLightingSDKIntegration\MappedFileManager.cs" />
     <Compile Include="Bootloader\Bootloader.cs" />
     <Compile Include="Bootloader\FirmwareUpdateManager.cs" />
     <Compile Include="Bootloader\HexManager.cs" />
-    <Compile Include="Common\Consts.cs" />
+    <Compile Include="Common\Definitions.cs" />
     <Compile Include="Common\DataGridViewHandlers.cs" />
     <Compile Include="Components\ComboBoxItem.cs" />
     <Compile Include="Components\ControllerComponent.cs" />
@@ -170,8 +178,8 @@
     <Compile Include="OpenHardware\HardwareTypeImage.cs" />
     <Compile Include="OpenHardware\Node.cs" />
     <Compile Include="OpenHardware\SensorNode.cs" />
-    <Compile Include="OpenHardware\Startup\StartupManager.cs" />
-    <Compile Include="OpenHardware\Startup\TaskScheduler.cs" />
+    <Compile Include="WindowsSystem\Startup\StartupManager.cs" />
+    <Compile Include="WindowsSystem\Startup\TaskScheduler.cs" />
     <Compile Include="OpenHardware\TypeNode.cs" />
     <Compile Include="OpenHardware\TemperatureUnitManager.cs" />
     <Compile Include="OpenHardware\UpdateVisitor.cs" />
@@ -215,6 +223,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\FirmwareUpdateForm.resx">
       <DependentUpon>FirmwareUpdateForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\LogForm.resx">
+      <DependentUpon>LogForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SequencerForm.resx">
       <DependentUpon>SequencerForm.cs</DependentUpon>

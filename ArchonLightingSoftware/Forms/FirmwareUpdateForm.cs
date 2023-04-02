@@ -275,11 +275,7 @@ namespace ArchonLightingSystem
                 // todo open file
                 try
                 {
-                    if(firmwareManager.OpenCustomHexFile(openFileDialog.FileName))
-                    {
-                        // todo: get version
-                    }
-                    else
+                    if(!firmwareManager.OpenCustomHexFile(openFileDialog.FileName))
                     {
                         btn_UpdateAll.Enabled = false;
                         btn_UpdateSelected.Enabled = false;
@@ -288,7 +284,7 @@ namespace ArchonLightingSystem
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"An error occured: {ex.Message}");
+                    MessageBox.Show($"An error occurred: {ex.Message}");
                 }
             }
         }

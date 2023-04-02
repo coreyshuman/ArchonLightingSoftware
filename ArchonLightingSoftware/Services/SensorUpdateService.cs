@@ -5,6 +5,7 @@ using System.Threading;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.OpenHardware;
+using ArchonLightingSystem.Common;
 
 
 namespace ArchonLightingSystem.Services
@@ -24,12 +25,11 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
-                //var test = ArchonLightingSDKIntegration.AIDA64Integration.ReadData();
                 hardwareManager.UpdateReadings();
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"HardwareUpdateService Error: {ex.ToString()}");
+                Logger.Write(Level.Error, $"HardwareUpdateService Error: {ex}");
             }
         }
     }

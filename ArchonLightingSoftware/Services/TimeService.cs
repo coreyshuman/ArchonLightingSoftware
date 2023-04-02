@@ -1,4 +1,5 @@
-﻿using ArchonLightingSystem.Models;
+﻿using ArchonLightingSystem.Common;
+using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
 using System;
 using System.Collections.Generic;
@@ -32,11 +33,11 @@ namespace ArchonLightingSystem.Services
                 applicationData.TimeValue[2] = (byte)time.Second;
 
                 applicationData.SendTimePending = true;
-                Console.WriteLine("time controller service tick");
+                Logger.Write(Level.Trace, "time controller service tick");
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"LightServiceThread Error: {ex.ToString()}");
+                Logger.Write(Level.Error, $"LightServiceThread Error: {ex}");
             }
         }
     }

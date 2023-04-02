@@ -5,7 +5,7 @@ using System.Threading;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.OpenHardware;
-
+using ArchonLightingSystem.Common;
 
 namespace ArchonLightingSystem.Services
 {
@@ -82,7 +82,7 @@ namespace ArchonLightingSystem.Services
                 }
                 catch (Exception ex)
                 {
-                    Trace.TraceError($"ServiceThread Error: {ex.ToString()}");
+                    Logger.Write(Level.Error, $"ServiceThread Error: {ex.ToString()}");
                 }
                 finally
                 {
@@ -125,7 +125,7 @@ namespace ArchonLightingSystem.Services
             }
             catch(Exception ex)
             {
-                Trace.TraceError("Couldn't locate next controller: " + ex.Message);
+                Logger.Write(Level.Error, "Couldn't locate next controller: " + ex.Message);
                 return null;
             }
         }    

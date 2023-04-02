@@ -11,7 +11,8 @@ using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Services;
 using ArchonLightingSystem.Forms;
-using ArchonLightingSystem.OpenHardware.Startup;
+using ArchonLightingSystem.WindowsSystem.Startup;
+using System.Windows.Forms.DataVisualization.Charting;
 
 namespace ArchonLightingSystem
 {
@@ -26,6 +27,7 @@ namespace ArchonLightingSystem
         private FirmwareUpdateForm firmwareForm = null;
         private SensorMonitorManager hardwareManager = null;
         private SequencerForm sequencerForm = null;
+        private LogForm logForm = null;
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
         
@@ -33,7 +35,6 @@ namespace ArchonLightingSystem
         private int selectedAddressIdx = 0;
         private int selectedAddress = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
-        private string temperatureString = "";
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private UserSettingsManager settingsManager = new UserSettingsManager();
         private UserSettings userSettings = null;
@@ -45,7 +46,11 @@ namespace ArchonLightingSystem
 
         public unsafe AppForm(bool startInBackground)
         {
-            InitializeComponent();     
+            InitializeComponent();
+
+            Logger.LatestLogEvent += HandleLogEvent;
+
+            Logger.Write(Level.Information, $"Loading ArchonLightingSystem {DateTime.Now}");
 
             dragSupport.Initialize(this, menuStrip1);
             dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
@@ -55,13 +60,14 @@ namespace ArchonLightingSystem
             if (Settings.Default.MainWindowLocation.X >= 0)
             {
                 this.Location = Settings.Default.MainWindowLocation;
+                Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
             InitializeForm();
 
             usbDeviceManager = new UsbDeviceManager();
             usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
-            usbDeviceManager.Connect(Handle, Consts.ApplicationVid, Consts.ApplicationPid);
+            usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
 
             FormUpdateTimer.Enabled = true;
 
@@ -104,6 +110,7 @@ namespace ArchonLightingSystem
         {
             Settings.Default.MainWindowLocation = args.Location;
             Settings.Default.Save();
+            Logger.Write(Level.Trace, $"Window dragged: {args.Location}");
         }
 
         void InitializeForm()
@@ -118,6 +125,26 @@ namespace ArchonLightingSystem
                 device.InitializeComponent(this, hardwareManager, i);
                 device.UserSettings = userSettings;
             }
+        }
+
+        void HandleLogEvent(object sender, LogEventArgs eventArgs)
+        {
+            UpdateStatusBar(eventArgs.Log.Message);
+            if(eventArgs.Log.Level == Level.Error )
+            {
+                ShowTaskbarNotification("Archon Error", eventArgs.Log.Message);
+                SetErrorIcon(true);
+            }
+        }
+
+        void UpdateStatusBar(string msg) 
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action<string>(UpdateStatusBar), new object[] { msg });
+                return;
+            }
+            statusLabel.Text = msg; 
         }
 
         void UpdateFormSettings(DeviceControllerData controller)
@@ -157,17 +184,21 @@ namespace ArchonLightingSystem
                 };
 
                 deviceAddressList.Add(comboBoxItem);
+
+                var addr = controllerInstance.AppData?.DeviceControllerData.DeviceAddress;
+                var firmwareVer = controllerInstance.AppData?.DeviceControllerData.ApplicationVersion;
+                var bootVer = controllerInstance.AppData?.DeviceControllerData.BootloaderVersion;
+                Logger.Write(Level.Information, $"Device {addr} added. Firmware: {firmwareVer} Bootloader: {bootVer}");
             }
             else if (e is UsbControllerRemovedEventArgs)
             {
-
+                UsbControllerRemovedEventArgs evtArgs = e as UsbControllerRemovedEventArgs;
+                Logger.Write(Level.Information, $"Device {evtArgs?.ControllerInstance?.AppData?.DeviceControllerData.DeviceAddress} removed");
             }
             else if (e is UsbControllerErrorEventArgs)
             {
                 UsbControllerErrorEventArgs errorArgs = e as UsbControllerErrorEventArgs;
-                statusLabel.Text = $"Error on Device {errorArgs.ControllerAddress}: {errorArgs.Message}";
-                SetErrorIcon(true);
-                ShowTaskbarNotification("Device Error", statusLabel.Text);
+                Logger.Write(Level.Error, $"Error on Device {errorArgs.ControllerAddress}: {errorArgs.Message}");
             }
         }
 
@@ -211,6 +242,7 @@ namespace ArchonLightingSystem
                 catch(Exception ex)
                 {
                     Trace.WriteLine($"ForUpdateTick Error: {ex.ToString()}");
+                    Logger.Write(Level.Trace, $"ForUpdateTick Error: {ex.ToString()}");
                 }
                 finally
                 {
@@ -415,7 +447,7 @@ namespace ArchonLightingSystem
 
         private void sequencerToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            if (debugForm == null || debugForm.IsDisposed)
+            if (sequencerForm == null || sequencerForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
                 sequencerForm.InitializeForm(usbDeviceManager, userSettings, deviceAddressList, selectedAddressIdx);
@@ -433,6 +465,22 @@ namespace ArchonLightingSystem
         {
             serviceManager.StopServices();
             hardwareManager.Close();
+        }
+
+        private void toolStripMenuItem_ViewLog_Click(object sender, EventArgs e)
+        {
+            if (logForm == null || logForm.IsDisposed)
+            {
+                logForm = new LogForm();
+                //logForm.InitializeForm(usbDeviceManager, userSettings, deviceAddressList, selectedAddressIdx);
+                logForm.Location = this.Location;
+                logForm.Show();
+            }
+            if (logForm.WindowState == FormWindowState.Minimized)
+            {
+                logForm.WindowState = FormWindowState.Normal;
+            }
+            logForm.Focus();
         }
     }
 } 
