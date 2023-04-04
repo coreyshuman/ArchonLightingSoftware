@@ -5,28 +5,27 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Diagnostics;
 using System.Threading;
+using ArchonLightingSystem.Common;
 
-namespace ArchonLightingSystem.UsbApplication
+namespace ArchonLightingSystem.UsbApplicationV2
 {
-    public partial class UsbDevice
+    public class UsbDeviceEventArgs : EventArgs
     {
-        public bool IsAttached { get; set; }
-        public bool IsAttachedButBroken { get; set; }
-        public bool IsFound { get; set; } // used to verify device is attached when system event occurs
-        public SafeFileHandle WriteHandleToUSBDevice { get; set; }
-        public SafeFileHandle ReadHandleToUSBDevice { get; set; }
-        public string DevicePath { get; set; }
+        public int EventCount { get; internal set; }
+        public List<UsbDevice> ConnectedDevices { get; } 
+        public List<UsbDevice> DisconnectedDevices { get; }
+
+        public UsbDeviceEventArgs()
+        {
+            ConnectedDevices = new List<UsbDevice>();
+            DisconnectedDevices = new List<UsbDevice>();
+        }
     }
 
-    public class UsbDriverEventArgs : EventArgs
-    {
-        public List<UsbDevice> Devices { get; internal set; }
-    }
-
-    public class UsbDriver : UsbSystemDefinitions
+    public class UsbDeviceManager : UsbSystemDefinitions
     {
         public static uint USB_PACKET_SIZE { get; } = 64 + 1;
-        public event EventHandler<UsbDriverEventArgs> UsbDriverEvent;
+        public event EventHandler<UsbDeviceEventArgs> UsbDriverEvent;
 
         protected List<UsbDevice> usbDevices = new List<UsbDevice>();
         //Globally Unique Identifier (GUID) for HID class devices.  Windows uses GUIDs to identify things.
@@ -34,7 +33,7 @@ namespace ArchonLightingSystem.UsbApplication
         private string devicePid = "0000";
         private string deviceVid = "0000";
         private string deviceIDToFind = "Vid_0000&Pid_0000";
-        private SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
+        private readonly SemaphoreSlim semaphore = new SemaphoreSlim(1, 1);
 
         public int DeviceCount
         {
@@ -78,12 +77,12 @@ namespace ArchonLightingSystem.UsbApplication
             }
         }
 
-        public UsbDriver()
+        public UsbDeviceManager()
         {
 
         }
 
-        public void InitializeDevice(string vid, string pid)
+        public void RegisterUsbDevice(string vid, string pid)
         {
             DeviceVid = vid;
             DevicePid = pid;
@@ -118,7 +117,7 @@ namespace ArchonLightingSystem.UsbApplication
             return usbDevices[deviceIdx];
         }
 
-        protected virtual void OnUsbDriverEvent(UsbDriverEventArgs e)
+        protected virtual void OnUsbDriverEvent(UsbDeviceEventArgs e)
         {
             UsbDriverEvent?.Invoke(this, e);
         }
@@ -152,6 +151,7 @@ namespace ArchonLightingSystem.UsbApplication
                     //to your device (with known VID/PID) took place before doing any kind of opening or closing of handles/endpoints.
                     //(the message could have been totally unrelated to your application/USB device)
                     UpdateDeviceStatus();
+                    Logger.Write(Level.Debug, $"Windows Event {m.WParam}, {m.LParam}");
                 }
             }
         }
@@ -172,6 +172,9 @@ namespace ArchonLightingSystem.UsbApplication
 
         private void UpdateDeviceStatus()
         {
+            int changeEventCount = 0;
+            UsbDeviceEventArgs usbEventArgs = new UsbDeviceEventArgs();
+
             if (semaphore.Wait(10))
             {
                 try
@@ -199,6 +202,7 @@ namespace ArchonLightingSystem.UsbApplication
                                 {
                                     device.IsAttached = true;       //Let the rest of the PC application know the USB device is connected, and it is safe to read/write to it
                                     device.IsAttachedButBroken = false;
+                                    usbEventArgs.ConnectedDevices.Add(device);
                                 }
                                 else //for some reason the device was physically plugged in, but one or both of the read/write handles didn't open successfully...
                                 {
@@ -209,19 +213,22 @@ namespace ArchonLightingSystem.UsbApplication
                                     if (ErrorStatusRead == ERROR_SUCCESS)
                                         device.ReadHandleToUSBDevice.Close();
                                 }
+                                usbEventArgs.EventCount++;
                             }
                             //Device must not be connected (or not programmed with correct firmware)
                             else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
                             {
                                 DetachDevice(device);
+                                usbEventArgs.EventCount++;
+                                usbEventArgs.DisconnectedDevices.Add(device);
                             }
                             //else we did find the device, but IsAttached was already true.  In this case, don't do anything to the read/write handles,
                             //since the WM_DEVICECHANGE message presumably wasn't caused by our USB device.  
                         });
                     }
-                    if (usbDevices.Count > 0)
+                    if (usbEventArgs.EventCount > 0)
                     {
-                        OnUsbDriverEvent(new UsbDriverEventArgs() { Devices = usbDevices });
+                        OnUsbDriverEvent(usbEventArgs);
                     }
                 }
                 catch (Exception e)
@@ -246,7 +253,6 @@ namespace ArchonLightingSystem.UsbApplication
         {
             OVERLAPPED HIDOverlapped = new OVERLAPPED();
             SafeFileHandle hEventObject = null;
-            uint result = 0;
             uint bytesWritten = 0;
             Byte[] usbReport = new Byte[USB_PACKET_SIZE];
             int i;
@@ -261,7 +267,18 @@ namespace ArchonLightingSystem.UsbApplication
                 return 0;
             }
 
-            // while (bufflen > 0)
+            if(bufflen > USB_PACKET_SIZE - 1)
+            {
+                Trace.WriteLine("Usb write buffer length too long");
+                return 0;
+            }
+
+            if (buffer == null || buffer.Length < bufflen)
+            {
+                Trace.WriteLine("Usb write buffer shorter than bufflen");
+                return 0;
+            }
+
             {
                 // Set output buffer to 0xFF.
                 for (i = 0; i < USB_PACKET_SIZE; i++)
@@ -285,7 +302,7 @@ namespace ArchonLightingSystem.UsbApplication
                     WriteFile(device.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, ref HIDOverlapped);
                     if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
                     {
-                        result = WaitForSingleObject(hEventObject, 200); //200ms timeout period
+                        uint result = WaitForSingleObject(hEventObject, 200); //200ms timeout period
 
                         switch (result)
                         {
@@ -312,6 +329,10 @@ namespace ArchonLightingSystem.UsbApplication
 
                         }
                     }
+                }
+                catch(Exception e)
+                {
+                    Trace.WriteLine($"Undefined UsbWrite Error: {e.Message}");
                 }
                 finally
                 {
@@ -344,6 +365,12 @@ namespace ArchonLightingSystem.UsbApplication
 
             if (device.ReadHandleToUSBDevice == null)
             {
+                return 0;
+            }
+
+            if (buffer == null || buffer.Length < bufflen)
+            {
+                Trace.WriteLine("Usb write buffer shorter than bufflen");
                 return 0;
             }
 
@@ -397,6 +424,10 @@ namespace ArchonLightingSystem.UsbApplication
                     }
                 }
             }
+            catch (Exception e)
+            {
+                Trace.WriteLine($"Undefined UsbWrite Error: {e.Message}");
+            }
             finally
             {
                 hEventObject?.Dispose();
@@ -405,7 +436,6 @@ namespace ArchonLightingSystem.UsbApplication
                     Marshal.FreeHGlobal(pINBuffer);
                 }
             }
-
 
             return 0;
         }
@@ -557,7 +587,6 @@ namespace ArchonLightingSystem.UsbApplication
                                 var foundDevice = usbDevices.Where(dev => dev.DevicePath == devicePath).FirstOrDefault();
                                 if (foundDevice != null)
                                 {
-                                    //usbDevices[usbDevices.IndexOf(foundDevice)].IsFound = true;
                                     foundDevice.IsFound = true;
                                 }
                                 else
@@ -581,7 +610,7 @@ namespace ArchonLightingSystem.UsbApplication
                         //However, just in case some unexpected error occurs, keep track of the number of loops executed.
                         //If the number of loops exceeds a very large number, exit anyway, to prevent inadvertent infinite looping.
                         loopCounter++;
-                        if (loopCounter == 10000000)    //Surely there aren't more than 10 million devices attached to any forseeable PC...
+                        if (loopCounter == 100000)
                         {
                             break;
                         }
@@ -598,7 +627,7 @@ namespace ArchonLightingSystem.UsbApplication
             catch (Exception ex)
             {
                 //Something went wrong if PC gets here.  Maybe a Marshal.AllocHGlobal() failed due to insufficient resources or something.
-                Trace.WriteLine($"CheckIfPresent Error: {ex.ToString()}");
+                Trace.WriteLine($"CheckIfPresent Error: {ex}");
                 return false;
             }
         }

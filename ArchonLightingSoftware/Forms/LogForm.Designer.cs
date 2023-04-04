@@ -31,6 +31,7 @@
             this.txt_log = new System.Windows.Forms.RichTextBox();
             this.lvlLabel = new System.Windows.Forms.Label();
             this.cb_Level = new System.Windows.Forms.ComboBox();
+            this.btn_CopyToClipboard = new System.Windows.Forms.Button();
             this.SuspendLayout();
             // 
             // txt_log
@@ -71,15 +72,31 @@
             this.cb_Level.TabIndex = 2;
             this.cb_Level.SelectedIndexChanged += new System.EventHandler(this.comboBoxLevel_SelectedIndexChanged);
             // 
+            // btn_CopyToClipboard
+            // 
+            this.btn_CopyToClipboard.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_CopyToClipboard.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_CopyToClipboard.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F);
+            this.btn_CopyToClipboard.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.btn_CopyToClipboard.Location = new System.Drawing.Point(12, 9);
+            this.btn_CopyToClipboard.Name = "btn_CopyToClipboard";
+            this.btn_CopyToClipboard.Size = new System.Drawing.Size(128, 33);
+            this.btn_CopyToClipboard.TabIndex = 8;
+            this.btn_CopyToClipboard.Text = "Copy to Clipboard";
+            this.btn_CopyToClipboard.UseVisualStyleBackColor = false;
+            this.btn_CopyToClipboard.Click += new System.EventHandler(this.btn_CopyToClipboard_Click);
+            // 
             // LogForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(800, 450);
+            this.Controls.Add(this.btn_CopyToClipboard);
             this.Controls.Add(this.cb_Level);
             this.Controls.Add(this.lvlLabel);
             this.Controls.Add(this.txt_log);
+            this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.Name = "LogForm";
             this.Text = "Application Log";
             this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.LogForm_FormClosing);
@@ -93,5 +110,6 @@
         private System.Windows.Forms.RichTextBox txt_log;
         private System.Windows.Forms.Label lvlLabel;
         private System.Windows.Forms.ComboBox cb_Level;
+        private System.Windows.Forms.Button btn_CopyToClipboard;
     }
 }

@@ -30,7 +30,9 @@ namespace ArchonLightingSystem
         private LogForm logForm = null;
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
-        
+
+        UsbApplicationV2.UsbControllerManager usbControllerManger;
+
         private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
         private int selectedAddressIdx = 0;
         private int selectedAddress = 0;
@@ -68,6 +70,10 @@ namespace ArchonLightingSystem
             usbDeviceManager = new UsbDeviceManager();
             usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
             usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
+
+            // debug testing new manager
+            usbControllerManger = new UsbApplicationV2.UsbControllerManager();
+            usbControllerManger.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
 
             FormUpdateTimer.Enabled = true;
 
@@ -166,7 +172,10 @@ namespace ArchonLightingSystem
         //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
         protected override void WndProc(ref Message m)
         {
+            usbControllerManger?.HandleWindowEvent(ref m);
+
             usbDeviceManager?.HandleWindowEvent(ref m);
+            
             base.WndProc(ref m);
         }
 

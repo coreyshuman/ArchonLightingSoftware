@@ -103,5 +103,10 @@ namespace ArchonLightingSystem.Forms
             Logger.SetLevel(lev);
             GetLogs();
         }
+
+        private void btn_CopyToClipboard_Click(object sender, EventArgs e)
+        {
+            Clipboard.SetData(DataFormats.Text, (Object)txt_log.Text);
+        }
     }
 }

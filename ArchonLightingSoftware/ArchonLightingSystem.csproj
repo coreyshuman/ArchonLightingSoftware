@@ -178,6 +178,14 @@
     <Compile Include="OpenHardware\HardwareTypeImage.cs" />
     <Compile Include="OpenHardware\Node.cs" />
     <Compile Include="OpenHardware\SensorNode.cs" />
+    <Compile Include="UsbApplicationV2\UsbApp.cs" />
+    <Compile Include="UsbApplicationV2\UsbAppDefinitions.cs" />
+    <Compile Include="UsbApplicationV2\UsbControllerEventArgs.cs" />
+    <Compile Include="UsbApplicationV2\UsbControllerDevice.cs" />
+    <Compile Include="UsbApplicationV2\UsbDevice.cs" />
+    <Compile Include="UsbApplicationV2\UsbControllerManager.cs" />
+    <Compile Include="UsbApplicationV2\UsbDeviceManager.cs" />
+    <Compile Include="UsbApplicationV2\UsbSystemDefinitions.cs" />
     <Compile Include="WindowsSystem\Startup\StartupManager.cs" />
     <Compile Include="WindowsSystem\Startup\TaskScheduler.cs" />
     <Compile Include="OpenHardware\TypeNode.cs" />
