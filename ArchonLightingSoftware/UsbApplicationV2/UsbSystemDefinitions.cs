@@ -8,6 +8,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
     //properly interact with the unmanged C++ style APIs used to find and connect with the USB device.
     public class UsbSystemDefinitions
     {
+        public static uint USB_PACKET_SIZE { get; } = 64 + 1;
+
         //Constant definitions from setupapi.h, which we aren't allowed to include directly since this is C#
         internal const uint DIGCF_PRESENT = 0x02;
         internal const uint DIGCF_DEVICEINTERFACE = 0x10;

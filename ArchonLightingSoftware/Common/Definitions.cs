@@ -15,4 +15,10 @@ namespace ArchonLightingSystem.Common
         public const uint ApplicationVersionAddress = 0x9D00EFF0;
         public static readonly Version SoftwareVersion = new Version(1,3,20,0);
     }
+
+    public partial class UsbAppCommon
+    {
+        public const uint CONTROL_BUFFER_SIZE = 960;
+        public const uint USB_BUFFER_SIZE = 960 + 64;
+    }
 }

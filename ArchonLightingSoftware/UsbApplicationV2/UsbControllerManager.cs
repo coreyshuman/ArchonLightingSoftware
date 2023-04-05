@@ -79,19 +79,38 @@ namespace ArchonLightingSystem.UsbApplicationV2
             UsbControllerEvent?.Invoke(this, e);
         }
 
+        private async Task<bool> ConnectUsbControllerAsync(UsbDevice device)
+        {
+            
+            Logger.Write(Level.Debug, $"Connect device {device.DevicePath}");
+            if(UsbApp.GetDeviceInitialization(device))
+            {
+                Logger.Write(Level.Debug, $"Can initialize {device.DevicePath}");
+            }
+
+
+            
+            return true;
+        }
+
+        private async void DisconnectUsbControllerAsync(UsbDevice device)
+        {
+            device.Cancel();
+            await device.WaitAsync();
+            Logger.Write(Level.Debug, $"Disconnect device {device.DevicePath}");
+
+
+
+            device.Release();
+        }
+
         private void HandleUsbDriverEvent(object sender, UsbDeviceEventArgs e)
         {
             if(e.EventCount > 0)
             {
-                e.ConnectedDevices.ForEach(device =>
-                {
-                    Logger.Write(Level.Debug, $"Connect device {device.DevicePath}");
-                });
+                e.ConnectedDevices.ForEach(device => ConnectUsbControllerAsync(device));
 
-                e.DisconnectedDevices.ForEach(device =>
-                {
-                    Logger.Write(Level.Debug, $"Disconnect device {device.DevicePath}");
-                });
+                e.DisconnectedDevices.ForEach(device => DisconnectUsbControllerAsync(device));
             }
 
 

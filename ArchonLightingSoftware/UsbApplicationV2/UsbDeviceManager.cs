@@ -150,8 +150,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     //sources, not just your USB hardware device.  Therefore, must check to find out if any changes relavant
                     //to your device (with known VID/PID) took place before doing any kind of opening or closing of handles/endpoints.
                     //(the message could have been totally unrelated to your application/USB device)
-                    UpdateDeviceStatus();
                     Logger.Write(Level.Debug, $"Windows Event {m.WParam}, {m.LParam}");
+                    UpdateDeviceStatus();
+                    
                 }
             }
         }
@@ -172,7 +173,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         private void UpdateDeviceStatus()
         {
-            int changeEventCount = 0;
             UsbDeviceEventArgs usbEventArgs = new UsbDeviceEventArgs();
 
             if (semaphore.Wait(10))
@@ -240,204 +240,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     semaphore.Release();
                 }
             }
-        }
-
-        /// <summary>
-        /// Write buffer to USB device
-        /// </summary>
-        /// <param name="device">device class with device info</param>
-        /// <param name="buffer">buffer bytes</param>
-        /// <param name="bufflen">buffer length</param>
-        /// <returns>Number of bytes written</returns>
-        internal uint WriteUSBDevice(UsbDevice device, Byte[] buffer, uint bufflen)
-        {
-            OVERLAPPED HIDOverlapped = new OVERLAPPED();
-            SafeFileHandle hEventObject = null;
-            uint bytesWritten = 0;
-            Byte[] usbReport = new Byte[USB_PACKET_SIZE];
-            int i;
-
-            if (device.IsAttached == false)
-            {
-                return 0;
-            }
-
-            if (device.WriteHandleToUSBDevice == null)
-            {
-                return 0;
-            }
-
-            if(bufflen > USB_PACKET_SIZE - 1)
-            {
-                Trace.WriteLine("Usb write buffer length too long");
-                return 0;
-            }
-
-            if (buffer == null || buffer.Length < bufflen)
-            {
-                Trace.WriteLine("Usb write buffer shorter than bufflen");
-                return 0;
-            }
-
-            {
-                // Set output buffer to 0xFF.
-                for (i = 0; i < USB_PACKET_SIZE; i++)
-                {
-                    usbReport[i] = 0xFF;
-                }
-                usbReport[0] = 0;  // Report ID = 0
-                for (i = 0; i < bufflen; i++)
-                {
-                    usbReport[i + 1] = buffer[i];
-                }
-
-                try
-                {
-                    // use overlapped structure
-                    hEventObject = CreateEvent(IntPtr.Zero, false, true, IntPtr.Zero);
-                    HIDOverlapped.hEvent = hEventObject.DangerousGetHandle();
-                    HIDOverlapped.Offset = 0;
-                    HIDOverlapped.OffsetHigh = 0;
-
-                    WriteFile(device.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, ref HIDOverlapped);
-                    if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
-                    {
-                        uint result = WaitForSingleObject(hEventObject, 200); //200ms timeout period
-
-                        switch (result)
-                        {
-                            case WAIT_OBJECT_0:
-                                // Success;
-                                if (GetOverlappedResult(device.WriteHandleToUSBDevice, ref HIDOverlapped, ref bytesWritten, false))
-                                {
-                                    return bytesWritten;
-                                }
-                                CancelIo(device.WriteHandleToUSBDevice);
-                                break;
-
-                            case WAIT_TIMEOUT:
-                                // Timeout error;
-                                CancelIo(device.WriteHandleToUSBDevice);
-                                break;
-
-                            default:
-                                // Undefined error;
-                                uint ErrorCode = (uint)Marshal.GetLastWin32Error();
-                                Trace.WriteLine($"Undefined UsbWrite Error. WaitForSingleObject=[{ErrorCode.ToString("X8")}] LastWin32Error=[{result.ToString("X8")}]");
-                                CancelIo(device.WriteHandleToUSBDevice);
-                                break;
-
-                        }
-                    }
-                }
-                catch(Exception e)
-                {
-                    Trace.WriteLine($"Undefined UsbWrite Error: {e.Message}");
-                }
-                finally
-                {
-                    hEventObject?.Dispose();
-                }
-            }
-            return 0;
-        }
-
-        /// <summary>
-        /// Read from USB device
-        /// </summary>
-        /// <param name="device">device class with device info</param>
-        /// <param name="buffer">buffer array</param>
-        /// <param name="bufflen">buffer length</param>
-        /// <param name="readTimeout">timeout for read operation</param>
-        /// <returns></returns>
-        internal uint ReadUSBDevice(UsbDevice device, ref Byte[] buffer, uint bufflen, uint readTimeout = 200)
-        {
-            OVERLAPPED HIDOverlapped = new OVERLAPPED();
-            SafeFileHandle hEventObject = null;
-            IntPtr pINBuffer = IntPtr.Zero;
-            uint bytesRead = 0;
-            UInt32 result;
-
-            if (device.IsAttached == false)
-            {
-                return 0;
-            }
-
-            if (device.ReadHandleToUSBDevice == null)
-            {
-                return 0;
-            }
-
-            if (buffer == null || buffer.Length < bufflen)
-            {
-                Trace.WriteLine("Usb write buffer shorter than bufflen");
-                return 0;
-            }
-
-            // Set the first byte in the buffer to the Report ID.
-            buffer[0] = 0;
-
-            try
-            {
-                // use overlapped structure
-                hEventObject = CreateEvent(IntPtr.Zero, false, true, IntPtr.Zero);
-                HIDOverlapped.hEvent = hEventObject.DangerousGetHandle();
-                HIDOverlapped.Offset = 0;
-                HIDOverlapped.OffsetHigh = 0;
-
-                pINBuffer = Marshal.AllocHGlobal((int)bufflen);    //Allocate some unmanged RAM for the receive data buffer.
-
-                //ReadFileManagedBuffer(device.ReadHandleToUSBDevice, buffer, bufflen, ref bytesRead, ref HIDOverlapped);
-                if (ReadFile(device.ReadHandleToUSBDevice, pINBuffer, bufflen, ref bytesRead, ref HIDOverlapped))
-                {
-                    Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
-                    return bytesRead;
-                }
-                else if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
-                {
-                    result = WaitForSingleObject(hEventObject, readTimeout);
-
-                    switch (result)
-                    {
-                        case WAIT_OBJECT_0:
-                            // Success;
-                            if (GetOverlappedResult(device.ReadHandleToUSBDevice, ref HIDOverlapped, ref bytesRead, false))
-                            {
-                                Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
-                                return bytesRead;
-                            }
-                            CancelIo(device.ReadHandleToUSBDevice);
-                            break;
-
-                        case WAIT_TIMEOUT:
-                            // Timeout error;
-                            CancelIo(device.ReadHandleToUSBDevice);
-                            break;
-
-                        default:
-                            // Undefined error;
-                            uint ErrorCode = (uint)Marshal.GetLastWin32Error();
-                            Trace.WriteLine($"Undefined UsbRead Error. WaitForSingleObject=[{ErrorCode.ToString("X8")}] LastWin32Error=[{result.ToString("X8")}]");
-                            CancelIo(device.ReadHandleToUSBDevice);
-                            break;
-
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                Trace.WriteLine($"Undefined UsbWrite Error: {e.Message}");
-            }
-            finally
-            {
-                hEventObject?.Dispose();
-                if (pINBuffer != IntPtr.Zero)
-                {
-                    Marshal.FreeHGlobal(pINBuffer);
-                }
-            }
-
-            return 0;
         }
 
         /// <summary>
@@ -619,7 +421,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     SetupDiDestroyDeviceInfoList(deviceInfoTable);	//Clean up the old structure we no longer need.
 
                     var deviceFoundCount = usbDevices.Where(dev => dev.IsFound == true).Count();
-                    Trace.WriteLine($"USB found {deviceFoundCount}");
+                    Trace.WriteLine($"USB found {deviceFoundCount} device(s)");
                     return deviceFoundCount > 0;
                 }
                 return false;

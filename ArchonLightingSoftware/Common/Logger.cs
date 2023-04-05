@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -35,6 +36,7 @@ namespace ArchonLightingSystem.Common
 
         public static void Write(Level lev, string message)
         {
+            Trace.WriteLine(message);
             var log = new Log { Level = lev, Message = message };
             logs.Add(log);
 
@@ -42,6 +44,8 @@ namespace ArchonLightingSystem.Common
             {
                 OnLogWritten(new LogEventArgs { Log = log });
             }
+
+            
         }
 
         public static void Clear()

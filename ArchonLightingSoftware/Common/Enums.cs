@@ -1,10 +1,13 @@
-﻿namespace ArchonLightingSystem.UsbApplication
-{
-    public partial class UsbApp
-    {
-        public const uint CONTROL_BUFFER_SIZE = 960;
-        public const uint USB_BUFFER_SIZE = 960 + 64;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Threading.Tasks;
 
+namespace ArchonLightingSystem.Common
+{
+    public partial class UsbAppCommon
+    {
         public enum CONTROL_ERROR_CODES
         {
             RESPONSE_TOO_LONG = 0x00,
@@ -33,7 +36,7 @@
             CMD_SET_TIME = 0x37,
             CMD_READ_EEPROM = 0x38,
             CMD_WRITE_EEPROM = 0x39,
-            CMD_ERROR_OCCURED = 0x40
+            CMD_ERROR_OCCURRED = 0x40
         };
     }
 }

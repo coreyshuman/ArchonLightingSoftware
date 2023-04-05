@@ -27,7 +27,7 @@ namespace ArchonLightingSystem.UsbApplication
 
         public static async Task DeviceDoWork(UsbControllerInstance controllerInstance)
         {
-            Byte[] rxtxBuffer = new Byte[CONTROL_BUFFER_SIZE];
+            Byte[] rxtxBuffer = new Byte[UsbAppCommon.CONTROL_BUFFER_SIZE];
             uint byteCnt = 0;
             int i = 0;
 
@@ -66,7 +66,7 @@ namespace ArchonLightingSystem.UsbApplication
                             await GetDeviceInitialization(controllerInstance);
                         }
 
-                        for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
+                        for (i = 0; i < UsbAppCommon.CONTROL_BUFFER_SIZE; i++)
                         {
                             rxtxBuffer[i] = 0;
                         }
@@ -78,10 +78,10 @@ namespace ArchonLightingSystem.UsbApplication
                             {
                                 rxtxBuffer[i] = controllerInstance.AppData.DeviceControllerData.TemperatureValue[i];
                             }
-                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController) > 0)
                             {
                                 //await Task.Delay(2);
-                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_FANSPEED);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED);
                                 if (response != null)
                                 {
                                     for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
@@ -118,7 +118,7 @@ namespace ArchonLightingSystem.UsbApplication
                         if (controllerInstance.AppData.EepromWritePending)
                         {
                             controllerInstance.AppData.EepromWritePending = false;
-                            for (i = 0; i < CONTROL_BUFFER_SIZE; i++)
+                            for (i = 0; i < UsbAppCommon.CONTROL_BUFFER_SIZE; i++)
                             {
                                 rxtxBuffer[i] = 0;
                             }
@@ -129,9 +129,9 @@ namespace ArchonLightingSystem.UsbApplication
                                 rxtxBuffer[i + 2] = controllerInstance.AppData.DeviceControllerData.EepromData[i];
                             }
 
-                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + controllerInstance.AppData.EepromLength) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + controllerInstance.AppData.EepromLength) > 0)
                             {
-                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_EEPROM);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM);
                                 if (response != null)
                                 {
                                     Console.WriteLine(response.Data[0]);
@@ -172,9 +172,9 @@ namespace ArchonLightingSystem.UsbApplication
                         {
                             controllerInstance.AppData.WriteConfigPending = false;
                             byteCnt = 1;// AppData.DeviceConfig.ToBuffer(ref rxtxBuffer);
-                            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
+                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
                             {
-                                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG);
+                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG);
                                 if (response != null)
                                 {
 
@@ -243,10 +243,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> ReadBootloaderInfo(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO);
                 return response;
             }
             return null;
@@ -254,10 +254,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> ReadApplicationInfo(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO);
                 return response;
             }
             return null;
@@ -265,9 +265,9 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> WriteFanSpeed(UsbControllerInstance controllerInstance, byte[] speedValues)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController) > 0)
             {
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_FANSPEED, 20);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, 20);
                 return response;
             }
             return null;
@@ -275,15 +275,15 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static bool ResetDeviceToBootloader(UsbControllerInstance controllerInstance)
         {
-            return GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
+            return GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0) > 0;
         }
 
         private static async Task<ControlPacket> ReadBootStatus(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_BOOT_STATUS);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS);
                 return response;
             }
             return null;
@@ -293,10 +293,10 @@ namespace ArchonLightingSystem.UsbApplication
         private static async Task<ControlPacket> ReadEeprom(UsbControllerInstance controllerInstance, UInt16 address, UInt16 length)
         {
             byte[] request = new byte[] { (byte)address, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF) };
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, request, 3) > 0)
             {
                 //await Task.Delay(100); // give controller time to read EEPROM
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_EEPROM, 2000);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, 2000);
                 return response;
             }
             return null;
@@ -304,10 +304,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> DefaultConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_DEFAULT_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG);
                 return response;
             }
             return null;
@@ -315,10 +315,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> ReadConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(50); // larger packet
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG);
                 return response;
             }
             return null;
@@ -326,10 +326,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> WriteConfig(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, null, 0) > 0)
             {
                 //await Task.Delay(100); // writing to eeprom
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG);
                 return response;
             }
             return null;
@@ -339,10 +339,10 @@ namespace ArchonLightingSystem.UsbApplication
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.EepromSize];
             uint length = config.ToBuffer(ref buffer);
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length) > 0)
             {
                 //await Task.Delay(50); // larger packet
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_UPDATE_CONFIG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG);
                 return response;
             }
             return null;
@@ -359,9 +359,9 @@ namespace ArchonLightingSystem.UsbApplication
                     buffer[devi * DeviceControllerDefinitions.LedBytesPerDevice + ledi] = ledFrame[devi, ledi];
                 }
             }
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length) > 0)
             {
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_WRITE_LED_FRAME);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME);
                 return response;
             }
             return null;
@@ -369,10 +369,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> ReadControllerAddress(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0) > 0)
             {
                 //await Task.Delay(2); 
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS);
                 return response;
             }
             return null;
@@ -380,10 +380,10 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> ReadDebug(UsbControllerInstance controllerInstance)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0) > 0)
             {
                 //await Task.Delay(2);
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_READ_EE_DEBUG);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG);
                 if (response != null)
                 {
                     controllerInstance.AppData.Debug = ($"Debug Len: {response.Len}"+Environment.NewLine);
@@ -404,15 +404,15 @@ namespace ArchonLightingSystem.UsbApplication
 
         private static async Task<ControlPacket> SetTime(UsbControllerInstance controllerInstance, byte[] timeValue)
         {
-            if (GenerateAndSendFrames(controllerInstance, CONTROL_CMD.CMD_SET_TIME, timeValue, 3) > 0)
+            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, timeValue, 3) > 0)
             {
-                ControlPacket response = GetDeviceResponse(controllerInstance, CONTROL_CMD.CMD_SET_TIME);
+                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket GetDeviceResponse(UsbControllerInstance controllerInstance, CONTROL_CMD cmd, uint readTimeout = 200)
+        private static ControlPacket GetDeviceResponse(UsbControllerInstance controllerInstance, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200)
         {
             uint byteCnt;
             uint frameCnt = 0;
@@ -435,7 +435,7 @@ namespace ArchonLightingSystem.UsbApplication
                     }
                     else if (frameInfo.FrameValid)
                     {
-                        if(controlPacket.Cmd == CONTROL_CMD.CMD_ERROR_OCCURED)
+                        if(controlPacket.Cmd == UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED)
                         {
                             // handle error codes from the Controller
                             byte errorCode = controlPacket.Data[0];
@@ -454,13 +454,13 @@ namespace ArchonLightingSystem.UsbApplication
             return null;
         }
 
-        private static uint GenerateAndSendFrames(UsbControllerInstance controllerInstance, CONTROL_CMD cmd, Byte[] frameData, uint frameLen)
+        private static uint GenerateAndSendFrames(UsbControllerInstance controllerInstance, UsbAppCommon.CONTROL_CMD cmd, Byte[] frameData, uint frameLen)
         {
             uint byteCnt;
             uint bytesSent = 0;
             Byte[] usbBuffer = new byte[UsbDriver.USB_PACKET_SIZE];
-            Byte[] packetsBuffer = new byte[USB_BUFFER_SIZE];
-            byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, USB_BUFFER_SIZE);
+            Byte[] packetsBuffer = new byte[UsbAppCommon.USB_BUFFER_SIZE];
+            byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, UsbAppCommon.USB_BUFFER_SIZE);
             while (byteCnt > 0)
             {
                 uint sendLen = byteCnt > 64 ? 64 : byteCnt;
@@ -478,7 +478,7 @@ namespace ArchonLightingSystem.UsbApplication
             return bytesSent;
         }
 
-        private static uint GenerateFrames(CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
+        private static uint GenerateFrames(UsbAppCommon.CONTROL_CMD cmd, Byte[] frameData, uint dataLen, ref Byte[] outBuffer, uint outBufferMaxLen)
         {
             uint outBufferLen = 0;
             uint packetDataCount = 0;
@@ -538,14 +538,14 @@ namespace ArchonLightingSystem.UsbApplication
             }
 
             if (frameInfo.Multiframe) {
-                if(controlPacket.Cmd != (CONTROL_CMD)frameInfo.FrameData[1])
+                if(controlPacket.Cmd != (UsbAppCommon.CONTROL_CMD)frameInfo.FrameData[1])
                 {
                     throw new Exception("Invalid multipacket.");
                 }
             }
             else
             {
-                controlPacket.Cmd = (CONTROL_CMD)frameInfo.FrameData[1];
+                controlPacket.Cmd = (UsbAppCommon.CONTROL_CMD)frameInfo.FrameData[1];
             }
 
             frameInfo.Multiframe |= multipacket;
