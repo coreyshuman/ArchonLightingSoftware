@@ -10,6 +10,7 @@ namespace ArchonLightingSystem.Interfaces
 {
     public interface IUsbDevice
     {
+        string ShortName { get; }
         bool IsAttached { get; }
         SafeFileHandle WriteHandleToUSBDevice { get; }
         SafeFileHandle ReadHandleToUSBDevice { get; }

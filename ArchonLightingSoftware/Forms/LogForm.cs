@@ -17,6 +17,7 @@ namespace ArchonLightingSystem.Forms
     public partial class LogForm : Form
     {
         private uint lineNumber = 0;
+        private object eventLock = new object();
 
         public LogForm()
         {
@@ -25,23 +26,22 @@ namespace ArchonLightingSystem.Forms
             cb_Level.Items.Clear();
             cb_Level.Items.AddRange(Enum.GetNames(typeof(Level)));
             cb_Level.SelectedIndex = (int)Logger.GetLevel();
-
-            Logger.LatestLogEvent += HandleLogEvent;
-            GetLogs();
         }
 
         private void GetLogs()
         {
-            Logger.LatestLogEvent -= HandleLogEvent;
-            lineNumber = 0;
-            txt_log.Clear();
-            Logger.GetLogs().ForEach(log => WriteLine(log));
-            Logger.LatestLogEvent += HandleLogEvent;
+            lock(eventLock)
+            {
+                lineNumber = 0;
+                txt_log.Clear();
+                Logger.GetLogs().ForEach(log => WriteLine(log));
+            }
         }
 
         void HandleLogEvent(object sender, LogEventArgs eventArgs)
         {
-            WriteLine(eventArgs.Log);
+            lock(eventLock)
+                WriteLine(eventArgs.Log);
         }
 
         void WriteLine(Log log)
@@ -100,13 +100,23 @@ namespace ArchonLightingSystem.Forms
         private void comboBoxLevel_SelectedIndexChanged(object sender, EventArgs e)
         {
             Level lev = (Level)((ComboBox)sender).SelectedIndex;
-            Logger.SetLevel(lev);
-            GetLogs();
+
+            if(lev != Logger.GetLevel())
+            {
+                Logger.SetLevel(lev);
+                GetLogs();
+            }        
         }
 
         private void btn_CopyToClipboard_Click(object sender, EventArgs e)
         {
             Clipboard.SetData(DataFormats.Text, (Object)txt_log.Text);
+        }
+
+        private void LogForm_Load(object sender, EventArgs e)
+        {
+            Logger.LatestLogEvent += HandleLogEvent;
+            GetLogs();
         }
     }
 }

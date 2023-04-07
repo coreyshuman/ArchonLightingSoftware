@@ -13,8 +13,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
     public static partial class UsbApp
     {
         private static UsbReadWrite usbIO = new UsbReadWrite();
-        private static uint defaultReadTimeout = 20; //ms
-        private static uint eepromReadTimeout = 400; //ms
+        private static uint defaultReadTimeout = 15; //ms
+        private static uint eepromReadTimeout = 25; //ms
 
         private static ControlPacket ReadBootloaderInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
@@ -119,9 +119,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice];
             uint length = DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice;
-            for(int devi = 0; devi < DeviceControllerDefinitions.DevicePerController; devi++)
+            for (int devi = 0; devi < DeviceControllerDefinitions.DevicePerController; devi++)
             {
-                for(int ledi = 0; ledi < DeviceControllerDefinitions.LedBytesPerDevice; ledi++)
+                for (int ledi = 0; ledi < DeviceControllerDefinitions.LedBytesPerDevice; ledi++)
                 {
                     buffer[devi * DeviceControllerDefinitions.LedBytesPerDevice + ledi] = ledFrame[devi, ledi];
                 }
@@ -176,7 +176,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
             return null;
         }
-        
+
         private static ControlPacket GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
         {
             uint byteCnt;
@@ -200,7 +200,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     }
                     else if (frameInfo.FrameValid)
                     {
-                        if(controlPacket.Cmd == UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED)
+                        if (controlPacket.Cmd == UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED)
                         {
                             // handle error codes from the Controller
                             byte errorCode = controlPacket.Data[0];
@@ -285,7 +285,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return (outBufferLen); // Return buffer length.
         }
 
-        
+
 
         private static uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)
         {
@@ -294,18 +294,21 @@ namespace ArchonLightingSystem.UsbApplicationV2
             uint frameIdx = 0;
 
             bool multipacket = (frameInfo.FrameData[2] & 0x80) == 0x80; // check multipacket flag
-            
+
             dataLen = (uint)(frameInfo.FrameData[2] & 0x3F);
 
-            if(dataLen > 62)
+            if (dataLen > 62)
             {
                 throw new Exception("Software invalid packet length.");
             }
 
-            if (frameInfo.Multiframe) {
-                if(controlPacket.Cmd != (UsbAppCommon.CONTROL_CMD)frameInfo.FrameData[1])
+            if (frameInfo.Multiframe)
+            {
+                if (controlPacket.Cmd != (UsbAppCommon.CONTROL_CMD)frameInfo.FrameData[1])
                 {
-                    throw new Exception("Software invalid multipacket.");
+                    throw new Exception($"Software invalid multipacket. " +
+                        $"Expected {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)} " +
+                        $"Received {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), frameInfo.FrameData[1])} Len {controlPacket.Len}");
                 }
             }
             else
@@ -315,10 +318,16 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             frameInfo.Multiframe |= multipacket;
             crc = Util.CalculateCrc(frameInfo.FrameData, 1, dataLen);
-
-            if (crc != ((UInt16)frameInfo.FrameData[dataLen+1] | (UInt16)(frameInfo.FrameData[dataLen+2] << 8)))
+            UInt16 rxCrc = (UInt16)((UInt16)frameInfo.FrameData[dataLen + 1] | (UInt16)(frameInfo.FrameData[dataLen + 2] << 8));
+            if (crc != rxCrc)
             {
+                Trace.WriteLine($"Invalid CRC. Expected [{crc:X2}] Received [{rxCrc:X2}]");
                 return 0;
+            }
+
+            if(multipacket)
+            {
+                Trace.WriteLine($"_multi [{(uint)(controlPacket.Cmd):X2}] ({dataLen})");
             }
 
             // skip Report ID, CMD and LEN
@@ -335,15 +344,15 @@ namespace ArchonLightingSystem.UsbApplicationV2
             {
                 frameInfo.FrameValid = true;
             }
-           
+
             return controlPacket.Len;
         }
 
-        
+
         private static string GetErrorMessage(byte errorCode)
         {
             string ret = "Unknown error code.";
-            switch(errorCode)
+            switch (errorCode)
             {
                 case 0x01: ret = "Controller transmit buffer overflow."; break;
                 case 0x02: ret = "Controller receiver buffer overflow."; break;

@@ -68,8 +68,8 @@ namespace ArchonLightingSystem
             InitializeForm();
 
             usbDeviceManager = new UsbDeviceManager();
-            usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
-            usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
+            //usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
+            //usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
 
             // debug testing new manager
             usbControllerManger = new UsbApplicationV2.UsbControllerManager();

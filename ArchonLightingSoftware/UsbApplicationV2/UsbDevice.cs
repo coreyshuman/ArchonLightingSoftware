@@ -18,6 +18,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
         public SafeFileHandle WriteHandleToUSBDevice { get; set; }
         public SafeFileHandle ReadHandleToUSBDevice { get; set; }
         public string DevicePath { get; set; }
+        public string ShortName
+        {
+            get
+            {
+                return DevicePath.Substring(26, 10);
+            }
+
+        }
 
         private SemaphoreSlim semaphore;
         private object listLock;
@@ -25,7 +33,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         public UsbDevice()
         {
-            semaphore = new SemaphoreSlim(1,1);
+            semaphore = new SemaphoreSlim(1, 1);
             listLock = new object();
             cancellationTokenSources = new List<CancellationTokenSource>();
         }
@@ -96,7 +104,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 cancellationTokenSources.ForEach(cts => cts.Dispose());
                 cancellationTokenSources.Clear();
             }
-            
+
         }
     }
 }

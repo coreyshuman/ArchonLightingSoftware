@@ -5,7 +5,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ArchonLightingSystem.Common;
 using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem.UsbApplicationV2
@@ -37,11 +36,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             isRegistered = true;
 
+            Logger.Write(Level.Debug, $"Register UsbControllerManager vid={vid} pid={pid}");
+
             usbDeviceManager.UsbDriverEvent += HandleUsbDriverEvent;
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
             
-            Logger.Write(Level.Debug, $"Register UsbControllerManager vid={vid} pid={pid}");
+            
         }
 
         public int DeviceCount
@@ -82,10 +83,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private async Task<bool> ConnectUsbControllerAsync(UsbDevice device)
         {
             
-            Logger.Write(Level.Debug, $"Connect device {device.DevicePath}");
-            if(UsbApp.GetDeviceInitialization(device))
+            Logger.Write(Level.Debug, $"Connect device {device.ShortName}");
+            //if (device.ShortName != "b&172fe167") return false;
+            if(await UsbApp.GetDeviceInitializationAsync(device))
             {
-                Logger.Write(Level.Debug, $"Can initialize {device.DevicePath}");
+                Logger.Write(Level.Debug, $"Can initialize {device.ShortName}");
             }
 
 
@@ -93,24 +95,28 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return true;
         }
 
-        private async void DisconnectUsbControllerAsync(UsbDevice device)
+        private async Task DisconnectUsbControllerAsync(UsbDevice device)
         {
+            Logger.Write(Level.Debug, $"Disconnect device {device.ShortName}");
             device.Cancel();
             await device.WaitAsync();
-            Logger.Write(Level.Debug, $"Disconnect device {device.DevicePath}");
-
-
-
             device.Release();
+            Logger.Write(Level.Debug, $"Disconnected {device.ShortName}");
         }
 
-        private void HandleUsbDriverEvent(object sender, UsbDeviceEventArgs e)
+        private async void HandleUsbDriverEvent(object sender, UsbDeviceEventArgs e)
         {
             if(e.EventCount > 0)
             {
-                e.ConnectedDevices.ForEach(device => ConnectUsbControllerAsync(device));
+                var connectTasks = e.ConnectedDevices.Select(device => ConnectUsbControllerAsync(device));
 
-                e.DisconnectedDevices.ForEach(device => DisconnectUsbControllerAsync(device));
+                //e.ConnectedDevices.ForEach(device => ConnectUsbControllerAsync(device));
+
+                var disconnectTasks = e.DisconnectedDevices.Select(device => DisconnectUsbControllerAsync(device));
+
+                //e.DisconnectedDevices.ForEach(device => DisconnectUsbControllerAsync(device));
+                await Task.WhenAll(connectTasks);
+                await Task.WhenAll(disconnectTasks);
             }
 
 

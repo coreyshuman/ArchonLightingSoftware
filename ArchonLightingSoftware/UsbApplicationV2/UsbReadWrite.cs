@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using ArchonLightingSystem.Interfaces;
+using ArchonLightingSystem.Common;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -80,6 +81,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 HIDOverlapped.Offset = 0;
                 HIDOverlapped.OffsetHigh = 0;
 
+                var watch = Stopwatch.StartNew();
                 WriteFile(device.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, ref HIDOverlapped);
                 if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
                 {
@@ -89,8 +91,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         return 0;
                     }
 
-                    uint result = WaitForSingleObject(hEventObject, 200); //200ms timeout period
-
+                    uint result = WaitForSingleObject(hEventObject, 150); // ms timeout period
+                    watch.Stop();
+                    Logger.Write(Level.Trace, $"UsbWrite Duration {watch.ElapsedMilliseconds} ms");
                     switch (result)
                     {
                         case WAIT_OBJECT_0:
@@ -104,6 +107,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                         case WAIT_TIMEOUT:
                             // Timeout error;
+                            Trace.WriteLine($"UsbRead Timeout {device.ShortName}");
                             CancelIo(device.WriteHandleToUSBDevice);
                             break;
 
@@ -188,8 +192,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                 pINBuffer = Marshal.AllocHGlobal((int)bufflen);    //Allocate some unmanged RAM for the receive data buffer.
 
+                var watch = Stopwatch.StartNew();
                 if (ReadFile(device.ReadHandleToUSBDevice, pINBuffer, bufflen, ref bytesRead, ref HIDOverlapped))
                 {
+                    watch.Stop();
+                    Logger.Write(Level.Trace, $"UsbRead Duration {watch.ElapsedMilliseconds} ms");
                     Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
                     return bytesRead;
                 }
@@ -202,7 +209,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     }
 
                     result = WaitForSingleObject(hEventObject, readTimeout);
-
+                    watch.Stop();
+                    Logger.Write(Level.Trace, $"UsbRead Duration {watch.ElapsedMilliseconds} ms");
                     switch (result)
                     {
                         case WAIT_OBJECT_0:

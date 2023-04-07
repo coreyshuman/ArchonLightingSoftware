@@ -32,13 +32,15 @@ namespace ArchonLightingSystem.Common
         public static event EventHandler<LogEventArgs> LatestLogEvent;
 
         private static List<Log> logs = new List<Log>();
+        private static object listLock = new object();
         private static Level level = Level.Information;
 
         public static void Write(Level lev, string message)
         {
             Trace.WriteLine(message);
             var log = new Log { Level = lev, Message = message };
-            logs.Add(log);
+            lock(listLock)
+                logs.Add(log);
 
             if(lev <= level)
             {
@@ -50,12 +52,14 @@ namespace ArchonLightingSystem.Common
 
         public static void Clear()
         {
-            logs.Clear();
+            lock (listLock)
+                logs.Clear();
         }
 
         public static List<Log> GetLogs()
         {
-            return logs.Where(l => l.Level <= Logger.level).ToList();
+            lock (listLock)
+                return logs.Where(l => l.Level <= Logger.level).ToList();
         }
 
         public static void SetLevel(Level lev)
