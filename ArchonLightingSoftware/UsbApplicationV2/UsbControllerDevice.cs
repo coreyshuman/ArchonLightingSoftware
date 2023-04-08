@@ -13,6 +13,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
     public class UsbControllerDevice
     {
         public ApplicationData AppData { get; set; }
+        public DeviceControllerData ControllerData { get; set; }
         public int Address { get; set; }
         public bool IsPaused { get; set; } = false;
         public bool AppIsInitialized { get; set; } = false;
@@ -37,6 +38,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
             ReadWriteThread.WorkerReportsProgress = true;
             ReadWriteThread.DoWork += new DoWorkEventHandler(ReadWriteThread_DoWork);
             ReadWriteThread.RunWorkerAsync();
+
+            IsDisconnected = true;
         }
 
         ~UsbControllerDevice()

@@ -42,17 +42,67 @@ namespace ArchonLightingSystem.Models
             BootloaderVersion = new Version(bootVer[0], bootVer[1]);
             ApplicationVersion = new Version(appVer[0], appVer[1]);
             DeviceAddress = deviceAddress;
-            UpdateEepromData(eepromData);
+            //UpdateEepromData(eepromData);
             DeviceConfig.FromBuffer(deviceConfig);
             BootStatusFlag = Util.UInt32FromBytes(bootStatus[0], bootStatus[1], bootStatus[2], bootStatus[4]);
             isInitialized = true;
         }
 
-        public void UpdateEepromData(Byte[] eeprom)
+        public void UpdateBootloaderVersion(Byte[] data, uint len)
         {
+            if(data == null || data.Length < len || len != 2) 
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+            BootloaderVersion = new Version(data[0], data[1]);
+        }
+
+        public void UpdateApplicationVersion(Byte[] data, uint len)
+        {
+            if (data == null || data.Length < len || len != 2)
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+            ApplicationVersion = new Version(data[0], data[1]);
+        }
+
+        public void UpdateAddress(Byte[] data, uint len)
+        {
+            if (data == null || data.Length < len || len != 1)
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+            DeviceAddress = data[0];
+        }
+
+        public void UpdateBootStatusFlag(Byte[] data, uint len)
+        {
+            if (data == null || data.Length < len || len != 4)
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+            BootStatusFlag = Util.UInt32FromBytes(data[0], data[1], data[2], data[3]);
+        }
+
+        public void UpdateDeviceConfig(Byte[] data, uint len)
+        {
+            if (data == null || data.Length < len || len != DeviceConfig.ConfigLength)
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+            DeviceConfig.FromBuffer(data);
+        }
+
+        public void UpdateEepromData(Byte[] data, uint len)
+        {
+            if (data == null || data.Length < len || len != DeviceControllerDefinitions.EepromSize)
+            {
+                throw new ArgumentException("Invalid response length.");
+            }
+
             for (int i = 0; i < DeviceControllerDefinitions.EepromSize; i++)
             {
-                EepromData[i] = eeprom[i];
+                EepromData[i] = data[i];
             }
         }
     }

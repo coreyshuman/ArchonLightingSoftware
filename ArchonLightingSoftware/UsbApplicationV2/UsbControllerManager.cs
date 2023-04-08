@@ -6,11 +6,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using ArchonLightingSystem.UsbApplication;
+using System.Threading;
+using System.Security.Cryptography;
+using System.Timers;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
-
-
     public class UsbControllerManager
     {
         public event EventHandler<UsbControllerEventArgs> UsbControllerEvent;
@@ -18,6 +19,36 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private UsbDeviceManager usbDeviceManager = new UsbDeviceManager();
         private List<UsbControllerDevice> usbControllerInstances = new List<UsbControllerDevice>();
         private bool isRegistered = false;
+
+        private EventDrivenBackgroundTask usbEventBackgroundTask = null;
+        private List<UsbDevice> pendingConnectedDevices = new List<UsbDevice>();
+        private object connectedDevicesLock = new object();
+        private List<UsbDevice> pendingDisconnectedDevices = new List<UsbDevice>();
+        private object disconnectedDevicesLock = new object();
+
+        private Task processPendingDevices(CancellationToken token)
+        {
+            IList<Task> deviceTasks = new List<Task>();
+
+            lock (connectedDevicesLock)
+            {
+                lock (disconnectedDevicesLock)
+                {
+                    pendingDisconnectedDevices.ForEach(device =>
+                    {
+                        pendingConnectedDevices.Remove(device);
+                        deviceTasks.Add(DisconnectUsbControllerAsync(device));
+                    });
+                    pendingDisconnectedDevices.Clear();
+                }
+                pendingConnectedDevices.ForEach(device =>
+                {
+                    deviceTasks.Add(ConnectUsbControllerAsync(device));
+                });
+                pendingConnectedDevices.Clear();
+            }
+            return Task.WhenAll(deviceTasks);
+        }
 
         public UsbControllerManager()
         {
@@ -38,11 +69,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             Logger.Write(Level.Debug, $"Register UsbControllerManager vid={vid} pid={pid}");
 
+            usbEventBackgroundTask = new EventDrivenBackgroundTask();
+
             usbDeviceManager.UsbDriverEvent += HandleUsbDriverEvent;
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
-            
-            
+
+            usbEventBackgroundTask.StartTask(processPendingDevices);         
         }
 
         public int DeviceCount
@@ -80,19 +113,36 @@ namespace ArchonLightingSystem.UsbApplicationV2
             UsbControllerEvent?.Invoke(this, e);
         }
 
-        private async Task<bool> ConnectUsbControllerAsync(UsbDevice device)
+        private async Task ConnectUsbControllerAsync(UsbDevice device)
         {
-            
             Logger.Write(Level.Debug, $"Connect device {device.ShortName}");
             //if (device.ShortName != "b&172fe167") return false;
-            if(await UsbApp.GetDeviceInitializationAsync(device))
+            var deviceControllerConfig = await UsbApp.GetDeviceInitializationAsync(device);
+
+            if (deviceControllerConfig == null)
             {
-                Logger.Write(Level.Debug, $"Can initialize {device.ShortName}");
+                Logger.Write(Level.Debug, $"Failed to initialize {device.ShortName}");
+                return;
             }
 
-
+            var deviceInstance = usbControllerInstances.Where(d => d.Address == deviceControllerConfig.DeviceAddress).FirstOrDefault();
+            if (deviceInstance == null)
+            {
+                Logger.Write(Level.Debug, $"Cannot connect device, invalid address: {deviceControllerConfig.DeviceAddress}");
+                return;
+            }
             
-            return true;
+            if(!deviceInstance.IsDisconnected)
+            {
+                Logger.Write(Level.Debug, $"Cannot connect device, already initialized: {deviceControllerConfig.DeviceAddress}");
+                return;
+            }
+
+            deviceInstance.ControllerData = deviceControllerConfig;
+            deviceInstance.UsbDevice = device;
+            deviceInstance.IsDisconnected = false;
+
+            Logger.Write(Level.Debug, $"Device connected, address: {deviceControllerConfig.DeviceAddress}");
         }
 
         private async Task DisconnectUsbControllerAsync(UsbDevice device)
@@ -101,22 +151,40 @@ namespace ArchonLightingSystem.UsbApplicationV2
             device.Cancel();
             await device.WaitAsync();
             device.Release();
-            Logger.Write(Level.Debug, $"Disconnected {device.ShortName}");
+            usbControllerInstances.ForEach(d =>
+            {
+                if(d.UsbDevice == device)
+                {
+                    d.UsbDevice = null;
+                    d.IsDisconnected = true;
+                    Logger.Write(Level.Debug, $"Disconnected device address: {d.Address}");
+                }
+            });
         }
 
         private async void HandleUsbDriverEvent(object sender, UsbDeviceEventArgs e)
         {
             if(e.EventCount > 0)
             {
+                /*
                 var connectTasks = e.ConnectedDevices.Select(device => ConnectUsbControllerAsync(device));
-
-                //e.ConnectedDevices.ForEach(device => ConnectUsbControllerAsync(device));
-
                 var disconnectTasks = e.DisconnectedDevices.Select(device => DisconnectUsbControllerAsync(device));
-
-                //e.DisconnectedDevices.ForEach(device => DisconnectUsbControllerAsync(device));
                 await Task.WhenAll(connectTasks);
                 await Task.WhenAll(disconnectTasks);
+                */
+                Logger.Write(Level.Trace, $"UsbControllerManager UsbEvent");
+                lock (connectedDevicesLock)
+                {
+                    pendingConnectedDevices.AddRange(e.ConnectedDevices);
+                }
+
+                lock(disconnectedDevicesLock)
+                {
+                    pendingDisconnectedDevices.AddRange(e.DisconnectedDevices);
+                }
+
+                usbEventBackgroundTask?.NextStep();
+                Logger.Write(Level.Trace, $"UsbControllerManager UsbEvent Done");
             }
 
 

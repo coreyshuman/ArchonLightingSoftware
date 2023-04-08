@@ -8,6 +8,7 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.DataVisualization.Charting;
@@ -18,6 +19,7 @@ namespace ArchonLightingSystem.Forms
     {
         private uint lineNumber = 0;
         private object eventLock = new object();
+        private SemaphoreSlim updateSemaphore = new SemaphoreSlim(1,1);
 
         public LogForm()
         {
@@ -30,25 +32,37 @@ namespace ArchonLightingSystem.Forms
 
         private void GetLogs()
         {
-            lock(eventLock)
+            updateSemaphore.Wait();
+            try
             {
                 lineNumber = 0;
                 txt_log.Clear();
                 Logger.GetLogs().ForEach(log => WriteLine(log));
             }
+            finally
+            {
+                updateSemaphore.Release();
+            }
         }
 
         void HandleLogEvent(object sender, LogEventArgs eventArgs)
         {
-            lock(eventLock)
+            updateSemaphore.Wait();
+            try
+            {
                 WriteLine(eventArgs.Log);
+            }
+            finally
+            {
+                updateSemaphore.Release();
+            }
         }
 
         void WriteLine(Log log)
         {
             if (InvokeRequired)
             {
-                this.Invoke(new Action<Log>(WriteLine), new object[] { log });
+                this.BeginInvoke(new Action<Log>(WriteLine), new object[] { log });
                 return;
             }
 

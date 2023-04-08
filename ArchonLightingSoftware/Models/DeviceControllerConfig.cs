@@ -10,6 +10,7 @@ namespace ArchonLightingSystem.Models
         public const uint LedModeOffset = 9;
         public const uint LedSpeedOffset = 14;
         public const uint LedColorOffset = 20;
+        public int ConfigLength { get; private set; }
         public UInt16 Crc { get; set; }
         public UInt16 Length { get; set; }
         public Byte[] FanSpeed { get; set; }
@@ -17,9 +18,6 @@ namespace ArchonLightingSystem.Models
         public Byte[] LedSpeed { get; set; }
         public Byte Unused1 { get; set; }
         public Byte[,] Colors { get; set; }
-
-        // non-saved data
-        
 
         public DeviceControllerConfig()
         {
@@ -29,9 +27,8 @@ namespace ArchonLightingSystem.Models
             Unused1 = 0;
             Colors = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
             
+            ConfigLength = 2 + 2 + FanSpeed.Length + LedMode.Length + LedSpeed.Length + 1 + Colors.Length;
         }
-
-
 
         public override void FromBuffer(byte[] buffer)
         {

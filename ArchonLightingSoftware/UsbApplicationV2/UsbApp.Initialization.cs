@@ -83,10 +83,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
             Done
         }
 
-        public static Task<bool> GetDeviceInitializationAsync(IUsbDevice usbDevice)
+        public static Task<DeviceControllerData> GetDeviceInitializationAsync(IUsbDevice usbDevice)
         {
             return Task.Run(() =>
             {
+                DeviceControllerData deviceControllerData = new DeviceControllerData();
                 ControlPacket response = null;
                 int retryCount = 0;
 
@@ -166,21 +167,27 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         switch(initState)
                         {
                             case DeviceInitializationState.ReadBootloader:
+                                deviceControllerData.UpdateBootloaderVersion(response.Data, response.Len);
                                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Boot: {response.Data[0]}.{response.Data[1]}");
                                 break;
                             case DeviceInitializationState.ReadApplication:
+                                deviceControllerData.UpdateApplicationVersion(response.Data, response.Len);
                                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} App: {response.Data[0]}.{response.Data[1]}");
                                 break;
                             case DeviceInitializationState.ReadAddress:
+                                deviceControllerData.UpdateAddress(response.Data, response.Len);
                                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Addr: {response.Data[0]}");
                                 break;
                             case DeviceInitializationState.ReadBootStatus:
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Status: {response.Data[0]}");
+                                deviceControllerData.UpdateBootStatusFlag(response.Data, response.Len);
+                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Status: {deviceControllerData.BootStatusFlag}");
                                 break;
                             case DeviceInitializationState.ReadEeprom:
+                                deviceControllerData.UpdateEepromData(response.Data, response.Len);
                                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} EEPROM: {response.Len} bytes");
                                 break;
                             case DeviceInitializationState.ReadConfig:
+                                deviceControllerData.UpdateDeviceConfig(response.Data, response.Len);
                                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Config: {response.Len} bytes");
                                 break;
                         }
@@ -189,16 +196,16 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                         if(initState == DeviceInitializationState.Done)
                         {
-                            return true;
+                            return deviceControllerData;
                         }
                     }
 
-                    return false;
+                    return null;
                 }
                 catch (Exception ex)
                 {
                     Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} Error: {ex.Message}");
-                    return false;
+                    return null;
                 }
                 finally
                 {

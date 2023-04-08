@@ -111,7 +111,7 @@ namespace ArchonLightingSystem.UsbApplication
                             controllerInstance.AppData.EepromReadPending = false;
 
                             ControlPacket response = await ReadEeprom(controllerInstance, (byte)controllerInstance.AppData.EepromAddress, (byte)controllerInstance.AppData.EepromLength);
-                            controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data);
+                            controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data, response.Len);
                             controllerInstance.AppData.EepromReadDone = true;
                         }
 
