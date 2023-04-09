@@ -40,6 +40,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
             ReadWriteThread.RunWorkerAsync();
 
             IsDisconnected = true;
+
+            AppData = new ApplicationData();
+            ControllerData = new DeviceControllerData();
         }
 
         ~UsbControllerDevice()
@@ -90,10 +93,12 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 // todo - use different exception types to handle various errors
                 catch (Exception exc)
                 {
+                    /*
                     ControllerErrorEvent?.Invoke(this, new UsbControllerErrorEventArgs
                     {
                         Message = exc.Message
                     });
+                    */
                     Trace.WriteLine($"ReadWriteThread Error: {exc.ToString()}");
 
                     // exponential retry backoff on consecutive errors

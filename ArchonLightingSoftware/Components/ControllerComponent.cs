@@ -242,7 +242,7 @@ namespace ArchonLightingSystem.Components
             fanBar.Width = fanMarker.Width;
             fanBar.Height = fanMarker.Height;
             fanBar.BorderStyle = fanMarker.BorderStyle;
-            fanBar.BarColor = AppColors.PrimaryHighlight;
+            fanBar.BarColor = AppTheme.PrimaryHighlight;
             fanBar.ForeColor = grpFan.ForeColor;
             fanBar.UseAverage = true;
             fanBar.Minimum = 0;

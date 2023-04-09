@@ -96,19 +96,19 @@ namespace ArchonLightingSystem.Forms
             var pointPoints = pointSeries.Points;
             var chart = fanCurveChart.ChartAreas[0];
             fanCurveChart.Titles.Add("Fan Curve");
-            fanCurveChart.Titles[0].ForeColor = AppColors.PrimaryText;
-            lineSeries.Color = AppColors.PrimaryHighlight;
-            pointSeries.Color = AppColors.SecondaryHighlight;
-            chart.AxisX.LineColor = AppColors.PrimaryText;
-            chart.AxisX.TitleForeColor = AppColors.PrimaryText;
-            chart.AxisX.LabelStyle.ForeColor = AppColors.PrimaryText;
-            chart.AxisX.MajorGrid.LineColor = AppColors.PrimaryText;
-            chart.AxisX.MajorTickMark.LineColor = AppColors.PrimaryText;
-            chart.AxisY.LineColor = AppColors.PrimaryText;
-            chart.AxisY.TitleForeColor = AppColors.PrimaryText;
-            chart.AxisY.LabelStyle.ForeColor = AppColors.PrimaryText;
-            chart.AxisY.MajorGrid.LineColor = AppColors.PrimaryText;
-            chart.AxisY.MajorTickMark.LineColor = AppColors.PrimaryText;
+            fanCurveChart.Titles[0].ForeColor = AppTheme.PrimaryText;
+            lineSeries.Color = AppTheme.PrimaryHighlight;
+            pointSeries.Color = AppTheme.SecondaryHighlight;
+            chart.AxisX.LineColor = AppTheme.PrimaryText;
+            chart.AxisX.TitleForeColor = AppTheme.PrimaryText;
+            chart.AxisX.LabelStyle.ForeColor = AppTheme.PrimaryText;
+            chart.AxisX.MajorGrid.LineColor = AppTheme.PrimaryText;
+            chart.AxisX.MajorTickMark.LineColor = AppTheme.PrimaryText;
+            chart.AxisY.LineColor = AppTheme.PrimaryText;
+            chart.AxisY.TitleForeColor = AppTheme.PrimaryText;
+            chart.AxisY.LabelStyle.ForeColor = AppTheme.PrimaryText;
+            chart.AxisY.MajorGrid.LineColor = AppTheme.PrimaryText;
+            chart.AxisY.MajorTickMark.LineColor = AppTheme.PrimaryText;
             chart.AxisX.Maximum = 100;
             chart.AxisX.Minimum = 0;
             chart.AxisX.Interval = 10;
@@ -296,14 +296,14 @@ namespace ArchonLightingSystem.Forms
         {
             if (lastSelectedDataPoint != null)
             {
-                lastSelectedDataPoint.Color = AppColors.SecondaryHighlight;
+                lastSelectedDataPoint.Color = AppTheme.SecondaryHighlight;
             }
             selectedDataPoint = null;
         }
 
         private void selectPoint(DataPoint dp)
         {
-            dp.Color = AppColors.PrimaryLowLight;
+            dp.Color = AppTheme.PrimaryLowLight;
             selectedDataPoint = dp;
             lastSelectedDataPoint = dp;
         }

@@ -30,6 +30,10 @@ namespace ArchonLightingSystem.Common
 
                     }
                 }
+                catch(Exception ex)
+                {
+                    Logger.Write(Level.Error, ex.Message);
+                }
                 finally
                 {
                     Logger.Write(Level.Trace, "EventDrivenBackgroundTask Closed");

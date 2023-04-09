@@ -309,7 +309,7 @@ namespace ArchonLightingSystem
             if (configForm == null || configForm.IsDisposed)
             {
                 configForm = new ConfigEditorForm();
-                configForm.InitializeForm(usbDeviceManager.GetAppData(selectedAddressIdx));
+                configForm.InitializeForm(usbControllerManger);
                 configForm.Show();
             }
             if (configForm.WindowState == FormWindowState.Minimized)
@@ -327,7 +327,7 @@ namespace ArchonLightingSystem
             if (eepromForm == null || eepromForm.IsDisposed)
             {
                 eepromForm = new EepromEditorForm();
-                eepromForm.InitializeForm(usbDeviceManager.GetAppData(selectedAddressIdx));
+                eepromForm.InitializeForm(usbControllerManger);
                 eepromForm.Show();
             }
             if (eepromForm.WindowState == FormWindowState.Minimized)

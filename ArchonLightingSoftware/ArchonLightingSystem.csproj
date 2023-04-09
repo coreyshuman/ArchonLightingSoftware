@@ -158,7 +158,7 @@
     <Compile Include="Forms\SequencerForm.Designer.cs">
       <DependentUpon>SequencerForm.cs</DependentUpon>
     </Compile>
-    <Compile Include="Models\AppColors.cs" />
+    <Compile Include="Models\AppTheme.cs" />
     <Compile Include="Models\CopyPasteDictionary.cs" />
     <Compile Include="Models\DeviceControllerConfig.cs" />
     <Compile Include="Models\DeviceControllerDefinitions.cs" />

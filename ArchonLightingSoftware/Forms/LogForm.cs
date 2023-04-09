@@ -97,7 +97,7 @@ namespace ArchonLightingSystem.Forms
             try 
             { 
                 txt_log.SelectionColor = textColor;
-                txt_log.SelectionBackColor = (lineNumber % 2 == 0) ? txt_log.BackColor : AppColors.Background;
+                txt_log.SelectionBackColor = (lineNumber % 2 == 0) ? txt_log.BackColor : AppTheme.Background;
                 txt_log.AppendText(msg);
             }
             catch(ObjectDisposedException) 

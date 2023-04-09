@@ -10,31 +10,43 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Interfaces;
-
+using ArchonLightingSystem.UsbApplicationV2;
+using ArchonLightingSystem.Components;
+using System.Web.UI.Design;
+using System.Threading;
+using System.Windows.Forms.DataVisualization.Charting;
+using ArchonLightingSDKCommon;
 
 namespace ArchonLightingSystem
 {
-    public partial class EepromEditorForm : SubformBase
+    public partial class EepromEditorForm : Form
     {
-        private ApplicationData applicationData;
-        private string[] colNames = new string[16];
-        private DataSet eepromData;
+        private readonly string[] colNames = new string[16];
+        private readonly DataSet eepromData;
+        private int lastSelectedAddress = -1;
+        
+        private UsbControllerManager manager = null;
+        private UsbControllerDevice usbControllerDevice;
+        private readonly ApplicationData applicationData;
+
+        private SemaphoreSlim formUpdateSemiphore = new SemaphoreSlim(1,1);
 
         public EepromEditorForm()
         {
             InitializeComponent();
+
+            cbo_DeviceAddress.DisplayMember = "Text";
+            cbo_DeviceAddress.ValueMember = "Value";
+
             eepromData = new DataSet();
             colNames = colNames.Select((item, index) => ((int)index).ToString("X")).ToArray();
-        }
 
-        public void InitializeForm(ApplicationData appData)
-        {
-            applicationData = appData;
             DataTable eeprom = eepromData.Tables.Add("Eeprom");
 
-            colNames.Select(col => eeprom.Columns.Add(col)).ToArray();
-
-            UpdateFormData();
+            foreach(var col in colNames)
+            {
+                eeprom.Columns.Add(col);
+            }
 
             eepromGridView.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
             eepromGridView.AutoGenerateColumns = true;
@@ -42,19 +54,69 @@ namespace ArchonLightingSystem
             eepromGridView.DataMember = "Eeprom";
             eepromGridView.RowHeadersWidth = 50;
             eepromGridView.CellValidating += DataGridViewHandlers.DataGridValidateNumericRangeHandler(new Tuple<int, int>(0, 255));
+
+            AppTheme.ApplyThemeToForm(this);
+
+            lbl_Disconnected.ForeColor = AppTheme.PrimaryLowLight;
         }
 
-        public void UpdateFormData()
+        public void InitializeForm(UsbControllerManager manager)
         {
-            eepromData.Tables["Eeprom"].Rows.Clear();
-            for (int rows = 0; rows < DeviceControllerDefinitions.EepromSize / 16; rows++)
+            this.manager = manager;
+
+            cbo_DeviceAddress.Items.Clear();
+            cbo_DeviceAddress.Items.AddRange(
+                manager
+                .Controllers
+                .Select(controller => 
+                    new ComboBoxItem { Text = $"Address {controller.Address}", Value = controller.Address}
+                ).ToArray());
+        }
+
+        public void UpdateFormData(UsbControllerDevice device)
+        {
+            formUpdateSemiphore.Wait();
+
+            try
             {
-                DataRow row = eepromData.Tables["Eeprom"].NewRow();
-                for (int i = 0; i < 16; i++)
+                eepromData.Tables["Eeprom"].Rows.Clear();
+                for (int rows = 0; rows < DeviceControllerDefinitions.EepromSize / 16; rows++)
                 {
-                    row[colNames[i]] = applicationData.DeviceControllerData.EepromData[i + DeviceControllerDefinitions.EepromSize / 16 * rows];
+                    DataRow row = eepromData.Tables["Eeprom"].NewRow();
+                    for (int i = 0; i < 16; i++)
+                    {
+                        row[colNames[i]] = device.ControllerData.EepromData[i + DeviceControllerDefinitions.EepromSize / 16 * rows];
+                    }
+                    eepromData.Tables["Eeprom"].Rows.Add(row);
                 }
-                eepromData.Tables["Eeprom"].Rows.Add(row);
+
+                eepromData.AcceptChanges();
+
+                foreach (DataGridViewColumn col in eepromGridView.Columns)
+                {
+                    col.SortMode = DataGridViewColumnSortMode.NotSortable;
+                }
+            }
+            finally 
+            { 
+                formUpdateSemiphore.Release(); 
+            }
+        }
+
+        public void UpdateFormState(UsbControllerDevice device) 
+        {
+            formUpdateSemiphore.Wait();
+
+            try
+            {
+                lbl_Disconnected.Visible = device.IsDisconnected;
+                btn_ReadEeprom.Enabled = !device.IsDisconnected;
+                btn_WriteEeprom.Enabled = !device.IsDisconnected;
+                eepromGridView.Enabled = !device.IsDisconnected;
+            }
+            finally
+            {
+                formUpdateSemiphore.Release();
             }
         }
 
@@ -68,6 +130,8 @@ namespace ArchonLightingSystem
 
         private void WriteFormData()
         {
+            eepromData.AcceptChanges();
+
             int dataIdx = 0;
             for (int rows = 0; rows < eepromData.Tables["Eeprom"].Rows.Count; rows++)
             {
@@ -118,10 +182,63 @@ namespace ArchonLightingSystem
             {
                 applicationData.EepromReadDone = false;
                 formUpdateTimer.Enabled = false;
-                UpdateFormData();
+                UpdateFormData(usbControllerDevice);
                 SetFormBusy(false);
             }
+        }
+
+        private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            ComboBox combo = (ComboBox)sender;
             
+            if (combo.SelectedIndex == lastSelectedAddress) return;
+
+            if (eepromData.HasChanges())
+            {
+                if (DiscardChangesMessageBox() != DialogResult.Yes)
+                {
+                    combo.SelectedIndex = lastSelectedAddress;
+                    return;
+                }
+            }
+
+            lastSelectedAddress = combo.SelectedIndex;
+            usbControllerDevice = manager.GetDevice(combo.SelectedIndex);
+            UpdateFormState(usbControllerDevice);
+            UpdateFormData(usbControllerDevice);
+        }
+
+        private DialogResult DiscardChangesMessageBox()
+        {
+            return MessageBox.Show(
+                    "The form has uncommitted changes. Do you want to discard those changes?",
+                    "Uncommitted Changes.",
+                    MessageBoxButtons.YesNo);
+        }
+
+        private void EepromEditorForm_Load(object sender, EventArgs e)
+        {
+            cbo_DeviceAddress.SelectedIndex = 0;
+            manager.UsbControllerEvent += HandleControllerEvent;
+        }
+
+        private void HandleControllerEvent(object sender, UsbControllerEventArgs e)
+        {
+            this.BeginInvoke(new Action<UsbControllerDevice>(UpdateFormState), new object[] { usbControllerDevice });
+        }
+
+        private void EepromEditorForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (eepromData.HasChanges())
+            {
+                if (DiscardChangesMessageBox() != DialogResult.Yes)
+                {
+                    e.Cancel = true;
+                    return;
+                }
+            }
+
+            manager.UsbControllerEvent -= HandleControllerEvent;
         }
     }
 }
