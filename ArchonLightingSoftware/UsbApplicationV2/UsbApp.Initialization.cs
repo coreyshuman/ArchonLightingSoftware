@@ -12,7 +12,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 {
     public static partial class UsbApp
     {
-        public static bool GetDeviceInitialization(IUsbDevice usbDevice)
+        public static async Task<bool> GetDeviceInitialization(IUsbDevice usbDevice)
         {
             ControlPacket bootResponse;
             ControlPacket appResponse;
@@ -25,34 +25,34 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             try
             {
-                usbDevice.Wait(cancelToken);
+                await usbDevice.WaitAsync(cancelToken);
 
-                bootResponse = ReadBootloaderInfo(usbDevice, cancelToken);
+                bootResponse = await ReadBootloaderInfo(usbDevice, cancelToken);
                 if (bootResponse == null) throw new Exception("Couldn't read Bootloader info.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Boot: {bootResponse.Data[0]}.{bootResponse.Data[1]}");
 
-                appResponse = ReadApplicationInfo(usbDevice, cancelToken);
+                appResponse = await ReadApplicationInfo(usbDevice, cancelToken);
                 if (appResponse == null) throw new Exception("Couldn't read Application info.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} App: {appResponse.Data[0]}.{appResponse.Data[1]}");
 
-                usbDeviceAddressResponse = ReadControllerAddress(usbDevice, cancelToken);
+                usbDeviceAddressResponse = await ReadControllerAddress(usbDevice, cancelToken);
                 if (usbDeviceAddressResponse == null) throw new Exception("Couldn't read Address.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Addr: {usbDeviceAddressResponse.Data[0]}");
 
-                bootStatusResponse = ReadBootStatus(usbDevice, cancelToken);
+                bootStatusResponse = await ReadBootStatus(usbDevice, cancelToken);
                 if (bootStatusResponse == null) throw new Exception("Couldn't read boot status.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Status: {bootStatusResponse.Data[0]}");
 
-                eepromResponse = ReadEeprom(usbDevice, 0, (UInt16)DeviceControllerDefinitions.EepromSize, cancelToken);
+                eepromResponse = await ReadEeprom(usbDevice, 0, (UInt16)DeviceControllerDefinitions.EepromSize, cancelToken);
                 if (eepromResponse == null) throw new Exception("Couldn't read EEPROM.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} EEPROM: {eepromResponse.Len} bytes");
 
-                usbDeviceConfigResponse = ReadConfig(usbDevice, cancelToken);
+                usbDeviceConfigResponse = await ReadConfig(usbDevice, cancelToken);
                 if (usbDeviceConfigResponse == null) throw new Exception("Couldn't read Config.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Config: {usbDeviceConfigResponse.Len} bytes");
@@ -85,9 +85,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         public static Task<DeviceControllerData> GetDeviceInitializationAsync(IUsbDevice usbDevice)
         {
-            return Task.Run(() =>
+            return Task.Run(async () =>
             {
                 DeviceControllerData deviceControllerData = new DeviceControllerData();
+
                 ControlPacket response = null;
                 int retryCount = 0;
 
@@ -111,28 +112,28 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     retryCount = 0;
                                     continue;
                                 case DeviceInitializationState.ReadBootloader:
-                                    response = ReadBootloaderInfo(usbDevice, cancelToken);
+                                    response = await ReadBootloaderInfo(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadApplication:
-                                    response = ReadApplicationInfo(usbDevice, cancelToken);
+                                    response = await ReadApplicationInfo(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadAddress:
-                                    response = ReadControllerAddress(usbDevice, cancelToken);
+                                    response = await ReadControllerAddress(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadBootStatus:
-                                    response = ReadBootStatus(usbDevice, cancelToken);
+                                    response = await ReadBootStatus(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadEeprom:
-                                    response = ReadEeprom(usbDevice, 0, (UInt16)DeviceControllerDefinitions.EepromSize, cancelToken);
+                                    response = await ReadEeprom(usbDevice, 0, (UInt16)DeviceControllerDefinitions.EepromSize, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadConfig:
-                                    response = ReadConfig(usbDevice, cancelToken);
+                                    response = await ReadConfig(usbDevice, cancelToken);
                                     break;
                             }
                         }
                         catch(Exception ex)
                         {
-                            Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} Warning: {ex.Message}");
+                            Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} {Enum.GetName(typeof(DeviceInitializationState), initState)} Warning: {ex.Message}");
                             response = null;
                         }
 

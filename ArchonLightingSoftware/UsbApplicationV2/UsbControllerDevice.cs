@@ -70,7 +70,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     if (!IsDisconnected && !IsPaused)
                     {
-                        //await UsbApp.DeviceDoWork(this);
+                        await UsbApp.DeviceDoWork(this);
 
                         if (!IsReady && (this?.AppData?.DeviceControllerData?.IsInitialized ?? false))
                         {

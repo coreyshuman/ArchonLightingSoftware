@@ -11,6 +11,44 @@ namespace ArchonLightingSystem.UsbApplicationV2
 {
     public static partial class UsbApp
     {
+        public static async Task DeviceDoWork(UsbControllerDevice controllerInstance)
+        {
+            if (await controllerInstance.semaphore.WaitAsync(200))
+            {
+                try
+                {
+                    if (controllerInstance.AppData.EepromReadPending)
+                    {
+                        controllerInstance.AppData.EepromReadPending = false;
+                        CancellationTokenSource cancelToken = new CancellationTokenSource();
+                        controllerInstance.UsbDevice.Wait(cancelToken);
+
+                        try
+                        {
+                            ControlPacket response = await ReadEeprom(controllerInstance.UsbDevice, (ushort)controllerInstance.AppData.EepromAddress, (ushort)controllerInstance.AppData.EepromLength, cancelToken);
+
+                            if (response != null)
+                            {
+                                controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data, response.Len);
+                                controllerInstance.AppData.EepromReadDone = true;
+                            }
+                        }
+                        finally
+                        {
+                            controllerInstance.UsbDevice.Release();
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    Logger.Write(Level.Error, ex.Message);
+                }
+                finally
+                {
+                    controllerInstance.semaphore.Release();
+                }
+            }
+        }
         /*
         public static async Task DeviceDoWork(UsbControllerDevice controllerInstance)
         {

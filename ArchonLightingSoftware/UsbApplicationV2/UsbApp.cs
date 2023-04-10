@@ -7,6 +7,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using ArchonLightingSystem.Interfaces;
+using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -14,108 +15,136 @@ namespace ArchonLightingSystem.UsbApplicationV2
     {
         private static UsbReadWrite usbIO = new UsbReadWrite();
         private static uint defaultReadTimeout = 15; //ms
-        private static uint eepromReadTimeout = 25; //ms
+        private static uint eepromReadTimeout = 250; //ms
 
-        private static ControlPacket ReadBootloaderInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadBootloaderInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOTLOADER_INFO, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket ReadApplicationInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadApplicationInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FIRMWARE_INFO, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket WriteFanSpeed(IUsbDevice usbDevice, byte[] speedValues, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> WriteFanSpeed(IUsbDevice usbDevice, byte[] speedValues, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, speedValues, DeviceControllerDefinitions.DevicePerController, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_FANSPEED, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static bool ResetDeviceToBootloader(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<bool> ResetDeviceToBootloader(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            return GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0, cancelToken) > 0;
+            return await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_RESET_TO_BOOTLOADER, null, 0, cancelToken) > 0;
         }
 
-        private static ControlPacket ReadBootStatus(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadBootStatus(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_BOOT_STATUS, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-
-        private static ControlPacket ReadEeprom(IUsbDevice usbDevice, UInt16 address, UInt16 length, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadEeprom(IUsbDevice usbDevice, UInt16 address, UInt16 length, CancellationTokenSource cancelToken)
         {
             byte[] request = new byte[] { (byte)address, (byte)(length & 0xFF), (byte)((length >> 8) & 0xFF) };
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, request, 3, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, request, 3, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, eepromReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EEPROM, eepromReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket DefaultConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> WriteEeprom(IUsbDevice usbDevice, UInt16 address, UInt16 length, byte[] data, CancellationTokenSource cancelToken)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0, cancelToken) > 0)
+            if(data == null || data.Length < length)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, defaultReadTimeout, cancelToken);
+                throw new ArgumentException("Invalid data buffer length");
+            }
+
+            byte[] buffer = new byte[length + 2];
+
+            // todo remove this work around with below fix
+            if (length == 256) length = 255;
+
+            buffer[0] = (byte)address;
+            buffer[1] = (byte)(length & 0xFF);
+            // todo update firmware to take two byte length
+            //buffer[2] = (byte)((length >> 8) & 0xFF);
+            for (int i = 0; i < length; i++)    
+            {
+                buffer[i + 2] = data[i];
+            }
+
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM, buffer, (uint)(2 + length), cancelToken) > 0)
+            {
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM, eepromReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket ReadConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> DefaultConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, eepromReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket WriteConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, eepromReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, eepromReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket UpdateConfig(IUsbDevice usbDevice, DeviceControllerConfig config, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> WriteConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        {
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, null, 0, cancelToken) > 0)
+            {
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, eepromReadTimeout, cancelToken);
+                return response;
+            }
+            return null;
+        }
+
+        private static async Task<ControlPacket> UpdateConfig(IUsbDevice usbDevice, DeviceControllerConfig config, CancellationTokenSource cancelToken = null)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.EepromSize];
             uint length = config.ToBuffer(ref buffer);
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG, buffer, length, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG, 50, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_UPDATE_CONFIG, 50, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket WriteLedFrame(IUsbDevice usbDevice, byte[,] ledFrame, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> WriteLedFrame(IUsbDevice usbDevice, byte[,] ledFrame, CancellationTokenSource cancelToken = null)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice];
             uint length = DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice;
@@ -126,29 +155,29 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     buffer[devi * DeviceControllerDefinitions.LedBytesPerDevice + ledi] = ledFrame[devi, ledi];
                 }
             }
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME, buffer, length, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_LED_FRAME, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket ReadControllerAddress(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadControllerAddress(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket ReadDebug(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> ReadDebug(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, eepromReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, eepromReadTimeout, cancelToken);
                 if (response != null)
                 {
                     //usbDevice.AppData.Debug = ($"Debug Len: {response.Len}"+Environment.NewLine);
@@ -167,17 +196,17 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static ControlPacket SetTime(IUsbDevice usbDevice, byte[] timeValue, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SetTime(IUsbDevice usbDevice, byte[] timeValue, CancellationTokenSource cancelToken = null)
         {
-            if (GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, timeValue, 3, cancelToken) > 0)
+            if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, timeValue, 3, cancelToken) > 0)
             {
-                ControlPacket response = GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, defaultReadTimeout, cancelToken);
+                ControlPacket response = await GetDeviceResponse(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, defaultReadTimeout, cancelToken);
                 return response;
             }
             return null;
         }
 
-        private static ControlPacket GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
         {
             uint byteCnt;
             uint frameCnt = 0;
@@ -194,6 +223,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     frameInfo.FrameLen = byteCnt;
                     // validate frame and load data into controlPacket
                     byteCnt = ValidateFrame(frameInfo, controlPacket);
+
+                    Logger.Write(Level.Trace, $"ReadFrame {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)}");
+
                     if (byteCnt == 0)
                     {
                         return null;
@@ -208,6 +240,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             Trace.WriteLine(err);
                             throw new Exception(err);
                         }
+
                         return controlPacket.Cmd == cmd ? controlPacket : null;
                     }
                 }
@@ -219,12 +252,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static uint GenerateAndSendFrames(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, Byte[] frameData, uint frameLen, CancellationTokenSource cancelToken = null)
+        private static async Task<uint> GenerateAndSendFrames(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, Byte[] frameData, uint frameLen, CancellationTokenSource cancelToken)
         {
             uint byteCnt;
             uint bytesSent = 0;
             Byte[] usbBuffer = new byte[UsbDeviceManager.USB_PACKET_SIZE];
             Byte[] packetsBuffer = new byte[UsbAppCommon.USB_BUFFER_SIZE];
+
+            Logger.Write(Level.Trace, $"SendFrames {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)}");
 
             byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, UsbAppCommon.USB_BUFFER_SIZE);
             while (byteCnt > 0)
@@ -234,7 +269,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     usbBuffer[i] = packetsBuffer[i + bytesSent];
                 }
-                if (usbIO.Write(usbDevice, usbBuffer, sendLen, cancelToken) == 0)
+                if (0 == await usbIO.Write(usbDevice, usbBuffer, sendLen, cancelToken))
                 {
                     return 0;
                 }

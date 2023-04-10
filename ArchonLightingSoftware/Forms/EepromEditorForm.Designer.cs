@@ -37,6 +37,8 @@
             this.cbo_DeviceAddress = new System.Windows.Forms.ComboBox();
             this.label1 = new System.Windows.Forms.Label();
             this.lbl_Disconnected = new System.Windows.Forms.Label();
+            this.lbl_Timer = new System.Windows.Forms.Label();
+            this.lbl_Stopwatch = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.eepromGridView)).BeginInit();
             this.SuspendLayout();
             // 
@@ -118,12 +120,32 @@
             this.lbl_Disconnected.TabIndex = 6;
             this.lbl_Disconnected.Text = "Disconnected";
             // 
+            // lbl_Timer
+            // 
+            this.lbl_Timer.AutoSize = true;
+            this.lbl_Timer.Location = new System.Drawing.Point(388, 13);
+            this.lbl_Timer.Name = "lbl_Timer";
+            this.lbl_Timer.Size = new System.Drawing.Size(49, 13);
+            this.lbl_Timer.TabIndex = 7;
+            this.lbl_Timer.Text = "lbl_Timer";
+            // 
+            // lbl_Stopwatch
+            // 
+            this.lbl_Stopwatch.AutoSize = true;
+            this.lbl_Stopwatch.Location = new System.Drawing.Point(388, 35);
+            this.lbl_Stopwatch.Name = "lbl_Stopwatch";
+            this.lbl_Stopwatch.Size = new System.Drawing.Size(35, 13);
+            this.lbl_Stopwatch.TabIndex = 8;
+            this.lbl_Stopwatch.Text = "label3";
+            // 
             // EepromEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.Window;
             this.ClientSize = new System.Drawing.Size(841, 452);
+            this.Controls.Add(this.lbl_Stopwatch);
+            this.Controls.Add(this.lbl_Timer);
             this.Controls.Add(this.lbl_Disconnected);
             this.Controls.Add(this.label1);
             this.Controls.Add(this.cbo_DeviceAddress);
@@ -154,5 +176,7 @@
         private System.Windows.Forms.ComboBox cbo_DeviceAddress;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label lbl_Disconnected;
+        private System.Windows.Forms.Label lbl_Timer;
+        private System.Windows.Forms.Label lbl_Stopwatch;
     }
 }

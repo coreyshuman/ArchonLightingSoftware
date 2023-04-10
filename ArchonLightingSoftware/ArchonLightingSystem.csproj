@@ -182,6 +182,7 @@
     <Compile Include="OpenHardware\HardwareTypeImage.cs" />
     <Compile Include="OpenHardware\Node.cs" />
     <Compile Include="OpenHardware\SensorNode.cs" />
+    <Compile Include="UsbApplicationV2\UsbApp.Commands.cs" />
     <Compile Include="UsbApplicationV2\UsbApp.cs" />
     <Compile Include="UsbApplicationV2\UsbApp.Initialization.cs" />
     <Compile Include="UsbApplicationV2\UsbApp.StateMachine.cs" />

@@ -16,6 +16,7 @@ using System.Web.UI.Design;
 using System.Threading;
 using System.Windows.Forms.DataVisualization.Charting;
 using ArchonLightingSDKCommon;
+using System.Diagnostics;
 
 namespace ArchonLightingSystem
 {
@@ -24,10 +25,14 @@ namespace ArchonLightingSystem
         private readonly string[] colNames = new string[16];
         private readonly DataSet eepromData;
         private int lastSelectedAddress = -1;
+        private bool formBusy = false;
+
+        private int test = 0;
+        private Stopwatch stopwatch = new Stopwatch();
         
         private UsbControllerManager manager = null;
         private UsbControllerDevice usbControllerDevice;
-        private readonly ApplicationData applicationData;
+        private ApplicationData applicationData;
 
         private SemaphoreSlim formUpdateSemiphore = new SemaphoreSlim(1,1);
 
@@ -103,16 +108,22 @@ namespace ArchonLightingSystem
             }
         }
 
-        public void UpdateFormState(UsbControllerDevice device) 
+        public void UpdateFormState(UsbControllerDevice device, bool? busy = null) 
         {
             formUpdateSemiphore.Wait();
+
+            if(busy.HasValue)
+            {
+                this.formBusy = busy.Value;
+            }
 
             try
             {
                 lbl_Disconnected.Visible = device.IsDisconnected;
-                btn_ReadEeprom.Enabled = !device.IsDisconnected;
-                btn_WriteEeprom.Enabled = !device.IsDisconnected;
-                eepromGridView.Enabled = !device.IsDisconnected;
+                btn_ReadEeprom.Enabled = !device.IsDisconnected && !formBusy;
+                btn_WriteEeprom.Enabled = !device.IsDisconnected && !formBusy;
+                eepromGridView.Enabled = !device.IsDisconnected && !formBusy;
+                cbo_DeviceAddress.Enabled = !formBusy;
             }
             finally
             {
@@ -120,15 +131,7 @@ namespace ArchonLightingSystem
             }
         }
 
-        private void SetFormBusy(bool busy)
-        {
-            foreach(Control con in this.Controls)
-            {
-                con.Enabled = !busy;
-            }
-        }
-
-        private void WriteFormData()
+        private void CommitLocalFormData()
         {
             eepromData.AcceptChanges();
 
@@ -138,12 +141,9 @@ namespace ArchonLightingSystem
                 DataRow row = eepromData.Tables["Eeprom"].Rows[rows];
                 for (int i = 0; i < DeviceControllerDefinitions.EepromSize / 16; i++)
                 {
-                    applicationData.DeviceControllerData.EepromData[dataIdx++] = (byte)int.Parse((string)row[colNames[i]]);
+                    usbControllerDevice.ControllerData.EepromData[dataIdx++] = (byte)int.Parse((string)row[colNames[i]]);
                 }
             }
-            applicationData.EepromAddress = 0;
-            applicationData.EepromLength = 255;
-            applicationData.EepromWritePending = true;
         }
 
         private void eepromGridView_DataBindingComplete(object sender, DataGridViewBindingCompleteEventArgs e)
@@ -155,35 +155,85 @@ namespace ArchonLightingSystem
             }
         }
 
-        private void btn_ReadEeprom_Click(object sender, EventArgs e)
+        private async void btn_ReadEeprom_Click(object sender, EventArgs e)
         {
-            applicationData.EepromAddress = 0;
-            applicationData.EepromLength = 255;
-            applicationData.EepromReadDone = false;
-            applicationData.EepromReadPending = true;
-            StartFormUpdateEvent();
+            if (eepromData.HasChanges())
+            {
+                if (DiscardChangesMessageBox() != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
+
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                if (false == await UsbApp.ReadAndUpdateEepromAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch(Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
-        private void btn_WriteEeprom_Click(object sender, EventArgs e)
+        private async void btn_WriteEeprom_Click(object sender, EventArgs e)
         {
-            WriteFormData();
-            
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                CommitLocalFormData();
+
+                if (false == await UsbApp.WriteAndUpdateEepromAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
         private void StartFormUpdateEvent()
         {
-            SetFormBusy(true);
+ 
             formUpdateTimer.Enabled = true;
+            stopwatch.Restart();
+            //stopwatch.Start();
         }
 
         private void formUpdateTimer_Tick(object sender, EventArgs e)
         {
+            lbl_Timer.Text = $"{test}";
+            test++;
+
             if(applicationData.EepromReadDone)
             {
                 applicationData.EepromReadDone = false;
-                formUpdateTimer.Enabled = false;
+                //formUpdateTimer.Enabled = false;
+                stopwatch.Stop();
+                lbl_Stopwatch.Text = stopwatch.ElapsedMilliseconds.ToString();
+
+                UpdateFormState(usbControllerDevice);
                 UpdateFormData(usbControllerDevice);
-                SetFormBusy(false);
+
             }
         }
 
@@ -204,6 +254,7 @@ namespace ArchonLightingSystem
 
             lastSelectedAddress = combo.SelectedIndex;
             usbControllerDevice = manager.GetDevice(combo.SelectedIndex);
+            applicationData = usbControllerDevice.AppData;
             UpdateFormState(usbControllerDevice);
             UpdateFormData(usbControllerDevice);
         }
@@ -216,6 +267,14 @@ namespace ArchonLightingSystem
                     MessageBoxButtons.YesNo);
         }
 
+        private void ErrorMessageBox(string message)
+        {
+            MessageBox.Show(
+                    $"The transaction failed: {message}",
+                    "Error Occurred.",
+                    MessageBoxButtons.OK);
+        }
+
         private void EepromEditorForm_Load(object sender, EventArgs e)
         {
             cbo_DeviceAddress.SelectedIndex = 0;
@@ -224,7 +283,7 @@ namespace ArchonLightingSystem
 
         private void HandleControllerEvent(object sender, UsbControllerEventArgs e)
         {
-            this.BeginInvoke(new Action<UsbControllerDevice>(UpdateFormState), new object[] { usbControllerDevice });
+            this.BeginInvoke(new Action<UsbControllerDevice, bool?>(UpdateFormState), new object[] { usbControllerDevice, null });
         }
 
         private void EepromEditorForm_FormClosing(object sender, FormClosingEventArgs e)

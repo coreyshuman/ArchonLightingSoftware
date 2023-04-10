@@ -1,4 +1,5 @@
-﻿using System.Drawing;
+﻿using System;
+using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.ComponentModel;
 
@@ -48,6 +49,7 @@ namespace ArchonLightingSystem.Models
                     combo.ForeColor = AppTheme.PrimaryText;
                     combo.BackColor = AppTheme.ComponentBackground;
                     combo.Font = AppTheme.ComponentFont;
+                    
                 }
 
                 if (control is DataGridView grid)
