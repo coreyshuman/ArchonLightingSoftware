@@ -206,52 +206,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
-        {
-            uint byteCnt;
-            uint frameCnt = 0;
-            FrameInfo frameInfo = new FrameInfo();
-            ControlPacket controlPacket = new ControlPacket();
-            frameInfo.OutBufferMaxLen = 512;
-
-            while (!frameInfo.FrameValid)
-            {
-                byteCnt = usbIO.Read(usbDevice, ref frameInfo.FrameData, UsbDeviceManager.USB_PACKET_SIZE, readTimeout, cancelToken);
-                if (byteCnt > 0)
-                {
-                    frameCnt++;
-                    frameInfo.FrameLen = byteCnt;
-                    // validate frame and load data into controlPacket
-                    byteCnt = ValidateFrame(frameInfo, controlPacket);
-
-                    Logger.Write(Level.Trace, $"ReadFrame {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)}");
-
-                    if (byteCnt == 0)
-                    {
-                        return null;
-                    }
-                    else if (frameInfo.FrameValid)
-                    {
-                        if (controlPacket.Cmd == UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED)
-                        {
-                            // handle error codes from the Controller
-                            byte errorCode = controlPacket.Data[0];
-                            string err = $"USB Controller Error. Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
-                            Trace.WriteLine(err);
-                            throw new Exception(err);
-                        }
-
-                        return controlPacket.Cmd == cmd ? controlPacket : null;
-                    }
-                }
-                else
-                {
-                    return null;
-                }
-            }
-            return null;
-        }
-
         private static async Task<uint> GenerateAndSendFrames(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, Byte[] frameData, uint frameLen, CancellationTokenSource cancelToken)
         {
             uint byteCnt;
@@ -320,7 +274,56 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return (outBufferLen); // Return buffer length.
         }
 
+        private static async Task<ControlPacket> GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
+        {
+            uint byteCnt;
+            FrameInfo frameInfo = new FrameInfo();
+            ControlPacket controlPacket = new ControlPacket();
 
+            while (!frameInfo.FrameValid)
+            {
+                byteCnt = await usbIO.Read(usbDevice, frameInfo.FrameData, UsbDeviceManager.USB_PACKET_SIZE, readTimeout, cancelToken);
+
+                if(byteCnt == 0)
+                {
+                    return null;
+                }
+
+                frameInfo.FrameLen = byteCnt;
+                // validate frame and load data into controlPacket
+                ValidateFrame(frameInfo, controlPacket);
+
+                Logger.Write(Level.Trace, $"ReadFrame {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)}");
+                    
+                if (frameInfo.FrameValid)
+                {
+                    if (controlPacket.Cmd == UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED)
+                    {
+                        // handle error codes from the Controller
+                        byte errorCode = controlPacket.Data[0];
+                        string err = $"USB Controller Error. Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
+                        Logger.Write(Level.Error, err);
+                        throw new Exception(err);
+                    }
+
+                    // handle incorrect cmd response received. Old data in OS buffer? Discard and try reading again.
+                    if (controlPacket.Cmd != cmd)
+                    {
+                        Logger.Write(Level.Warning, $"Received wrong response. " +
+                        $"Expected {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)} " +
+                        $"Received {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)} Len {controlPacket.Len}");
+
+                        frameInfo.Reset();
+                        controlPacket.Reset();
+                        continue;
+                    }
+
+                    return controlPacket;
+                }
+            }
+
+            return null;
+        }
 
         private static uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)
         {
@@ -352,8 +355,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
 
             frameInfo.Multiframe |= multipacket;
+
             crc = Util.CalculateCrc(frameInfo.FrameData, 1, dataLen);
             UInt16 rxCrc = (UInt16)((UInt16)frameInfo.FrameData[dataLen + 1] | (UInt16)(frameInfo.FrameData[dataLen + 2] << 8));
+
             if (crc != rxCrc)
             {
                 Trace.WriteLine($"Invalid CRC. Expected [{crc:X2}] Received [{rxCrc:X2}]");

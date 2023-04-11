@@ -15,9 +15,14 @@ namespace ArchonLightingSystem.Models
 
         public ControlPacket()
         {
+            Data = new byte[UsbAppCommon.CONTROL_BUFFER_SIZE];
+            Reset();
+        }
+
+        public void Reset()
+        {
             Cmd = UsbAppCommon.CONTROL_CMD.CMD_ERROR_OCCURRED;
             Len = 0;
-            Data = new byte[UsbAppCommon.CONTROL_BUFFER_SIZE];
         }
     }
 }

@@ -26,32 +26,65 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private object connectedDevicesLock = new object();
         private List<UsbDevice> pendingDisconnectedDevices = new List<UsbDevice>();
         private object disconnectedDevicesLock = new object();
+        private List<UsbDevice> pendingRetryDevices = new List<UsbDevice>();
+        private SemaphoreSlim pendingSemaphore = new SemaphoreSlim(1, 1);
 
         private async Task processPendingDevices(CancellationToken token)
         {
             List<Task> deviceTasks = new List<Task>();
 
-            lock (connectedDevicesLock)
+            if(!await pendingSemaphore.WaitAsync(200))
             {
-                lock (disconnectedDevicesLock)
-                {
-                    pendingDisconnectedDevices.ForEach(device =>
-                    {
-                        pendingConnectedDevices.Remove(device);
-                        deviceTasks.Add(DisconnectUsbControllerAsync(device));
-                    });
-                    pendingDisconnectedDevices.Clear();
-                }
-                pendingConnectedDevices.ForEach(device =>
-                {
-                    deviceTasks.Add(ConnectUsbControllerAsync(device));
-                });
-                pendingConnectedDevices.Clear();
+                return;
             }
 
-            await Task.WhenAll(deviceTasks);
+            try
+            {
+                lock (connectedDevicesLock)
+                {
+                    lock (disconnectedDevicesLock)
+                    {
+                        pendingDisconnectedDevices.ForEach(device =>
+                        {
+                            pendingConnectedDevices.Remove(device);
 
-            OnUsbDeviceEvent(new UsbControllersChangedEventArgs(usbControllerInstances));
+                            pendingRetryDevices.Remove(device);
+
+                            deviceTasks.Add(DisconnectUsbControllerAsync(device));
+                        });
+                        pendingDisconnectedDevices.Clear();
+                    }
+                    pendingConnectedDevices.ForEach(device =>
+                    {
+
+                        pendingRetryDevices.Remove(device);
+
+                        deviceTasks.Add(ConnectUsbControllerAsync(device));
+                    });
+                    pendingConnectedDevices.Clear();
+                }
+
+                pendingRetryDevices.ForEach(device =>
+                {
+                    Logger.Write(Level.Debug, $"Do retry device {device.ShortName}");
+                    deviceTasks.Add(ConnectUsbControllerAsync(device));
+                });
+
+                pendingRetryDevices.Clear();
+            }
+            finally 
+            { 
+                pendingSemaphore.Release(); 
+            }
+
+            try
+            {
+                await Task.WhenAll(deviceTasks);
+            }
+            finally
+            {
+                OnUsbDeviceEvent(new UsbControllersChangedEventArgs(usbControllerInstances));
+            }
         }
 
         public UsbControllerManager()
@@ -83,7 +116,18 @@ namespace ArchonLightingSystem.UsbApplicationV2
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
 
-            usbEventBackgroundTask.StartTask(processPendingDevices);         
+            usbEventBackgroundTask.StartTask(processPendingDevices);
+
+            // start connection retry thread
+            Task.Factory.StartNew(async () =>
+            {
+                while (true)
+                {
+                    usbEventBackgroundTask.NextStep();
+                    await Task.Delay(5000);
+                }
+
+            }, new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default);
         }
 
         public int ControllerCount
@@ -123,26 +167,38 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         private async Task ConnectUsbControllerAsync(UsbDevice device)
         {
-            Logger.Write(Level.Debug, $"Connect device {device.ShortName}");
-            //if (device.ShortName != "b&172fe167") return false;
+            Logger.Write(Level.Debug, $"Connecting device {device.ShortName}");
+
             var deviceControllerConfig = await UsbApp.GetDeviceInitializationAsync(device);
 
             if (deviceControllerConfig == null)
             {
-                Logger.Write(Level.Debug, $"Failed to initialize {device.ShortName}");
+                Logger.Write(Level.Error, $"Failed to initialize {device.ShortName}");
+                if(await pendingSemaphore.WaitAsync(300))
+                { 
+                    try
+                    {
+                        Logger.Write(Level.Debug, $"Pending retry device {device.ShortName}");
+                        pendingRetryDevices.Add(device);
+                    }
+                    finally
+                    {
+                        pendingSemaphore.Release();
+                    }
+                }
                 return;
             }
 
             var deviceInstance = usbControllerInstances.Where(d => d.Address == deviceControllerConfig.DeviceAddress).FirstOrDefault();
             if (deviceInstance == null)
             {
-                Logger.Write(Level.Debug, $"Cannot connect device, invalid address: {deviceControllerConfig.DeviceAddress}");
+                Logger.Write(Level.Error, $"Cannot connect device, invalid address: {deviceControllerConfig.DeviceAddress}");
                 return;
             }
             
             if(!deviceInstance.IsDisconnected)
             {
-                Logger.Write(Level.Debug, $"Cannot connect device, already initialized: {deviceControllerConfig.DeviceAddress}");
+                Logger.Write(Level.Error, $"Cannot connect device, already initialized: {deviceControllerConfig.DeviceAddress}");
                 return;
             }
 
@@ -150,7 +206,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             deviceInstance.UsbDevice = device;
             deviceInstance.IsDisconnected = false;
 
-            Logger.Write(Level.Debug, $"Device connected, address: {deviceControllerConfig.DeviceAddress}");
+            Logger.Write(Level.Information, $"Connected device {device.ShortName} address: {deviceControllerConfig.DeviceAddress}");
         }
 
         private async Task DisconnectUsbControllerAsync(UsbDevice device)
@@ -166,7 +222,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     deviceInstance.UsbDevice = null;
                     deviceInstance.IsDisconnected = true;
-                    Logger.Write(Level.Debug, $"Disconnected device address: {deviceInstance.Address}");
+                    Logger.Write(Level.Information, $"Disconnected device {device.ShortName} address: {deviceInstance.Address}");
                 }
             }
         }

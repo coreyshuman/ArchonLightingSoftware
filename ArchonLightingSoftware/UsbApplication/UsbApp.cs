@@ -418,7 +418,6 @@ namespace ArchonLightingSystem.UsbApplication
             uint frameCnt = 0;
             FrameInfo frameInfo = new FrameInfo();
             ControlPacket controlPacket = new ControlPacket();
-            frameInfo.OutBufferMaxLen = 512;
 
             while (!frameInfo.FrameValid)
             {
@@ -443,6 +442,7 @@ namespace ArchonLightingSystem.UsbApplication
                             Trace.WriteLine(err);
                             throw new Exception(err);
                         }
+
                         return controlPacket.Cmd == cmd ? controlPacket : null;
                     }
                 }

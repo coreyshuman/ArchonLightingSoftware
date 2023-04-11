@@ -23,16 +23,14 @@ namespace ArchonLightingSystem.Common
                 {
                     while(!cancellationTokenSource.IsCancellationRequested)
                     {
-                        Logger.Write(Level.Trace, "EventDrivenBackgroundTask Execute");
                         await recurringAction(cancellationTokenSource.Token);
-                        Logger.Write(Level.Trace, "EventDrivenBackgroundTask Wait");
                         autoResetEvent.WaitOne();
 
                     }
                 }
                 catch(Exception ex)
                 {
-                    Logger.Write(Level.Error, ex.Message);
+                    Logger.Write(Level.Error, $"EventDrivenBackgroundTask Exception: {ex.Message}");
                 }
                 finally
                 {
@@ -55,7 +53,6 @@ namespace ArchonLightingSystem.Common
                 throw new ObjectDisposedException("EventDrivenBackgroundTask disposed.");
             }
 
-            Logger.Write(Level.Trace, "EventDrivenBackgroundTask Next");
             autoResetEvent.Set();
         }
 

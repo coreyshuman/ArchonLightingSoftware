@@ -11,15 +11,18 @@ namespace ArchonLightingSystem.Models
     {
         public Byte[] FrameData;
         public uint FrameLen;
-        public uint OutBufferMaxLen;
         public bool Multiframe;
         public bool FrameValid;
 
         public FrameInfo()
         {
             FrameData = new byte[UsbDriver.USB_PACKET_SIZE];
+            Reset();
+        }
+
+        public void Reset()
+        {
             FrameLen = 0;
-            OutBufferMaxLen = 512;
             Multiframe = false;
             FrameValid = false;
         }

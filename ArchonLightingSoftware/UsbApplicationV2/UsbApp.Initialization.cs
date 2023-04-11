@@ -130,82 +130,79 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     response = await ReadConfig(usbDevice, cancelToken);
                                     break;
                             }
+
+                            if(response == null)
+                            {
+                                throw new Exception("No Response.");
+                            }
                         }
                         catch(Exception ex)
                         {
-                            Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} {Enum.GetName(typeof(DeviceInitializationState), initState)} Warning: {ex.Message}");
-                            response = null;
-                        }
-
-                        if(response == null)
-                        {
-                            if(retryCount >= 3)
+                            Logger.Write(Level.Trace, $"Initialize UsbDevice Read {usbDevice.ShortName} {Enum.GetName(typeof(DeviceInitializationState), initState)} Warning: {ex.Message}");
+                            if (retryCount >= 3)
                             {
-                                switch(initState)
-                                {
-                                    case DeviceInitializationState.ReadBootloader:
-                                        throw new Exception("Couldn't read Bootloader info.");
-                                    case DeviceInitializationState.ReadApplication:
-                                        throw new Exception("Couldn't read Application info.");
-                                    case DeviceInitializationState.ReadAddress:
-                                        throw new Exception("Couldn't read Address.");
-                                    case DeviceInitializationState.ReadBootStatus:
-                                        throw new Exception("Couldn't read boot status.");
-                                    case DeviceInitializationState.ReadEeprom:
-                                        throw new Exception("Couldn't read Eeprom.");
-                                    case DeviceInitializationState.ReadConfig:
-                                        throw new Exception("Couldn't read Config.");
-                                }
+                                throw new Exception($"Failed on {Enum.GetName(typeof(DeviceInitializationState), initState)}", ex);
                             }
 
-                            retryCount++;
-                            Logger.Write(Level.Trace, "_retry");
+                            Logger.Write(Level.Trace, "_retryA");
                             continue;
                         }
 
-                        retryCount = 0;
-
-                        switch(initState)
+                        try
                         {
-                            case DeviceInitializationState.ReadBootloader:
-                                deviceControllerData.UpdateBootloaderVersion(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Boot: {response.Data[0]}.{response.Data[1]}");
-                                break;
-                            case DeviceInitializationState.ReadApplication:
-                                deviceControllerData.UpdateApplicationVersion(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} App: {response.Data[0]}.{response.Data[1]}");
-                                break;
-                            case DeviceInitializationState.ReadAddress:
-                                deviceControllerData.UpdateAddress(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Addr: {response.Data[0]}");
-                                break;
-                            case DeviceInitializationState.ReadBootStatus:
-                                deviceControllerData.UpdateBootStatusFlag(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Status: {deviceControllerData.BootStatusFlag}");
-                                break;
-                            case DeviceInitializationState.ReadEeprom:
-                                deviceControllerData.UpdateEepromData(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} EEPROM: {response.Len} bytes");
-                                break;
-                            case DeviceInitializationState.ReadConfig:
-                                deviceControllerData.UpdateDeviceConfig(response.Data, response.Len);
-                                Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Config: {response.Len} bytes");
-                                break;
+                            switch (initState)
+                            {
+                                case DeviceInitializationState.ReadBootloader:
+                                    deviceControllerData.UpdateBootloaderVersion(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Boot: {response.Data[0]}.{response.Data[1]}");
+                                    break;
+                                case DeviceInitializationState.ReadApplication:
+                                    deviceControllerData.UpdateApplicationVersion(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} App: {response.Data[0]}.{response.Data[1]}");
+                                    break;
+                                case DeviceInitializationState.ReadAddress:
+                                    deviceControllerData.UpdateAddress(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Addr: {response.Data[0]}");
+                                    break;
+                                case DeviceInitializationState.ReadBootStatus:
+                                    deviceControllerData.UpdateBootStatusFlag(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Status: {deviceControllerData.BootStatusFlag}");
+                                    break;
+                                case DeviceInitializationState.ReadEeprom:
+                                    deviceControllerData.UpdateEepromData(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} EEPROM: {response.Len} bytes");
+                                    break;
+                                case DeviceInitializationState.ReadConfig:
+                                    deviceControllerData.UpdateDeviceConfig(response.Data, response.Len);
+                                    Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Config: {response.Len} bytes");
+                                    break;
+                            }
+
+                            initState++;
+                            retryCount = 0;
+
+                            if (initState == DeviceInitializationState.Done)
+                            {
+                                return deviceControllerData;
+                            }
                         }
-
-                        initState++;
-
-                        if(initState == DeviceInitializationState.Done)
+                        catch (Exception ex)
                         {
-                            return deviceControllerData;
+                            if (retryCount >= 3)
+                            {
+                                throw new Exception($"Failed on {Enum.GetName(typeof(DeviceInitializationState), initState)}", ex);
+                            }
+
+                            Logger.Write(Level.Trace, "_retryB");
+                            continue;
                         }
                     }
 
-                    return null;
+                    throw new Exception("Initialization was cancelled.");
                 }
                 catch (Exception ex)
                 {
-                    Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} Error: {ex.Message}");
+                    Logger.Write(Level.Warning, $"Initialize UsbDevice {usbDevice.ShortName} Error: {ex.Message} {ex.InnerException?.Message}");
                     return null;
                 }
                 finally

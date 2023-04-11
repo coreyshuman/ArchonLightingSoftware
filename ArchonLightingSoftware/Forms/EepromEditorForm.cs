@@ -26,9 +26,6 @@ namespace ArchonLightingSystem
         private readonly DataSet eepromData;
         private int lastSelectedAddress = -1;
         private bool formBusy = false;
-
-        private int test = 0;
-        private Stopwatch stopwatch = new Stopwatch();
         
         private UsbControllerManager manager = null;
         private UsbControllerDevice usbControllerDevice;
@@ -211,25 +208,13 @@ namespace ArchonLightingSystem
             }
         }
 
-        private void StartFormUpdateEvent()
-        {
- 
-            formUpdateTimer.Enabled = true;
-            stopwatch.Restart();
-            //stopwatch.Start();
-        }
-
         private void formUpdateTimer_Tick(object sender, EventArgs e)
         {
-            lbl_Timer.Text = $"{test}";
-            test++;
-
             if(applicationData.EepromReadDone)
             {
                 applicationData.EepromReadDone = false;
                 //formUpdateTimer.Enabled = false;
-                stopwatch.Stop();
-                lbl_Stopwatch.Text = stopwatch.ElapsedMilliseconds.ToString();
+
 
                 UpdateFormState(usbControllerDevice);
                 UpdateFormData(usbControllerDevice);
