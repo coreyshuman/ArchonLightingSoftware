@@ -37,7 +37,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} App: {appResponse.Data[0]}.{appResponse.Data[1]}");
 
-                usbDeviceAddressResponse = await ReadControllerAddress(usbDevice, cancelToken);
+                usbDeviceAddressResponse = await SendReadAddressCmd(usbDevice, cancelToken);
                 if (usbDeviceAddressResponse == null) throw new Exception("Couldn't read Address.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Addr: {usbDeviceAddressResponse.Data[0]}");
@@ -52,7 +52,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} EEPROM: {eepromResponse.Len} bytes");
 
-                usbDeviceConfigResponse = await ReadConfig(usbDevice, cancelToken);
+                usbDeviceConfigResponse = await SendReadConfigCmd(usbDevice, cancelToken);
                 if (usbDeviceConfigResponse == null) throw new Exception("Couldn't read Config.");
                 if (cancelToken.IsCancellationRequested) return false;
                 Logger.Write(Level.Trace, $"DeviceInit {usbDevice.ShortName} Config: {usbDeviceConfigResponse.Len} bytes");
@@ -118,7 +118,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     response = await ReadApplicationInfo(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadAddress:
-                                    response = await ReadControllerAddress(usbDevice, cancelToken);
+                                    response = await SendReadAddressCmd(usbDevice, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadBootStatus:
                                     response = await ReadBootStatus(usbDevice, cancelToken);
@@ -127,7 +127,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     response = await ReadEeprom(usbDevice, 0, (UInt16)DeviceControllerDefinitions.EepromSize, cancelToken);
                                     break;
                                 case DeviceInitializationState.ReadConfig:
-                                    response = await ReadConfig(usbDevice, cancelToken);
+                                    response = await SendReadConfigCmd(usbDevice, cancelToken);
                                     break;
                             }
 

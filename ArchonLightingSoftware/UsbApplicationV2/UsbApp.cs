@@ -102,7 +102,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> DefaultConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendDefaultConfigCmd(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_DEFAULT_CONFIG, null, 0, cancelToken) > 0)
             {
@@ -112,7 +112,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> ReadConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendReadConfigCmd(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONFIG, null, 0, cancelToken) > 0)
             {
@@ -122,7 +122,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> WriteConfig(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendCommitConfigCmd(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, null, 0, cancelToken) > 0)
             {
@@ -132,7 +132,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> UpdateConfig(IUsbDevice usbDevice, DeviceControllerConfig config, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendWriteConfigCmd(IUsbDevice usbDevice, DeviceControllerConfig config, CancellationTokenSource cancelToken = null)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.EepromSize];
             uint length = config.ToBuffer(ref buffer);
@@ -144,7 +144,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> WriteLedFrame(IUsbDevice usbDevice, byte[,] ledFrame, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendWriteLedFrameCmd(IUsbDevice usbDevice, byte[,] ledFrame, CancellationTokenSource cancelToken = null)
         {
             Byte[] buffer = new byte[DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice];
             uint length = DeviceControllerDefinitions.DevicePerController * DeviceControllerDefinitions.LedBytesPerDevice;
@@ -163,7 +163,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> ReadControllerAddress(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendReadAddressCmd(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_CONTROLLER_ADDRESS, null, 0, cancelToken) > 0)
             {
@@ -173,7 +173,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> ReadDebug(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendReadDebugCmd(IUsbDevice usbDevice, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_EE_DEBUG, null, 0, cancelToken) > 0)
             {
@@ -196,7 +196,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return null;
         }
 
-        private static async Task<ControlPacket> SetTime(IUsbDevice usbDevice, byte[] timeValue, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> SendSetTimeCmd(IUsbDevice usbDevice, byte[] timeValue, CancellationTokenSource cancelToken = null)
         {
             if (await GenerateAndSendFrames(usbDevice, UsbAppCommon.CONTROL_CMD.CMD_SET_TIME, timeValue, 3, cancelToken) > 0)
             {

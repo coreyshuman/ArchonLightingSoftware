@@ -63,6 +63,7 @@ namespace ArchonLightingSystem
             lbl_LedColors.Font = AppTheme.ComponentFontLarge;
             lbl_LedMode.Font = AppTheme.ComponentFontLarge;
             lbl_LedSpeed.Font = AppTheme.ComponentFontLarge;
+            lbl_CRC.Font = AppTheme.ComponentFont;
         }
 
         private void InitializeNavigator()
@@ -96,7 +97,6 @@ namespace ArchonLightingSystem
 
                 grid.DataSource = dataSet;
                 grid.DataMember = $"table{tableNum}";
-                //grid.ColumnCount = (int)DeviceControllerDefinitions.DevicePerController;
                 grid.RowHeadersVisible = true;
                 grid.AllowUserToAddRows = false;
                 grid.AllowUserToDeleteRows = false;
@@ -150,7 +150,6 @@ namespace ArchonLightingSystem
                 gView.AllowUserToAddRows = false;
                 gView.AllowUserToDeleteRows = false;
                 gView.GridColor = Color.Black;
-                //gView.ColumnCount = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
                 gView.DataSource = dataSet;
                 gView.AutoGenerateColumns = true;
                 gView.DataMember = $"table{tableNum}_device{currentDevice}";
@@ -177,9 +176,8 @@ namespace ArchonLightingSystem
                 lbl_Disconnected.Visible = device.IsDisconnected;
                 btn_ReadConfig.Enabled = !device.IsDisconnected && !formBusy;
                 btn_ResetConfig.Enabled = !device.IsDisconnected && !formBusy;
-                btn_UpdateConfig.Enabled = !device.IsDisconnected && !formBusy;
                 btn_WriteConfig.Enabled = !device.IsDisconnected && !formBusy;
-                btn_WriteLedFrame.Enabled = !device.IsDisconnected && !formBusy;
+                btn_CommitConfig.Enabled = !device.IsDisconnected && !formBusy;
                 ledColorNavigator.Enabled = !device.IsDisconnected && !formBusy;
 
                 foreach (var con in splitContainer1.Panel1.Controls)
@@ -215,14 +213,13 @@ namespace ArchonLightingSystem
             try
             {
                 var deviceConfig = device.ControllerData.DeviceConfig;
+                lbl_CRC.Text = "--";
 
                 foreach (var grid in topGrids)
                 {
                     var table = dataSet.Tables[grid.DataMember];
                     table.Rows.Clear();
                     table.Rows.Add(((byte[])GetDataPropertyForGrid(grid).GetValue(deviceConfig)).ToStringArray());
-
-                    //table.AcceptChanges();
                 }
 
                 int dataPerGrid = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
@@ -237,6 +234,9 @@ namespace ArchonLightingSystem
                         table.Rows.Add(deviceConfig.Colors.SliceRow(j).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
                     }
                 }
+
+                lbl_CRC.Text = $"0x{deviceConfig.Crc:X4}";
+
                 dataSet.AcceptChanges();
             }
             finally
@@ -259,9 +259,9 @@ namespace ArchonLightingSystem
 
                 var propertyData = (byte[])GetDataPropertyForGrid(grid).GetValue(deviceConfig);
 
-                for(i = 0; i < table.Rows.Count; i++)
+                for(i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
                 {
-                    propertyData[i] = (byte)int.Parse((string)table.Rows[i][0]);
+                    propertyData[i] = (byte)int.Parse((string)table.Rows[0][i]);
                 }
             }
 
@@ -280,9 +280,7 @@ namespace ArchonLightingSystem
 
                     deviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray();
                 }
-                //table.Rows.Clear();
-                //table.Rows.Add(deviceConfig.Colors.SliceRow(currentDevice).Select(d => ((int)d).ToString()).Skip(dataPerGrid * (i - 1)).Take(dataPerGrid).ToArray());
-            }          
+            }
         }
         #endregion
 
@@ -293,12 +291,6 @@ namespace ArchonLightingSystem
             {
                 var gView = ((DataGridView)sender);
                 gView.Rows[e.RowIndex].ErrorText = String.Empty;
-                /*
-                var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
-                var numVal = int.Parse(value);
-                byte[] configArray = (byte[])property.GetValue(usbControllerDevice.ControllerData.DeviceConfig, null);
-                configArray[e.ColumnIndex] = (byte)numVal;
-                */
             };
         }
 
@@ -308,11 +300,6 @@ namespace ArchonLightingSystem
             var gridNumber = int.Parse(gView.Name.Substring(14));
             int dataPerGrid = (int)(DeviceControllerDefinitions.LedBytesPerDevice / numberOfGrids);
             gView.Rows[e.RowIndex].ErrorText = String.Empty;
-            /*
-            var value = gView.Rows[e.RowIndex].Cells[e.ColumnIndex].FormattedValue.ToString();
-            var numVal = int.Parse(value);
-            usbControllerDevice.ControllerData.DeviceConfig.Colors[currentDevice, e.ColumnIndex + (gridNumber - 1) * dataPerGrid] = (byte)numVal;
-            */
         }
 
         private void BindingSource_PositionChanged(object sender, EventArgs e)
@@ -327,7 +314,7 @@ namespace ArchonLightingSystem
             }
         }
 
-        private void btn_ReadConfig_Click(object sender, EventArgs e)
+        private async void btn_ReadConfig_Click(object sender, EventArgs e)
         {
             if (dataSet.HasChanges())
             {
@@ -337,25 +324,52 @@ namespace ArchonLightingSystem
                 }
             }
 
-            UpdateFormState(usbControllerDevice, true);
-            UpdateFormData(usbControllerDevice);
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                if (false == await UsbApp.ReadAndUpdateConfigAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
-        private void btn_WriteConfig_Click(object sender, EventArgs e)
+        private async void btn_WriteConfig_Click(object sender, EventArgs e)
         {
-            CommitLocalFormData();
-            return;
-            appData.WriteConfigPending = true;
-            updateTimer.Enabled = true;
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                CommitLocalFormData();
+                if (false == await UsbApp.WriteAndUpdateConfigAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
-        private void updateTimer_Tick(object sender, EventArgs e)
-        {
-            updateTimer.Enabled = false;
-            UpdateFormData(usbControllerDevice);
-        }
-
-        private void btn_ResetConfig_Click(object sender, EventArgs e)
+        private async void btn_CommitConfig_Click(object sender, EventArgs e)
         {
             if (dataSet.HasChanges())
             {
@@ -365,19 +379,65 @@ namespace ArchonLightingSystem
                 }
             }
 
-            dataSet.RejectChanges();
-            
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                if (false == await UsbApp.CommitConfigToEepromAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
-        private void btn_UpdateConfig_Click(object sender, EventArgs e)
+        private async void btn_ResetConfig_Click(object sender, EventArgs e)
         {
-            
-        }
+            if (dataSet.HasChanges())
+            {
+                if (DiscardChangesMessageBox() != DialogResult.Yes)
+                {
+                    return;
+                }
+            }
 
-        private void btn_WriteLedFrame_Click(object sender, EventArgs e)
-        {
-            appData.LedFrameData = usbControllerDevice.ControllerData.DeviceConfig.Colors;
-            appData.WriteLedFrame = true;
+            if(DialogResult.Yes != MessageBox.Show(
+                    $"Are you sure you want to reset all settings to their default value?",
+                    "Reset Config To Default",
+                    MessageBoxButtons.YesNo)
+                )
+            {
+                return;
+            }
+
+            try
+            {
+                UpdateFormState(usbControllerDevice, true);
+                if (false == await UsbApp.ResetConfigToDefaultAsync(usbControllerDevice))
+                {
+                    throw new Exception("Transaction failed.");
+                }
+
+                UpdateFormData(usbControllerDevice);
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, ex.Message);
+                ErrorMessageBox(ex.Message);
+            }
+            finally
+            {
+                UpdateFormState(usbControllerDevice, false);
+            }
         }
 
         private void ConfigEditorForm_FormClosing(object sender, FormClosingEventArgs e)
@@ -474,8 +534,16 @@ namespace ArchonLightingSystem
             UpdateFormData(usbControllerDevice);
         }
 
-        
+        #region Forms
+        private void ErrorMessageBox(string message)
+        {
+            MessageBox.Show(
+                    $"The transaction failed: {message}",
+                    "Error Occurred.",
+                    MessageBoxButtons.OK);
+        }
+        #endregion
 
-        
+
     }
 }

@@ -206,7 +206,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
             deviceInstance.UsbDevice = device;
             deviceInstance.IsDisconnected = false;
 
-            Logger.Write(Level.Information, $"Connected device {device.ShortName} address: {deviceControllerConfig.DeviceAddress}");
+            var d = deviceControllerConfig;
+            Logger.Write(Level.Information, $"Connected device {device.ShortName} address: {d.DeviceAddress} firmware: {d.ApplicationVersion} bootloader: {d.BootloaderVersion}");
         }
 
         private async Task DisconnectUsbControllerAsync(UsbDevice device)

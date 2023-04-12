@@ -12,7 +12,6 @@ using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Services;
 using ArchonLightingSystem.Forms;
 using ArchonLightingSystem.WindowsSystem.Startup;
-using System.Windows.Forms.DataVisualization.Charting;
 
 namespace ArchonLightingSystem
 {
@@ -65,8 +64,6 @@ namespace ArchonLightingSystem
                 Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
-            InitializeForm();
-
             usbDeviceManager = new UsbDeviceManager();
             //usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
             //usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
@@ -90,6 +87,8 @@ namespace ArchonLightingSystem
 
             allowVisible = !startInBackground;
             isHidden = startInBackground;
+
+            InitializeForm();
         }
 
         protected override void SetVisibleCore(bool value)
@@ -126,11 +125,28 @@ namespace ArchonLightingSystem
 
             for(int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
-                ControllerComponent device = new ControllerComponent();
-                deviceComponents.Add(device);
-                device.InitializeComponent(this, hardwareManager, i);
-                device.UserSettings = userSettings;
+                ControllerComponent component = new ControllerComponent();
+                deviceComponents.Add(component);
+                component.InitializeComponent(this, hardwareManager, i);
+                component.UserSettings = userSettings;
             }
+
+            for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
+            {
+                var device = usbControllerManger.GetDevice(i);
+
+                var comboBoxItem = new ComboBoxItem
+                {
+                    Text = device.Address.ToString() +
+                                $" ({userSettings.Controllers.Where(c => c.Address == device.Address).FirstOrDefault()?.Name ?? ""})",
+                    Value = i
+                };
+
+                deviceAddressList.Add(comboBoxItem);
+            }
+
+            cbo_DeviceAddress.Items.Clear();
+            cbo_DeviceAddress.Items.AddRange(deviceAddressList.ToArray());
         }
 
         void HandleLogEvent(object sender, LogEventArgs eventArgs)
@@ -214,6 +230,7 @@ namespace ArchonLightingSystem
         private async void FormUpdateTimer_Tick(object sender, EventArgs e)
         {
             // Update dropdown UI if new controllers have been connected
+            /*
             if(deviceAddressList.Count > cbo_DeviceAddress.Items.Count)
             {
                 var lastSelected = cbo_DeviceAddress.SelectedValue;
@@ -226,6 +243,7 @@ namespace ArchonLightingSystem
                     cbo_DeviceAddress.SelectedIndex = 0;
                 }
             }
+            */
 
             var usbDevice = usbDeviceManager.GetDevice(selectedAddressIdx);
             if(usbDevice == null)
@@ -391,8 +409,8 @@ namespace ArchonLightingSystem
         {
             var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
             selectedAddressIdx = item.Value;
-            selectedAddress = (int)usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress;
-            UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
+            //selectedAddress = (int)usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress;
+            //UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)

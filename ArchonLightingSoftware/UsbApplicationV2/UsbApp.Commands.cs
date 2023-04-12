@@ -26,10 +26,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             if (response != null)
             {
-                controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data, response.Len);
+                controllerInstance.ControllerData.UpdateEepromData(response.Data, response.Len);
                 return true;
             }
-
 
             return false;
         }
@@ -68,10 +67,121 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             if (response != null)
             {
-                controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data, response.Len);
+                controllerInstance.ControllerData.UpdateEepromData(response.Data, response.Len);
                 return true;
             }
 
+
+            return false;
+        }
+
+        public static async Task<bool> ReadAndUpdateConfigAsync(UsbControllerDevice controllerInstance)
+        {
+            ControlPacket response =
+                await WithDeviceLock(controllerInstance, (token) =>
+                {
+                    return SendReadConfigCmd( controllerInstance.UsbDevice, token );
+                });
+
+            if (response != null)
+            {
+                controllerInstance.ControllerData.UpdateDeviceConfig(response.Data, response.Len);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> WriteAndUpdateConfigAsync(UsbControllerDevice controllerInstance)
+        {
+            ControlPacket response =
+                await WithDeviceLock(controllerInstance, async (token) =>
+                {
+                    try
+                    {
+                        var res = await SendWriteConfigCmd(
+                            controllerInstance.UsbDevice,
+                            controllerInstance.ControllerData.DeviceConfig,
+                            token
+                            );
+                        if (res == null)
+                        {
+                            throw new Exception("write failed");
+                        }
+                        return await SendReadConfigCmd(controllerInstance.UsbDevice, token);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Write(Level.Error, ex.Message);
+                        throw ex;
+                    }
+                });
+
+            if (response != null)
+            {
+                controllerInstance.ControllerData.UpdateDeviceConfig(response.Data, response.Len);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> CommitConfigToEepromAsync(UsbControllerDevice controllerInstance)
+        {
+            ControlPacket response =
+                await WithDeviceLock(controllerInstance, async (token) =>
+                {
+                    try
+                    {
+                        var res = await SendCommitConfigCmd(controllerInstance.UsbDevice, token);
+                        if (res == null)
+                        {
+                            throw new Exception("write failed");
+                        }
+                        return await SendReadConfigCmd(controllerInstance.UsbDevice, token);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Write(Level.Error, ex.Message);
+                        throw ex;
+                    }
+                });
+
+            if (response != null)
+            {
+                controllerInstance.ControllerData.UpdateDeviceConfig(response.Data, response.Len);
+                return true;
+            }
+
+            return false;
+        }
+
+        public static async Task<bool> ResetConfigToDefaultAsync(UsbControllerDevice controllerInstance)
+        {
+            ControlPacket response =
+                await WithDeviceLock(controllerInstance, async (token) =>
+                {
+                    try
+                    {
+                        var res = await SendDefaultConfigCmd(controllerInstance.UsbDevice, token);
+                        if (res == null)
+                        {
+                            throw new Exception("write failed");
+                        }
+                        return await SendReadConfigCmd(controllerInstance.UsbDevice, token);
+                    }
+                    catch (Exception ex)
+                    {
+                        Logger.Write(Level.Error, ex.Message);
+                        throw ex;
+                    }
+                });
+
+            if (response != null)
+            {
+                controllerInstance.ControllerData.UpdateDeviceConfig(response.Data, response.Len);
+                return true;
+            }
 
             return false;
         }

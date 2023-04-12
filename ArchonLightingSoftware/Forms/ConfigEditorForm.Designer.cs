@@ -32,15 +32,16 @@
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ConfigEditorForm));
             this.colorsGridView1 = new System.Windows.Forms.DataGridView();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+            this.lbl_CRC = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
             this.lbl_Disconnected = new System.Windows.Forms.Label();
             this.label5 = new System.Windows.Forms.Label();
             this.cbo_DeviceAddress = new System.Windows.Forms.ComboBox();
-            this.btn_WriteLedFrame = new System.Windows.Forms.Button();
-            this.btn_UpdateConfig = new System.Windows.Forms.Button();
+            this.btn_WriteConfig = new System.Windows.Forms.Button();
             this.btn_ResetConfig = new System.Windows.Forms.Button();
             this.ledSpeedGridView = new System.Windows.Forms.DataGridView();
             this.lbl_LedSpeed = new System.Windows.Forms.Label();
-            this.btn_WriteConfig = new System.Windows.Forms.Button();
+            this.btn_CommitConfig = new System.Windows.Forms.Button();
             this.btn_ReadConfig = new System.Windows.Forms.Button();
             this.fanSpeedGridView = new System.Windows.Forms.DataGridView();
             this.ledModeGridView = new System.Windows.Forms.DataGridView();
@@ -57,7 +58,6 @@
             this.bindingNavigatorMoveNextItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorMoveLastItem = new System.Windows.Forms.ToolStripButton();
             this.bindingNavigatorSeparator2 = new System.Windows.Forms.ToolStripSeparator();
-            this.updateTimer = new System.Windows.Forms.Timer(this.components);
             ((System.ComponentModel.ISupportInitialize)(this.colorsGridView1)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
@@ -89,15 +89,16 @@
             // 
             // splitContainer1.Panel1
             // 
+            this.splitContainer1.Panel1.Controls.Add(this.lbl_CRC);
+            this.splitContainer1.Panel1.Controls.Add(this.label1);
             this.splitContainer1.Panel1.Controls.Add(this.lbl_Disconnected);
             this.splitContainer1.Panel1.Controls.Add(this.label5);
             this.splitContainer1.Panel1.Controls.Add(this.cbo_DeviceAddress);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_WriteLedFrame);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_UpdateConfig);
+            this.splitContainer1.Panel1.Controls.Add(this.btn_WriteConfig);
             this.splitContainer1.Panel1.Controls.Add(this.btn_ResetConfig);
             this.splitContainer1.Panel1.Controls.Add(this.ledSpeedGridView);
             this.splitContainer1.Panel1.Controls.Add(this.lbl_LedSpeed);
-            this.splitContainer1.Panel1.Controls.Add(this.btn_WriteConfig);
+            this.splitContainer1.Panel1.Controls.Add(this.btn_CommitConfig);
             this.splitContainer1.Panel1.Controls.Add(this.btn_ReadConfig);
             this.splitContainer1.Panel1.Controls.Add(this.fanSpeedGridView);
             this.splitContainer1.Panel1.Controls.Add(this.ledModeGridView);
@@ -112,6 +113,24 @@
             this.splitContainer1.Size = new System.Drawing.Size(1254, 687);
             this.splitContainer1.SplitterDistance = 304;
             this.splitContainer1.TabIndex = 2;
+            // 
+            // lbl_CRC
+            // 
+            this.lbl_CRC.AutoSize = true;
+            this.lbl_CRC.Location = new System.Drawing.Point(844, 85);
+            this.lbl_CRC.Name = "lbl_CRC";
+            this.lbl_CRC.Size = new System.Drawing.Size(13, 13);
+            this.lbl_CRC.TabIndex = 15;
+            this.lbl_CRC.Text = "--";
+            // 
+            // label1
+            // 
+            this.label1.AutoSize = true;
+            this.label1.Location = new System.Drawing.Point(796, 85);
+            this.label1.Name = "label1";
+            this.label1.Size = new System.Drawing.Size(32, 13);
+            this.label1.TabIndex = 14;
+            this.label1.Text = "CRC:";
             // 
             // lbl_Disconnected
             // 
@@ -145,39 +164,27 @@
             this.cbo_DeviceAddress.TabIndex = 11;
             this.cbo_DeviceAddress.SelectedIndexChanged += new System.EventHandler(this.cbo_DeviceAddress_SelectedIndexChanged);
             // 
-            // btn_WriteLedFrame
+            // btn_WriteConfig
             // 
-            this.btn_WriteLedFrame.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_WriteLedFrame.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_WriteLedFrame.Location = new System.Drawing.Point(1123, 12);
-            this.btn_WriteLedFrame.Name = "btn_WriteLedFrame";
-            this.btn_WriteLedFrame.Size = new System.Drawing.Size(119, 35);
-            this.btn_WriteLedFrame.TabIndex = 10;
-            this.btn_WriteLedFrame.Text = "Write Led Frame";
-            this.btn_WriteLedFrame.UseVisualStyleBackColor = true;
-            this.btn_WriteLedFrame.Click += new System.EventHandler(this.btn_WriteLedFrame_Click);
-            // 
-            // btn_UpdateConfig
-            // 
-            this.btn_UpdateConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_UpdateConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_UpdateConfig.Location = new System.Drawing.Point(806, 12);
-            this.btn_UpdateConfig.Name = "btn_UpdateConfig";
-            this.btn_UpdateConfig.Size = new System.Drawing.Size(103, 35);
-            this.btn_UpdateConfig.TabIndex = 9;
-            this.btn_UpdateConfig.Text = "Update Config";
-            this.btn_UpdateConfig.UseVisualStyleBackColor = true;
-            this.btn_UpdateConfig.Click += new System.EventHandler(this.btn_UpdateConfig_Click);
+            this.btn_WriteConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_WriteConfig.Location = new System.Drawing.Point(911, 12);
+            this.btn_WriteConfig.Name = "btn_WriteConfig";
+            this.btn_WriteConfig.Size = new System.Drawing.Size(103, 35);
+            this.btn_WriteConfig.TabIndex = 9;
+            this.btn_WriteConfig.Text = "Write Config";
+            this.btn_WriteConfig.UseVisualStyleBackColor = true;
+            this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
             // 
             // btn_ResetConfig
             // 
             this.btn_ResetConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_ResetConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_ResetConfig.Location = new System.Drawing.Point(1019, 12);
+            this.btn_ResetConfig.Location = new System.Drawing.Point(1131, 12);
             this.btn_ResetConfig.Name = "btn_ResetConfig";
-            this.btn_ResetConfig.Size = new System.Drawing.Size(98, 35);
+            this.btn_ResetConfig.Size = new System.Drawing.Size(111, 35);
             this.btn_ResetConfig.TabIndex = 8;
-            this.btn_ResetConfig.Text = "Reset Config";
+            this.btn_ResetConfig.Text = "Default Config";
             this.btn_ResetConfig.UseVisualStyleBackColor = true;
             this.btn_ResetConfig.Click += new System.EventHandler(this.btn_ResetConfig_Click);
             // 
@@ -199,23 +206,23 @@
             this.lbl_LedSpeed.TabIndex = 6;
             this.lbl_LedSpeed.Text = "Led Speed";
             // 
-            // btn_WriteConfig
+            // btn_CommitConfig
             // 
-            this.btn_WriteConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_WriteConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_WriteConfig.Location = new System.Drawing.Point(915, 12);
-            this.btn_WriteConfig.Name = "btn_WriteConfig";
-            this.btn_WriteConfig.Size = new System.Drawing.Size(98, 35);
-            this.btn_WriteConfig.TabIndex = 5;
-            this.btn_WriteConfig.Text = "Write Config";
-            this.btn_WriteConfig.UseVisualStyleBackColor = true;
-            this.btn_WriteConfig.Click += new System.EventHandler(this.btn_WriteConfig_Click);
+            this.btn_CommitConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_CommitConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_CommitConfig.Location = new System.Drawing.Point(1020, 12);
+            this.btn_CommitConfig.Name = "btn_CommitConfig";
+            this.btn_CommitConfig.Size = new System.Drawing.Size(105, 35);
+            this.btn_CommitConfig.TabIndex = 5;
+            this.btn_CommitConfig.Text = "Commit Config";
+            this.btn_CommitConfig.UseVisualStyleBackColor = true;
+            this.btn_CommitConfig.Click += new System.EventHandler(this.btn_CommitConfig_Click);
             // 
             // btn_ReadConfig
             // 
             this.btn_ReadConfig.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
             this.btn_ReadConfig.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btn_ReadConfig.Location = new System.Drawing.Point(705, 12);
+            this.btn_ReadConfig.Location = new System.Drawing.Point(810, 12);
             this.btn_ReadConfig.Name = "btn_ReadConfig";
             this.btn_ReadConfig.Size = new System.Drawing.Size(95, 35);
             this.btn_ReadConfig.TabIndex = 4;
@@ -228,7 +235,7 @@
             this.fanSpeedGridView.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.fanSpeedGridView.Location = new System.Drawing.Point(0, 85);
             this.fanSpeedGridView.Name = "fanSpeedGridView";
-            this.fanSpeedGridView.Size = new System.Drawing.Size(1255, 55);
+            this.fanSpeedGridView.Size = new System.Drawing.Size(724, 55);
             this.fanSpeedGridView.TabIndex = 3;
             // 
             // ledModeGridView
@@ -365,10 +372,6 @@
             this.bindingNavigatorSeparator2.Name = "bindingNavigatorSeparator2";
             this.bindingNavigatorSeparator2.Size = new System.Drawing.Size(6, 25);
             // 
-            // updateTimer
-            // 
-            this.updateTimer.Tick += new System.EventHandler(this.updateTimer_Tick);
-            // 
             // ConfigEditorForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -420,16 +423,16 @@
         private System.Windows.Forms.ToolStripSeparator bindingNavigatorSeparator2;
         private System.Windows.Forms.DataGridView fanSpeedGridView;
         private System.Windows.Forms.DataGridView ledModeGridView;
-        private System.Windows.Forms.Button btn_WriteConfig;
+        private System.Windows.Forms.Button btn_CommitConfig;
         private System.Windows.Forms.Button btn_ReadConfig;
-        private System.Windows.Forms.Timer updateTimer;
         private System.Windows.Forms.Button btn_ResetConfig;
         private System.Windows.Forms.DataGridView ledSpeedGridView;
         private System.Windows.Forms.Label lbl_LedSpeed;
-        private System.Windows.Forms.Button btn_UpdateConfig;
-        private System.Windows.Forms.Button btn_WriteLedFrame;
+        private System.Windows.Forms.Button btn_WriteConfig;
         private System.Windows.Forms.Label lbl_Disconnected;
         private System.Windows.Forms.Label label5;
         private System.Windows.Forms.ComboBox cbo_DeviceAddress;
+        private System.Windows.Forms.Label lbl_CRC;
+        private System.Windows.Forms.Label label1;
     }
 }
