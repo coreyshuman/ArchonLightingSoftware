@@ -8,6 +8,8 @@ using ArchonLightingSystem.Bootloader;
 using ArchonLightingSystem.Common;
 using static ArchonLightingSystem.Bootloader.FirmwareUpdateManager;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
+using System.Reflection;
+using System.Net;
 
 namespace ArchonLightingSystem.Models
 {
@@ -24,23 +26,57 @@ namespace ArchonLightingSystem.Models
 
         public DeviceSettings()
         {
-            
+            Default(0);
         }
 
-        public void SetFanCurveToDefault()
+        public DeviceSettings(int index)
         {
-            FanCurveValues = new List<int>();
-            FanCurveValues.Add(10);
-            FanCurveValues.Add(10);
-            FanCurveValues.Add(10);
-            FanCurveValues.Add(10);
-            FanCurveValues.Add(20);
+            Default(index);
+            DefaultFanCurve();
+        }
+
+        public void Default(int index)
+        {
+            this.Index = index;
+            Name = $"Device {index + 1}";
+            Sensor = string.Empty;
+            SensorName = string.Empty;
+            UseFanCurve = false;
+        }
+
+        private void DefaultFanCurve()
+        {
+            FanCurveValues.Clear();
+            FanCurveValues.Add(30);
+            FanCurveValues.Add(30);
+            FanCurveValues.Add(30);
+            FanCurveValues.Add(30);
+            FanCurveValues.Add(30);
             FanCurveValues.Add(40);
             FanCurveValues.Add(60);
             FanCurveValues.Add(80);
             FanCurveValues.Add(100);
             FanCurveValues.Add(100);
             FanCurveValues.Add(100);
+        }
+
+        public void Validate()
+        {
+            lock(FanCurveValues)
+            {
+                if(FanCurveValues.Count != 11)
+                {
+                    Logger.Write(Level.Debug, $"Settings Device {Index} curve out of range, setting default values.");
+                    DefaultFanCurve();
+                    return;
+                }
+
+                for(int i = 0; i < FanCurveValues.Count; i++)
+                {
+                    if (FanCurveValues[i] < 0) FanCurveValues[i] = 0;
+                    if (FanCurveValues[i] > 100) FanCurveValues[i] = 100;
+                }
+            }
         }
     }
 
@@ -51,16 +87,54 @@ namespace ArchonLightingSystem.Models
         public int Address { get; set; }
         public string Name { get; set; }
         public List<DeviceSettings> Devices { get; } = new List<DeviceSettings>();
-        
 
         public ControllerSettings()
         {
-            
+            Default(0);
+        }
+
+        public ControllerSettings(int index)
+        {
+            Default(index);
         }
 
         public DeviceSettings GetDeviceByIndex(int deviceIndex)
         {
             return Devices.Where(d => d.Index == deviceIndex).FirstOrDefault();
+        }
+
+        public void Default(int index)
+        {
+            Address = index;
+            Name = $"Controller {index + 1}";
+        }
+
+        public void Validate()
+        {
+            lock(Devices)
+            {
+                Devices.RemoveAll(d => d.Index >= DeviceControllerDefinitions.DevicePerController);
+                Devices.RemoveAll(d => d.Index < 0);
+
+                for (int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+                {
+                    int count = Devices.Where(d => d.Index == i).Count();
+                    if (count == 0)
+                    {
+                        Logger.Write(Level.Debug, $"Settings Controller {Address} Device {i} adding default.");
+                        Devices.Add(new DeviceSettings(i));
+                    }
+                    else if(count > 1)
+                    {
+                        while(Devices.Where(d => d.Index == i).Count() > 1)
+                        {
+                            Logger.Write(Level.Debug, $"Settings Controller {Address} Device {i} removing duplicate.");
+                            Devices.Remove(Devices.Where(d => d.Index == i).Last());
+                        }
+                    }
+                    Devices.Where(d => d.Index == i).First().Validate();
+                }
+            }
         }
     }
 
@@ -72,7 +146,6 @@ namespace ArchonLightingSystem.Models
 
         public List<ControllerSettings> Controllers { get; private set; } = new List<ControllerSettings>();
 
-        //public ControllerSettings[] Controllers { get; set; } = new ControllerSettings[DeviceControllerDefinitions.MaxControllers];
         public string ComputerName { get; set; } = "XxX";
         public VersionXml SoftwareVersion { get; set; } = new Version(0,0);
         public VersionXml LatestFirmwareVersion { get; set; } = new Version(0, 0);
@@ -96,6 +169,34 @@ namespace ArchonLightingSystem.Models
         public ControllerSettings GetControllerByAddress(int address)
         {
             return Controllers.Where(c => c.Address == address).FirstOrDefault();
+        }
+
+        public void Validate()
+        {
+            lock (Controllers)
+            {
+                Controllers.RemoveAll(d => d.Address >= DeviceControllerDefinitions.MaxControllers);
+                Controllers.RemoveAll(d => d.Address < 0);
+
+                for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
+                {
+                    int count = Controllers.Where(d => d.Address == i).Count();
+                    if (count == 0)
+                    {
+                        Logger.Write(Level.Debug, $"Settings Controller {i} adding default.");
+                        Controllers.Add(new ControllerSettings(i));
+                    }
+                    else if (count > 1)
+                    {
+                        while (Controllers.Where(d => d.Address == i).Count() > 1)
+                        {
+                            Logger.Write(Level.Debug, $"Settings Controller {i} removing duplicate.");
+                            Controllers.Remove(Controllers.Where(d => d.Address == i).Last());
+                        }
+                    }
+                    Controllers.Where(d => d.Address == i).LastOrDefault().Validate();
+                }
+            }
         }
     }
 
@@ -129,6 +230,7 @@ namespace ArchonLightingSystem.Models
                 {
                     var settings = (UserSettings)xs.Deserialize(sr);
                     sr.Close();
+                    settings.Validate();
                     settings.Manager = this;
                     LoadPlatformVariables(settings);
                     return settings;
@@ -136,16 +238,23 @@ namespace ArchonLightingSystem.Models
             }
             catch (Exception ex)
             {
-                Logger.Write(Level.Error, $"Failed to open settings file: {ex.Message}");
+                Logger.Write(Level.Error, $"Failed to open settings file: {ex.Message} {ex.InnerException?.Message}");
             }
             return GetDefaultSettings();
+        }
+
+        public void ValidateSettings()
+        {
+
         }
 
         private UserSettings GetDefaultSettings()
         {
             var settings = new UserSettings();
+            settings.Validate();
             for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
             {
+                /*
                 var controller = new ControllerSettings() { Address = i, Name = "Controller" + (i + 1) };
                 for (int j = 0; j < DeviceControllerDefinitions.DevicePerController; j++)
                 {
@@ -153,6 +262,7 @@ namespace ArchonLightingSystem.Models
                 }
                 controller.Devices.ForEach((devSet) => devSet.SetFanCurveToDefault());
                 settings.Controllers.Add(controller);
+                */
             }
             settings.Manager = this;
             LoadPlatformVariables(settings);
@@ -165,7 +275,7 @@ namespace ArchonLightingSystem.Models
             if(settings.SoftwareVersion < Definitions.SoftwareVersion)
             {
                 // todo can run migrations on settings file
-                Logger.Write(Level.Trace, $"Update settings software version from {settings.SoftwareVersion} to {Definitions.SoftwareVersion}");
+                Logger.Write(Level.Debug, $"Update settings software version from {settings.SoftwareVersion} to {Definitions.SoftwareVersion}");
                 settings.SoftwareVersion = Definitions.SoftwareVersion;
                 needsSave = true;
             }
@@ -173,7 +283,7 @@ namespace ArchonLightingSystem.Models
 
             if (settings.ComputerName != System.Environment.MachineName)
             {
-                Logger.Write(Level.Trace, $"Update settings computer name from {settings.ComputerName} to {System.Environment.MachineName}");
+                Logger.Write(Level.Debug, $"Update settings computer name from {settings.ComputerName} to {System.Environment.MachineName}");
                 settings.ComputerName= System.Environment.MachineName;
                 needsSave = true;
             }
@@ -189,7 +299,7 @@ namespace ArchonLightingSystem.Models
                     var firmwareVer = bootloader.GetApplicationVersion();
                     if (settings.LatestFirmwareVersion != firmwareVer)
                     {
-                        Logger.Write(Level.Trace, $"Update settings firmware version from {settings.LatestFirmwareVersion} to {firmwareVer}");
+                        Logger.Write(Level.Debug, $"Update settings firmware version from {settings.LatestFirmwareVersion} to {firmwareVer}");
                         settings.LatestFirmwareVersion = firmwareVer;
                         needsSave = true;
                     }

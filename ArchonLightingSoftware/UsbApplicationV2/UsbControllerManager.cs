@@ -22,6 +22,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private bool isRegistered = false;
 
         private EventDrivenBackgroundTask usbEventBackgroundTask = null;
+        private PeriodicBackgroundTask periodicBackgroundTask = null;
         private List<UsbDevice> pendingConnectedDevices = new List<UsbDevice>();
         private object connectedDevicesLock = new object();
         private List<UsbDevice> pendingDisconnectedDevices = new List<UsbDevice>();
@@ -29,13 +30,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private List<UsbDevice> pendingRetryDevices = new List<UsbDevice>();
         private SemaphoreSlim pendingSemaphore = new SemaphoreSlim(1, 1);
 
-        private async Task processPendingDevices(CancellationToken token)
+        private async Task<BackgroundTaskResponse> processPendingDevices(CancellationToken token)
         {
             List<Task> deviceTasks = new List<Task>();
 
             if(!await pendingSemaphore.WaitAsync(200))
             {
-                return;
+                return BackgroundTaskResponse.Continue;
             }
 
             try
@@ -85,6 +86,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
             {
                 OnUsbDeviceEvent(new UsbControllersChangedEventArgs(usbControllerInstances));
             }
+
+            return BackgroundTaskResponse.Continue;
         }
 
         public UsbControllerManager()
@@ -111,14 +114,17 @@ namespace ArchonLightingSystem.UsbApplicationV2
             Logger.Write(Level.Debug, $"Register UsbControllerManager vid={vid} pid={pid}");
 
             usbEventBackgroundTask = new EventDrivenBackgroundTask();
+            periodicBackgroundTask = new PeriodicBackgroundTask(5000);
 
             usbDeviceManager.UsbDriverEvent += HandleUsbDriverEvent;
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
 
             usbEventBackgroundTask.StartTask(processPendingDevices);
-
-            // start connection retry thread
+            periodicBackgroundTask.StartTask(processPeriodicTasks);
+            
+            /*
+            // start controller period check thread
             Task.Factory.StartNew(async () =>
             {
                 while (true)
@@ -128,6 +134,15 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
 
             }, new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default);
+            */
+        }
+
+        private Task<BackgroundTaskResponse> processPeriodicTasks(CancellationToken cancellationToken)
+        {
+            // trigger usb event task to perform connection retries
+            usbEventBackgroundTask.NextStep();
+
+            return Task.FromResult(BackgroundTaskResponse.Continue);
         }
 
         public int ControllerCount
@@ -232,12 +247,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
         {
             if(e.EventCount > 0)
             {
-                /*
-                var connectTasks = e.ConnectedDevices.Select(device => ConnectUsbControllerAsync(device));
-                var disconnectTasks = e.DisconnectedDevices.Select(device => DisconnectUsbControllerAsync(device));
-                await Task.WhenAll(connectTasks);
-                await Task.WhenAll(disconnectTasks);
-                */
                 Logger.Write(Level.Trace, $"UsbControllerManager UsbEvent");
                 lock (connectedDevicesLock)
                 {
@@ -252,30 +261,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 usbEventBackgroundTask?.NextStep();
                 Logger.Write(Level.Trace, $"UsbControllerManager UsbEvent Done");
             }
-
-
-
-            /*
-            e.Devices.ForEach(dev =>
-            {
-                var controller = usbControllerInstances.Where(ctrl => ctrl.UsbDevice == dev).FirstOrDefault();
-                if(controller != null)
-                {
-                    if(!dev.IsAttached)
-                    {
-                        usbControllerInstances.Remove(controller);
-                        OnUsbDeviceEvent(new UsbControllerRemovedEventArgs() { ControllerInstance = controller});
-                    }
-                }
-                else
-                {
-                    var newController = new UsbControllerDevice(dev);
-                    newController.ControllerReadyEvent += ControllerReadyEventHandler;
-                    newController.ControllerErrorEvent += ControllerErrorEventHandler;
-                    usbControllerInstances.Add(newController);
-                }
-            });
-            */
         }
 
         private void ControllerReadyEventHandler(object sender, EventArgs e)

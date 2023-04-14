@@ -140,8 +140,6 @@ namespace ArchonLightingSystem.Forms
             pointPoints.AddXY(90, 100);
             pointPoints.AddXY(100, 100);
 
-            // get user settings
-            if (deviceSettings.FanCurveValues.Count != 11) deviceSettings.SetFanCurveToDefault();
             UpdateFanCurvePoints();
         }
 

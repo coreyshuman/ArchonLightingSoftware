@@ -4,20 +4,21 @@ using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+using ArchonLightingSystem.Interfaces;
 
 namespace ArchonLightingSystem.Common
 {
-    public class EventDrivenBackgroundTask
+    public class EventDrivenBackgroundTask : IBackgroundTask
     {
         readonly CancellationTokenSource cancellationTokenSource = new CancellationTokenSource();
         readonly AutoResetEvent autoResetEvent = new AutoResetEvent(false);
         private bool disposed = false;
 
-        public void StartTask(Func<CancellationToken, Task> recurringAction)
+        public Task StartTask(Func<CancellationToken, Task<BackgroundTaskResponse>> recurringAction)
         {
             if (recurringAction == null) throw new ArgumentException(nameof(recurringAction));
 
-            Task.Factory.StartNew(async () =>
+            return Task.Factory.StartNew(async () =>
             {
                 try
                 {
@@ -31,6 +32,7 @@ namespace ArchonLightingSystem.Common
                 catch(Exception ex)
                 {
                     Logger.Write(Level.Error, $"EventDrivenBackgroundTask Exception: {ex.Message}");
+                    throw ex;
                 }
                 finally
                 {
@@ -39,6 +41,8 @@ namespace ArchonLightingSystem.Common
                     cancellationTokenSource.Dispose();
                     autoResetEvent.Dispose();
                 }
+
+                return Task.CompletedTask;
             }, 
             cancellationTokenSource.Token, 
             TaskCreationOptions.LongRunning, 

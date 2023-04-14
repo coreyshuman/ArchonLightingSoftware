@@ -101,14 +101,17 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Common\Enums.cs" />
-    <Compile Include="Common\EventDrivenBackgroundTask.cs" />
+    <Compile Include="Common\Task\BackgroundTaskResponse.cs" />
+    <Compile Include="Common\Task\EventDrivenBackgroundTask.cs" />
     <Compile Include="Common\Logger.cs" />
+    <Compile Include="Common\Task\PeriodicBackgroundTask.cs" />
     <Compile Include="Forms\LogForm.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\LogForm.Designer.cs">
       <DependentUpon>LogForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Interfaces\IBackgroundTask.cs" />
     <Compile Include="Interfaces\IUsbDevice.cs" />
     <Compile Include="Models\VersionXml.cs" />
     <Compile Include="ThirdParty\AIDA64Integration.cs" />
