@@ -30,7 +30,7 @@ namespace ArchonLightingSystem
         private UsbControllerDevice usbControllerDevice;
         private readonly ApplicationData applicationData;
 
-        private SemaphoreSlim formUpdateSemiphore = new SemaphoreSlim(1, 1);
+        private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1, 1);
 
         #region Initializers
         public ConfigEditorForm()
@@ -64,6 +64,7 @@ namespace ArchonLightingSystem
             lbl_LedMode.Font = AppTheme.ComponentFontLarge;
             lbl_LedSpeed.Font = AppTheme.ComponentFontLarge;
             lbl_CRC.Font = AppTheme.ComponentFont;
+            lbl_Disconnected.ForeColor = AppTheme.PrimaryLowLight;
         }
 
         private void InitializeNavigator()
@@ -164,7 +165,7 @@ namespace ArchonLightingSystem
         #region Form Update
         public void UpdateFormState(UsbControllerDevice device, bool? busy = null)
         {
-            formUpdateSemiphore.Wait();
+            formUpdateSemaphore.Wait();
 
             if (busy.HasValue)
             {
@@ -200,7 +201,7 @@ namespace ArchonLightingSystem
             }
             finally
             {
-                formUpdateSemiphore.Release();
+                formUpdateSemaphore.Release();
             }
         }
 
@@ -208,7 +209,7 @@ namespace ArchonLightingSystem
         {
             int i, j;
 
-            formUpdateSemiphore.Wait();
+            formUpdateSemaphore.Wait();
 
             try
             {
@@ -241,7 +242,7 @@ namespace ArchonLightingSystem
             }
             finally
             { 
-                formUpdateSemiphore.Release(); 
+                formUpdateSemaphore.Release(); 
             }
         }
 
@@ -529,7 +530,7 @@ namespace ArchonLightingSystem
             ledColorNavigator.BindingSource.Position = 0;
 
             lastSelectedAddress = combo.SelectedIndex;
-            usbControllerDevice = manager.GetDevice(combo.SelectedIndex);
+            usbControllerDevice = manager.GetController(combo.SelectedIndex);
             UpdateFormState(usbControllerDevice);
             UpdateFormData(usbControllerDevice);
         }

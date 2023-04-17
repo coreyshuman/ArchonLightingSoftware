@@ -40,37 +40,31 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         public void Wait()
         {
-            Trace.WriteLine($"Wait {DevicePath}");
             semaphore.Wait();
         }
 
         public void Wait(CancellationTokenSource cancellationTokenSource)
         {
-            Trace.WriteLine($"WaitToken {DevicePath}");
             semaphore.Wait(cancellationTokenSource.Token);
         }
 
         public Task WaitAsync()
         {
-            Trace.WriteLine($"WaitAsync {DevicePath}");
             return semaphore.WaitAsync();
         }
 
         public Task WaitAsync(CancellationTokenSource cancellationTokenSource)
         {
-            Trace.WriteLine($"WaitAsyncToken {DevicePath}");
             return semaphore.WaitAsync(cancellationTokenSource.Token);
         }
 
         public void Release()
         {
-            Trace.WriteLine($"Release {DevicePath}");
             semaphore.Release();
         }
 
         public void Release(CancellationTokenSource cancellationTokenSource)
         {
-            Trace.WriteLine($"ReleaseToken {DevicePath}");
             try
             {
                 semaphore.Release();
@@ -97,7 +91,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         public void Cancel()
         {
-            Trace.WriteLine($"Cancel {DevicePath}");
             lock (listLock)
             {
                 cancellationTokenSources.ForEach(cts => cts.Cancel());

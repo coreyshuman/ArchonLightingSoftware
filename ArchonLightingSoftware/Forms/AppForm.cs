@@ -12,6 +12,9 @@ using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Services;
 using ArchonLightingSystem.Forms;
 using ArchonLightingSystem.WindowsSystem.Startup;
+using System.Windows.Forms.DataVisualization.Charting;
+using ArchonLightingSystem.UsbApplicationV2;
+using System.Threading;
 
 namespace ArchonLightingSystem
 {
@@ -19,7 +22,7 @@ namespace ArchonLightingSystem
     {
         public bool FormIsInitialized { get; set; } = false;
 
-        private UsbDeviceManager usbDeviceManager = null;
+        private UsbApplication.UsbDeviceManager usbDeviceManager = null;
         private ConfigEditorForm configForm = null;
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
@@ -32,7 +35,7 @@ namespace ArchonLightingSystem
 
         UsbApplicationV2.UsbControllerManager usbControllerManger;
 
-        private List<ComboBoxItem> deviceAddressList = new List<ComboBoxItem>();
+        
         private int selectedAddressIdx = 0;
         private int selectedAddress = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
@@ -42,7 +45,11 @@ namespace ArchonLightingSystem
         private bool isHidden = false;
         private bool allowVisible = false;
         private bool allowClose = false;
+        private bool formIsBusy = false;
         private string lastNotification = "";
+        private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1,1);
+
+        private UsbControllerDevice usbControllerDevice = null;
 
 
         public unsafe AppForm(bool startInBackground)
@@ -64,13 +71,14 @@ namespace ArchonLightingSystem
                 Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
-            usbDeviceManager = new UsbDeviceManager();
+            usbDeviceManager = new UsbApplication.UsbDeviceManager();
             //usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
             //usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
 
             // debug testing new manager
             usbControllerManger = new UsbApplicationV2.UsbControllerManager();
             usbControllerManger.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
+            usbControllerManger.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
 
             FormUpdateTimer.Enabled = true;
 
@@ -90,6 +98,8 @@ namespace ArchonLightingSystem
 
             InitializeForm();
         }
+
+        
 
         protected override void SetVisibleCore(bool value)
         {
@@ -128,25 +138,13 @@ namespace ArchonLightingSystem
                 ControllerComponent component = new ControllerComponent();
                 deviceComponents.Add(component);
                 component.InitializeComponent(this, hardwareManager, i);
-                component.UserSettings = userSettings;
             }
 
-            for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
-            {
-                var device = usbControllerManger.GetDevice(i);
+            UpdateDeviceComboBox();
 
-                var comboBoxItem = new ComboBoxItem
-                {
-                    Text = device.Address.ToString() +
-                                $" ({userSettings.Controllers.Where(c => c.Address == device.Address).FirstOrDefault()?.Name ?? ""})",
-                    Value = i
-                };
+            AppTheme.ApplyThemeToForm(this);
 
-                deviceAddressList.Add(comboBoxItem);
-            }
-
-            cbo_DeviceAddress.Items.Clear();
-            cbo_DeviceAddress.Items.AddRange(deviceAddressList.ToArray());
+            lbl_Disconnected.ForeColor = AppTheme.PrimaryLowLight;
         }
 
         void HandleLogEvent(object sender, LogEventArgs eventArgs)
@@ -169,19 +167,51 @@ namespace ArchonLightingSystem
             statusLabel.Text = msg; 
         }
 
-        void UpdateFormSettings(DeviceControllerData controller)
+        public void UpdateFormState(UsbControllerDevice device, bool? busy = null)
         {
+            if (InvokeRequired)
+            {
+                this.BeginInvoke(new Action<UsbControllerDevice, bool?>(UpdateFormState), new object[] { usbControllerDevice, null });
+                return;
+            }
+
+            formUpdateSemaphore.Wait();
+
+            if (busy.HasValue)
+            {
+                this.formIsBusy = busy.Value;
+            }
+
+            try
+            {
+                lbl_Disconnected.Visible = device.IsDisconnected;
+                cbo_DeviceAddress.Enabled = !formIsBusy;
+                txt_ControllerName.Enabled = device.IsConnected && !formIsBusy;
+                btn_SaveConfig.Enabled = device.IsConnected && !formIsBusy;
+            }
+            finally
+            {
+                formUpdateSemaphore.Release();
+            }
+        }
+
+        void UpdateFormData(UsbControllerDevice controller)
+        {
+            if (InvokeRequired)
+            {
+                this.BeginInvoke(new Action<UsbControllerDevice>(UpdateFormData), new object[] { usbControllerDevice });
+                return;
+            }
+
             FormUpdateTimer.Enabled = false;
 
-            txt_ControllerName.Text = userSettings.Controllers.Where(c => c.Address == selectedAddress).FirstOrDefault()?.Name;
+            txt_ControllerName.Text = controller.Settings.Name;
 
-
-            for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
+            for (int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
-                deviceComponents[i - 1].ControllerAddress = selectedAddress;
-                deviceComponents[i - 1].AppData = usbDeviceManager.GetAppData(selectedAddressIdx);
+                deviceComponents[i].UpdateComponentData(controller);
             }
-            FormUpdateTimer.Enabled = true;
+            //FormUpdateTimer.Enabled = true;
         }
 
         //This is a callback function that gets called when a Windows message is received by the form.
@@ -195,7 +225,14 @@ namespace ArchonLightingSystem
             base.WndProc(ref m);
         }
 
-        private void UsbDeviceManager_UsbControllerEvent(object sender, UsbControllerEventArgs e)
+        private void UsbControllerManger_UsbControllerEvent(object sender, UsbApplicationV2.UsbControllerEventArgs e)
+        {
+            UpdateDeviceComboBox();
+            UpdateFormState(usbControllerDevice, null);
+            UpdateFormData(usbControllerDevice);
+        }
+
+        private void UsbDeviceManager_UsbControllerEvent(object sender, UsbApplication.UsbControllerEventArgs e)
         {
             
             if (e is UsbControllerAddedEventArgs)
@@ -208,7 +245,7 @@ namespace ArchonLightingSystem
                     Value = usbDeviceManager.UsbDevices.IndexOf(controllerInstance)
                 };
 
-                deviceAddressList.Add(comboBoxItem);
+                //deviceAddressList.Add(comboBoxItem);
 
                 var addr = controllerInstance.AppData?.DeviceControllerData.DeviceAddress;
                 var firmwareVer = controllerInstance.AppData?.DeviceControllerData.ApplicationVersion;
@@ -220,31 +257,45 @@ namespace ArchonLightingSystem
                 UsbControllerRemovedEventArgs evtArgs = e as UsbControllerRemovedEventArgs;
                 Logger.Write(Level.Information, $"Device {evtArgs?.ControllerInstance?.AppData?.DeviceControllerData.DeviceAddress} removed");
             }
-            else if (e is UsbControllerErrorEventArgs)
+            else if (e is UsbApplication.UsbControllerErrorEventArgs)
             {
-                UsbControllerErrorEventArgs errorArgs = e as UsbControllerErrorEventArgs;
+                UsbApplication.UsbControllerErrorEventArgs errorArgs = e as UsbApplication.UsbControllerErrorEventArgs;
                 Logger.Write(Level.Error, $"Error on Device {errorArgs.ControllerAddress}: {errorArgs.Message}");
+            }
+        }
+
+        private void UpdateDeviceComboBox()
+        {
+            if (InvokeRequired)
+            {
+                this.Invoke(new Action(UpdateDeviceComboBox));
+                return;
+            }
+
+            var lastSelected = (ComboBoxItem)cbo_DeviceAddress.SelectedItem;
+            cbo_DeviceAddress.Items.Clear();
+            cbo_DeviceAddress.Items.AddRange(
+                usbControllerManger.ActiveControllers.Select(c =>
+                    new ComboBoxItem() { 
+                        Text = $"{c.Address} {c.Settings.Name}",
+                        Value = c.Address
+                    }
+                ).ToArray()
+            );
+            if(lastSelected != null)
+            {
+                var selectedController = usbControllerManger.ActiveControllers.Where(c => c.Address == lastSelected.Value).FirstOrDefault();
+                cbo_DeviceAddress.SelectedIndex = usbControllerManger.ActiveControllers.IndexOf(selectedController);
+            }
+
+            if (cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
+            {
+                cbo_DeviceAddress.SelectedIndex = 0;
             }
         }
 
         private async void FormUpdateTimer_Tick(object sender, EventArgs e)
         {
-            // Update dropdown UI if new controllers have been connected
-            /*
-            if(deviceAddressList.Count > cbo_DeviceAddress.Items.Count)
-            {
-                var lastSelected = cbo_DeviceAddress.SelectedValue;
-                cbo_DeviceAddress.Items.Clear();
-                cbo_DeviceAddress.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
-                cbo_DeviceAddress.SelectedValue = lastSelected;
-
-                if (cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
-                {
-                    cbo_DeviceAddress.SelectedIndex = 0;
-                }
-            }
-            */
-
             var usbDevice = usbDeviceManager.GetDevice(selectedAddressIdx);
             if(usbDevice == null)
             {
@@ -261,7 +312,7 @@ namespace ArchonLightingSystem
                     {
                         if (!FormIsInitialized && usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
                         {
-                            UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
+                            //UpdateFormData(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
                             FormIsInitialized = true;
                         }
                     }
@@ -407,10 +458,20 @@ namespace ArchonLightingSystem
 
         private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
+            var cbo = (ComboBox)sender;
+            
+            if(cbo.SelectedIndex == -1)
+            {
+                return;
+            }
+
+            var item = (ComboBoxItem)(cbo.SelectedItem);
             selectedAddressIdx = item.Value;
             //selectedAddress = (int)usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress;
             //UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
+            usbControllerDevice = usbControllerManger.GetControllerByAddress(item.Value);
+            UpdateFormState(usbControllerDevice, null);
+            UpdateFormData(usbControllerDevice);
         }
 
         private void closeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -477,7 +538,7 @@ namespace ArchonLightingSystem
             if (sequencerForm == null || sequencerForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
-                sequencerForm.InitializeForm(usbDeviceManager, userSettings, deviceAddressList, selectedAddressIdx);
+                sequencerForm.InitializeForm(usbDeviceManager, userSettings, null, selectedAddressIdx);
                 sequencerForm.Location = this.Location;
                 sequencerForm.Show();
             }

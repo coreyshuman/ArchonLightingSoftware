@@ -49,6 +49,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 return Task.FromResult(0u);
             }
 
+            if (device == null)
+            {
+                return Task.FromResult(0u);
+            }
+
             if (device.IsAttached == false)
             {
                 return Task.FromResult(0u);
@@ -83,14 +88,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 HIDOverlapped.Offset = 0;
                 HIDOverlapped.OffsetHigh = 0;
 
-                var watch = Stopwatch.StartNew();
                 if (WriteFile(device.WriteHandleToUSBDevice, usbReport, USB_PACKET_SIZE, ref bytesWritten, ref HIDOverlapped))
                 {
-                    watch.Stop();
-                    Logger.Write(Level.Trace, $"UsbWrite immediate Duration {watch.ElapsedMilliseconds} ms");
                     return Task.FromResult(bytesWritten);
                 }
-                else if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
+
+                var lastError = Marshal.GetLastWin32Error();
+
+                if (lastError == ERROR_IO_PENDING)
                 {
                     if (cancelToken.IsCancellationRequested)
                     {
@@ -112,8 +117,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             }
 
                             uint result = WaitForSingleObject(eventHandle, 150); // ms timeout period
-                            watch.Stop();
-                            Logger.Write(Level.Trace, $"UsbWrite wait Duration {watch.ElapsedMilliseconds} ms");
 
                             if (cancelToken.IsCancellationRequested)
                             {
@@ -129,7 +132,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     if (GetOverlappedResult(device.WriteHandleToUSBDevice, ref HIDOverlapped, ref bytesWritten, false))
                                     {
                                         //return bytesWritten;
-                                        Logger.Write(Level.Trace, $"UsbWrite wait {bytesWritten} bytes written");
+                                        //Logger.Write(Level.Trace, $"UsbWrite wait {bytesWritten} bytes written");
                                         taskCompletionSource.SetResult(bytesWritten);
                                         return;
                                     }
@@ -164,10 +167,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                     return taskCompletionSource.Task;
                 }
+                else
+                {
+                    throw new Exception($"Unknown WIN32 Error: {lastError:X}");
+                }
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"Undefined UsbWrite Error: {ex.Message}");
+                Logger.Write(Level.Error, $"Undefined UsbWrite Error: {ex.Message}");
             }
             finally
             {
@@ -210,6 +217,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 return Task.FromResult(0u);
             }
 
+            if (device == null)
+            {
+                return Task.FromResult(0u);
+            }
+
             if (device.IsAttached == false)
             {
                 return Task.FromResult(0u);
@@ -238,16 +250,16 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                 pINBuffer = Marshal.AllocHGlobal((int)bufflen);    //Allocate some unmanged RAM for the receive data buffer.
 
-                var watch = Stopwatch.StartNew();
                 if (ReadFile(device.ReadHandleToUSBDevice, pINBuffer, bufflen, ref bytesRead, ref HIDOverlapped))
                 {
-                    watch.Stop();
-                    Logger.Write(Level.Trace, $"UsbRead immediate Duration {watch.ElapsedMilliseconds} ms");
                     Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
-                    Logger.Write(Level.Trace, $"UsbRead {bytesRead} bytes read");
+                    //Logger.Write(Level.Trace, $"UsbRead {bytesRead} bytes read");
                     return Task.FromResult(bytesRead);
                 }
-                else if (Marshal.GetLastWin32Error() == ERROR_IO_PENDING)
+
+                var lastError = Marshal.GetLastWin32Error();
+
+                if (lastError == ERROR_IO_PENDING)
                 {
                     if (cancelToken.IsCancellationRequested)
                     {
@@ -262,8 +274,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         try
                         {
                             result = WaitForSingleObject(eventHandle, readTimeout);
-                            watch.Stop();
-                            Logger.Write(Level.Trace, $"UsbRead wait Duration {watch.ElapsedMilliseconds} ms");
 
                             if (cancelToken.IsCancellationRequested)
                             {
@@ -279,7 +289,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     if (GetOverlappedResult(device.ReadHandleToUSBDevice, ref HIDOverlapped, ref bytesRead, false))
                                     {
                                         Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
-                                        Logger.Write(Level.Trace, $"UsbRead {bytesRead} bytes read");
+                                        //Logger.Write(Level.Trace, $"UsbRead {bytesRead} bytes read");
                                         taskCompletionSource.SetResult(bytesRead);
                                         return;
                                     }
@@ -312,13 +322,17 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             Marshal.FreeHGlobal(pINBuffer);
                         }
                     }, cancelToken.Token, TaskCreationOptions.None, TaskScheduler.Default);
-                }
 
-                return taskCompletionSource.Task;
+                    return taskCompletionSource.Task;
+                }
+                else
+                {
+                    throw new Exception($"Unknown WIN32 Error: {lastError:X}");
+                }
             }
             catch (Exception e)
             {
-                Trace.WriteLine($"Undefined UsbWrite Error: {e.Message}");
+                Logger.Write(Level.Error, $"Undefined UsbWrite Error: {e.Message}");
             }
             finally
             {

@@ -6,6 +6,7 @@ using ArchonLightingSystem.Common;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
+using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -13,29 +14,46 @@ namespace ArchonLightingSystem.UsbApplicationV2
     {
         public static async Task DeviceDoWork(UsbControllerDevice controllerInstance)
         {
+            int i;
+            Byte[] rxtxBuffer = new Byte[UsbAppCommon.USB_BUFFER_SIZE];
+
             if (await controllerInstance.semaphore.WaitAsync(200))
             {
+                CancellationTokenSource cancelToken = null;
                 try
                 {
-                    if (controllerInstance.AppData.EepromReadPending)
+                    cancelToken = controllerInstance.UsbDevice.GetCancellationToken();
+                    await controllerInstance.UsbDevice.WaitAsync(cancelToken);
+
+                    // stop general tasks when paused
+                    if (!controllerInstance.IsPaused)
                     {
-                        controllerInstance.AppData.EepromReadPending = false;
-                        CancellationTokenSource cancelToken = new CancellationTokenSource();
-                        controllerInstance.UsbDevice.Wait(cancelToken);
-
-                        try
+                        for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
                         {
-                            ControlPacket response = await ReadEeprom(controllerInstance.UsbDevice, (ushort)controllerInstance.AppData.EepromAddress, (ushort)controllerInstance.AppData.EepromLength, cancelToken);
-
+                            rxtxBuffer[i] = controllerInstance.ControllerData.TemperatureValue[i];
+                        }
+                        if (await GenerateAndSendFrames(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController, cancelToken) > 0)
+                        {
+                            ControlPacket response = await GetDeviceResponse(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, defaultReadTimeout, cancelToken);
                             if (response != null)
                             {
-                                controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data, response.Len);
-                                controllerInstance.AppData.EepromReadDone = true;
+                                for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+                                {
+                                    controllerInstance.ControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
+                                }
                             }
                         }
-                        finally
+
+                        if (controllerInstance.AppData.UpdateFanSpeedPending)
                         {
-                            controllerInstance.UsbDevice.Release();
+                            await WriteFanSpeed(controllerInstance.UsbDevice, controllerInstance.AppData.DeviceControllerData.AutoFanSpeedValue, cancelToken);
+                            controllerInstance.AppData.UpdateFanSpeedPending = false;
+                        }
+
+                        if (controllerInstance.AppData.UpdateConfigPending)
+                        {
+                            await SendWriteConfigCmd(controllerInstance.UsbDevice, controllerInstance.ControllerData.DeviceConfig, cancelToken);
+                            controllerInstance.AppData.UpdateConfigPending = false;
                         }
                     }
                 }
@@ -45,6 +63,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
                 finally
                 {
+                    if (cancelToken != null)
+                    {
+                        controllerInstance.UsbDevice.Release(cancelToken);
+                    }
                     controllerInstance.semaphore.Release();
                 }
             }

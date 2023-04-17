@@ -86,6 +86,7 @@ namespace ArchonLightingSystem.Models
         [XmlAttribute]
         public int Address { get; set; }
         public string Name { get; set; }
+        public bool AlertOnDisconnect { get; set; }
         public List<DeviceSettings> Devices { get; } = new List<DeviceSettings>();
 
         public ControllerSettings()
@@ -243,27 +244,10 @@ namespace ArchonLightingSystem.Models
             return GetDefaultSettings();
         }
 
-        public void ValidateSettings()
-        {
-
-        }
-
         private UserSettings GetDefaultSettings()
         {
             var settings = new UserSettings();
             settings.Validate();
-            for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
-            {
-                /*
-                var controller = new ControllerSettings() { Address = i, Name = "Controller" + (i + 1) };
-                for (int j = 0; j < DeviceControllerDefinitions.DevicePerController; j++)
-                {
-                    controller.Devices.Add(new DeviceSettings() { Index = j });
-                }
-                controller.Devices.ForEach((devSet) => devSet.SetFanCurveToDefault());
-                settings.Controllers.Add(controller);
-                */
-            }
             settings.Manager = this;
             LoadPlatformVariables(settings);
             return settings;

@@ -140,7 +140,7 @@ namespace ArchonLightingSystem.Forms
             pointPoints.AddXY(90, 100);
             pointPoints.AddXY(100, 100);
 
-            UpdateFanCurvePoints();
+            UpdateFanCurveChart();
         }
 
         void StoreChartPointLocation(ChartArea ca, Series s, DataPoint dp)
@@ -151,7 +151,7 @@ namespace ArchonLightingSystem.Forms
             dp.Tag = (new RectangleF(px - mh, py - mh, dp.MarkerSize, dp.MarkerSize));
         }
 
-        void UpdateFanCurvePoints()
+        void UpdateFanCurveChart()
         {
             var lineSeries = fanCurveChart.Series[0];
             var linePoints = lineSeries.Points;
@@ -373,7 +373,7 @@ namespace ArchonLightingSystem.Forms
                 int pointIndex = pointPoints.IndexOf(selectedDataPoint);
                 deviceSettings.FanCurveValues[pointIndex] = (int)selectedDataPoint.YValues[0];
                 selectedDataPoint = null;
-                UpdateFanCurvePoints();
+                UpdateFanCurveChart();
             }
         }
 
@@ -390,7 +390,7 @@ namespace ArchonLightingSystem.Forms
         private void btnPasteFanCurve_Click(object sender, EventArgs e)
         {
             deviceSettings.FanCurveValues = (List<int>)CopyPasteDictionary.Paste(fanCurveCopyPasteKey);
-            UpdateFanCurvePoints();
+            UpdateFanCurveChart();
         }
 
         private void incrementPointValue(DataPoint dp, double value)
@@ -404,7 +404,7 @@ namespace ArchonLightingSystem.Forms
 
             int pointIndex = pointPoints.IndexOf(dp);
             deviceSettings.FanCurveValues[pointIndex] = (int)value;
-            UpdateFanCurvePoints();
+            UpdateFanCurveChart();
             fanCurveChart.Invalidate();
         }
 

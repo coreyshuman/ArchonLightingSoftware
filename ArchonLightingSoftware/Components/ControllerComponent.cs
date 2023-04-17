@@ -10,6 +10,7 @@ using System.Drawing;
 using System.Diagnostics;
 using ArchonLightingSystem.OpenHardware;
 using LibreHardwareMonitor.Hardware;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Components
 {
@@ -19,7 +20,11 @@ namespace ArchonLightingSystem.Components
         private static List<Color> lastColorsAll = new List<Color>();
         private static ColorDialog colorDialog = new ColorDialog();
 
+        private UsbControllerDevice usbController = null;
+        private DeviceSettings deviceSettings = null;
+        private DeviceControllerData deviceControllerData = null;
         private ApplicationData applicationData;
+
         private SensorMonitorManager hardwareManager;
         private Form parentForm;
         private Control parentControl;
@@ -34,56 +39,24 @@ namespace ArchonLightingSystem.Components
         private Button btnFanConfig;
         private IList<Button> buttons;
         private Timer fanUpdateTimer;
-        private bool isInitialized = false;
+
         private UserSettings userSettings = null;
         private int devIdx = 0;
         private ISensor sensor = null;
-        private int controllerAddress = 0;
 
         public bool UpdateReady { get; set; }
-        public ApplicationData AppData
-        {
-            get
-            {
-                return applicationData;
-            }
-            set
-            {
-                fanUpdateTimer.Enabled = false;
-                isInitialized = false;
-                ControlsEnabled(false);
-                applicationData = value;
-                fanUpdateTimer.Enabled = true;
-                LoadConfig();
-            }
-        }
 
-        public UserSettings UserSettings
+        public void UpdateComponentData(UsbControllerDevice controller)
         {
-            get
-            {
-                return userSettings;
-            }
-            set
-            {
-                userSettings = value;
-                LoadConfig();
-            }
-        }
-
-        
-
-        public int ControllerAddress
-        {
-            get
-            {
-                return controllerAddress;
-            }
-            set
-            {
-                controllerAddress = value;
-                LoadConfig();
-            }
+            fanUpdateTimer.Enabled = false;
+            ControlsEnabled(false);
+            usbController = controller;
+            deviceControllerData = usbController.ControllerData;
+            applicationData = usbController.AppData;
+            LoadConfig();
+            UpdateUI(devIdx);
+            ControlsEnabled(controller.IsConnected);
+            fanUpdateTimer.Enabled = true;
         }
 
         public ControllerComponent()
@@ -101,40 +74,30 @@ namespace ArchonLightingSystem.Components
             fanUpdateTimer.Interval = 50;
         }
 
-        private DeviceSettings GetDeviceSettings()
-        {
-            return userSettings.Controllers.Where(c => c.Address == controllerAddress).FirstOrDefault().Devices.Where(d => d.Index == devIdx).FirstOrDefault();
-        }
-
         private EventHandler FanUpdateTimerTickHandler(int deviceIdx)
         {
             return (object sender, EventArgs e) =>
             {
-                if(!isInitialized && applicationData?.DeviceControllerData?.IsInitialized == true)
+                if (usbController == null || !usbController.IsConnected)
                 {
-                    fanUpdateTimer.Enabled = false;
-                    UpdatePeripheralSettings(deviceIdx);
-                    ControlsEnabled(true);
-                    isInitialized = true;
-                    fanUpdateTimer.Enabled = true;
+                    return;
                 }
-                if(isInitialized)
+
+                fanBar.Value = deviceControllerData.MeasuredFanRpm[deviceIdx];
+                if(sensor != null && sensor.Value.HasValue)
                 {
-                    fanBar.Value = applicationData.DeviceControllerData.MeasuredFanRpm[deviceIdx];
-                    if(sensor != null && sensor.Value.HasValue)
-                    {
-                        tempBar.Value = (int)Math.Round(sensor.Value.Value);
-                    }
-                    else
-                    {
-                        tempBar.Value = 0;
-                    }
-                    if(GetDeviceSettings().UseFanCurve)
-                    {
-                        var calculatedFanSpeed = applicationData.DeviceControllerData.AutoFanSpeedValue[deviceIdx];
-                        fanCtrl.Value = calculatedFanSpeed == 0xFF ? fanCtrl.Value : calculatedFanSpeed;
-                    }
+                    tempBar.Value = (int)Math.Round(sensor.Value.Value);
                 }
+                else
+                {
+                    tempBar.Value = 0;
+                }
+                if(deviceSettings.UseFanCurve)
+                {
+                    var calculatedFanSpeed = deviceControllerData.AutoFanSpeedValue[deviceIdx];
+                    fanCtrl.Value = calculatedFanSpeed == 0xFF ? fanCtrl.Value : calculatedFanSpeed;
+                }
+
             };
         }
 
@@ -292,17 +255,19 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (usbController == null || !usbController.IsConnected)
+                {
                     return;
+                }
 
                 ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
-                form.InitializeForm(applicationData, hardwareManager, GetDeviceSettings());
+                form.InitializeForm(applicationData, hardwareManager, deviceSettings);
                 form.Location = parentForm.Location;
                 DialogResult res = form.ShowDialog(parentForm);
                 if(res == DialogResult.OK)
                 {
                     userSettings.Save();
-                    UpdateControlsUsingSettings();
+                    LoadConfig();
                 }
                 else
                 {
@@ -333,26 +298,19 @@ namespace ArchonLightingSystem.Components
 
         private void LoadConfig()
         {
-            if (userSettings == null) return;
+            if (usbController == null) return;
+            deviceSettings = usbController.Settings.GetDeviceByIndex(devIdx);
 
-            txtDeviceName.Text = GetDeviceSettings().Name;
-
-            UpdateControlsUsingSettings();
-        }
-
-        private void UpdateControlsUsingSettings()
-        {
-            var deviceSettings = GetDeviceSettings();
-
+            txtDeviceName.Text = deviceSettings.Name;
             fanCtrl.Enabled = !deviceSettings.UseFanCurve;
             fanCtrl.BackColor = fanCtrl.Enabled ? grpFan.BackColor : Color.FromArgb(unchecked((int)0xFF661111));
-            btnFanConfig.Text = deviceSettings.SensorName.IsNotNullOrEmpty() ? deviceSettings.SensorName : "Configure";
+            btnFanConfig.Text = deviceSettings.SensorName.IsNotNullOrEmpty() ? deviceSettings.SensorName : "Configure...";
             sensor = hardwareManager.GetSensorByIdentifier(deviceSettings.Sensor);
         }
 
-        private void UpdatePeripheralSettings(int deviceIdx)
+        private void UpdateUI(int deviceIdx)
         {
-            fanCtrl.Value = applicationData.DeviceControllerData.DeviceConfig.FanSpeed[deviceIdx];
+            fanCtrl.Value = deviceControllerData.DeviceConfig.FanSpeed[deviceIdx];
             buttons.Select((Button btn, int index) => {
                 btn.BackColor = GetLedColor(deviceIdx, index, true);
                 if (btn.BackColor.G == 0 || btn.BackColor.R == 0)
@@ -365,8 +323,8 @@ namespace ArchonLightingSystem.Components
                 }
                 return btn;
             }).ToArray();
-            byte ledMode = applicationData.DeviceControllerData.DeviceConfig.LedMode[deviceIdx];
-            byte ledSpeed = applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx];
+            byte ledMode = deviceControllerData.DeviceConfig.LedMode[deviceIdx];
+            byte ledSpeed = deviceControllerData.DeviceConfig.LedSpeed[deviceIdx];
             lightingMode.SelectedIndex = ledMode < LightingModes.GetLightingModes().Length ? ledMode : -1;
             lightingSpeed.SelectedIndex = ledSpeed > 0 && ledSpeed < LightingModes.GetLightingSpeeds().Length ? ledSpeed - 1 : -1;
         }
@@ -375,10 +333,12 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (usbController == null || !usbController.IsConnected)
+                {
                     return;
+                }
 
-                applicationData.DeviceControllerData.DeviceConfig.FanSpeed[deviceIdx] = (byte)((TrackBar)sender).Value;
+                deviceControllerData.DeviceConfig.FanSpeed[deviceIdx] = (byte)((TrackBar)sender).Value;
                 applicationData.UpdateConfigPending = true;
             };
         }
@@ -387,15 +347,17 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (userSettings == null)
+                {
                     return;
+                }
 
                 try
                 {
                     TextBox txt = (TextBox)sender;
                     if (userSettings != null)
                     {
-                        GetDeviceSettings().Name = txt.Text;
+                        deviceSettings.Name = txt.Text;
                         userSettings.Save();
                     }
                 }
@@ -411,11 +373,19 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (usbController == null || !usbController.IsConnected)
+                {
                     return;
+                }
 
                 ComboBox cbox = (ComboBox)sender;
-                applicationData.DeviceControllerData.DeviceConfig.LedMode[deviceIdx] = (byte)cbox.SelectedIndex;
+
+                if (cbox.SelectedIndex == -1)
+                {
+                    return;
+                }
+
+                deviceControllerData.DeviceConfig.LedMode[deviceIdx] = (byte)cbox.SelectedIndex;
                 applicationData.UpdateConfigPending = true;
             };
         }
@@ -424,11 +394,13 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (usbController == null || !usbController.IsConnected)
+                {
                     return;
+                }
 
                 ComboBox cbox = (ComboBox)sender;
-                applicationData.DeviceControllerData.DeviceConfig.LedSpeed[deviceIdx] = (byte)(cbox.SelectedIndex + 1);
+                deviceControllerData.DeviceConfig.LedSpeed[deviceIdx] = (byte)(cbox.SelectedIndex + 1);
                 applicationData.UpdateConfigPending = true;
             };
         }
@@ -437,8 +409,10 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (!isInitialized)
+                if (usbController == null || !usbController.IsConnected)
+                {
                     return;
+                }
 
                 var color = lastColor;
                 Button btn = (Button)sender;
@@ -522,17 +496,17 @@ namespace ArchonLightingSystem.Components
         private void SetLedColor(System.Drawing.Color color, int deviceIdx, int ledIdx)
         {
             ledIdx *= 3;
-            applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.G;
-            applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.R;
-            applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.B;
+            deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.G;
+            deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.R;
+            deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++] = color.B;
         }
 
         private System.Drawing.Color GetLedColor(int deviceIdx, int ledIdx, bool lighterColorScale = false)
         {
             ledIdx *= 3;
-            byte G = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
-            byte R = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
-            byte B = applicationData.DeviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            byte G = deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            byte R = deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
+            byte B = deviceControllerData.DeviceConfig.Colors[deviceIdx, ledIdx++];
 
             if (lighterColorScale)
             {

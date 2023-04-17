@@ -19,6 +19,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         private UsbDeviceManager usbDeviceManager = new UsbDeviceManager();
         private ReadOnlyCollection<UsbControllerDevice> usbControllerInstances;
+        private ReadOnlyCollection<UsbControllerDevice> activeControllers;
+        private UserSettingsManager settingsManager = new UserSettingsManager();
+        private UserSettings userSettings = null;
         private bool isRegistered = false;
 
         private EventDrivenBackgroundTask usbEventBackgroundTask = null;
@@ -84,7 +87,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
             finally
             {
-                OnUsbDeviceEvent(new UsbControllersChangedEventArgs(usbControllerInstances));
+                lock(activeControllers)
+                {
+                    activeControllers = usbControllerInstances.Where(c => c.IsActive).ToList().AsReadOnly();
+                }
+                if(deviceTasks.Count > 0)
+                {
+                    OnUsbDeviceEvent(new UsbControllersChangedEventArgs(usbControllerInstances));
+                }
             }
 
             return BackgroundTaskResponse.Continue;
@@ -93,13 +103,15 @@ namespace ArchonLightingSystem.UsbApplicationV2
         public UsbControllerManager()
         {
             var controllers = new List<UsbControllerDevice>();
+            userSettings = settingsManager.GetSettings();
 
-            for(int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
+            for (int i = 0; i < DeviceControllerDefinitions.MaxControllers; i++)
             {
-                controllers.Add(new UsbControllerDevice() { Address = i });
+                controllers.Add(new UsbControllerDevice(i, userSettings.GetControllerByAddress(i)));
             }
 
             usbControllerInstances = controllers.AsReadOnly();
+            activeControllers = controllers.Where(c => c.IsActive).ToList().AsReadOnly();
         }
 
         public void Register(IntPtr handle, string vid, string pid)
@@ -122,19 +134,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             usbEventBackgroundTask.StartTask(processPendingDevices);
             periodicBackgroundTask.StartTask(processPeriodicTasks);
-            
-            /*
-            // start controller period check thread
-            Task.Factory.StartNew(async () =>
-            {
-                while (true)
-                {
-                    usbEventBackgroundTask.NextStep();
-                    await Task.Delay(5000);
-                }
-
-            }, new CancellationToken(), TaskCreationOptions.LongRunning, TaskScheduler.Default);
-            */
         }
 
         private Task<BackgroundTaskResponse> processPeriodicTasks(CancellationToken cancellationToken)
@@ -161,13 +160,26 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
         }
 
-        public UsbControllerDevice GetDevice(int deviceIdx)
+        public ReadOnlyCollection<UsbControllerDevice> ActiveControllers
+        {
+            get
+            {
+                lock(activeControllers) { return activeControllers; }
+            }
+        }
+
+        public UsbControllerDevice GetController(int deviceIdx)
         {
             if (deviceIdx >= usbControllerInstances.Count)
             {
                 return null;
             }
             return usbControllerInstances[deviceIdx];
+        }
+
+        public UsbControllerDevice GetControllerByAddress(int deviceAddress)
+        {
+            return usbControllerInstances.Where(c => c.Address == deviceAddress).FirstOrDefault();
         }
 
         public void HandleWindowEvent(ref System.Windows.Forms.Message m)
@@ -217,9 +229,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 return;
             }
 
-            deviceInstance.ControllerData = deviceControllerConfig;
-            deviceInstance.UsbDevice = device;
-            deviceInstance.IsDisconnected = false;
+            deviceInstance.Connect(device, deviceControllerConfig);
 
             var d = deviceControllerConfig;
             Logger.Write(Level.Information, $"Connected device {device.ShortName} address: {d.DeviceAddress} firmware: {d.ApplicationVersion} bootloader: {d.BootloaderVersion}");
@@ -236,8 +246,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             {
                 if (deviceInstance.UsbDevice == device)
                 {
-                    deviceInstance.UsbDevice = null;
-                    deviceInstance.IsDisconnected = true;
+                    deviceInstance.Disconnect();
                     Logger.Write(Level.Information, $"Disconnected device {device.ShortName} address: {deviceInstance.Address}");
                 }
             }
@@ -263,40 +272,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
         }
 
-        private void ControllerReadyEventHandler(object sender, EventArgs e)
-        {
-            //OnUsbDeviceEvent(new UsbControllerAddedEventArgs() { ControllerInstance = (UsbControllerDevice)sender});
-        }
-
-        private void ControllerErrorEventHandler(object sender, UsbControllerErrorEventArgs e)
-        {
-            OnUsbDeviceEvent(e);
-        }
-
         public ApplicationData GetAppData(int deviceIdx)
         {
-            var device = GetDevice(deviceIdx);
+            var device = GetController(deviceIdx);
             return device?.AppData;
-        }
-
-        public void ClearDevices()
-        {
-            foreach(var dev in usbControllerInstances)
-            {
-                try
-                {
-                    dev.semaphore.Wait(1000);
-                    dev.AppIsInitialized = false;
-                    dev.AppData = null;
-                    // todo, how should this be handled?
-                    //DetachDevice(dev);
-                    dev.Reinitialize();
-                }
-                finally
-                {
-                    dev.semaphore.Release();
-                }
-            }
         }
     }
 }

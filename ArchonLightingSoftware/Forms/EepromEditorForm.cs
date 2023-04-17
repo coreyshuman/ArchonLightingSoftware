@@ -31,7 +31,7 @@ namespace ArchonLightingSystem
         private UsbControllerDevice usbControllerDevice;
         private ApplicationData applicationData;
 
-        private SemaphoreSlim formUpdateSemiphore = new SemaphoreSlim(1,1);
+        private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1,1);
 
         public EepromEditorForm()
         {
@@ -77,7 +77,7 @@ namespace ArchonLightingSystem
 
         public void UpdateFormData(UsbControllerDevice device)
         {
-            formUpdateSemiphore.Wait();
+            formUpdateSemaphore.Wait();
 
             try
             {
@@ -101,13 +101,13 @@ namespace ArchonLightingSystem
             }
             finally 
             { 
-                formUpdateSemiphore.Release(); 
+                formUpdateSemaphore.Release(); 
             }
         }
 
         public void UpdateFormState(UsbControllerDevice device, bool? busy = null) 
         {
-            formUpdateSemiphore.Wait();
+            formUpdateSemaphore.Wait();
 
             if(busy.HasValue)
             {
@@ -124,7 +124,7 @@ namespace ArchonLightingSystem
             }
             finally
             {
-                formUpdateSemiphore.Release();
+                formUpdateSemaphore.Release();
             }
         }
 
@@ -238,7 +238,7 @@ namespace ArchonLightingSystem
             }
 
             lastSelectedAddress = combo.SelectedIndex;
-            usbControllerDevice = manager.GetDevice(combo.SelectedIndex);
+            usbControllerDevice = manager.GetController(combo.SelectedIndex);
             applicationData = usbControllerDevice.AppData;
             UpdateFormState(usbControllerDevice);
             UpdateFormData(usbControllerDevice);

@@ -33,6 +33,7 @@ namespace ArchonLightingSystem.Models
             {
                 if (control is Label label)
                 {
+                    label.BackColor = Color.Transparent;
                     label.ForeColor = AppTheme.PrimaryText;
                     label.Font = AppTheme.FormFont;
                 }
@@ -48,8 +49,19 @@ namespace ArchonLightingSystem.Models
                 {
                     combo.ForeColor = AppTheme.PrimaryText;
                     combo.BackColor = AppTheme.ComponentBackground;
-                    combo.Font = AppTheme.ComponentFont;
-                    
+                    combo.Font = AppTheme.ComponentFont;  
+                }
+
+                if(control is TextBox textBox)
+                {
+                    textBox.ForeColor = AppTheme.PrimaryText;
+                    textBox.BackColor = AppTheme.ComponentBackground;
+                    textBox.Font = AppTheme.ComponentFont;
+                }
+
+                if(control is TrackBar trackBar)
+                {
+                    trackBar.BackColor = AppTheme.Background;
                 }
 
                 if (control is DataGridView grid)
@@ -90,6 +102,14 @@ namespace ArchonLightingSystem.Models
                 if (control is Panel panel)
                 {
                     ApplyThemeToControls(panel.Controls);
+                }
+
+                if(control is GroupBox groupBox)
+                {
+                    groupBox.BackColor = AppTheme.Background;
+                    groupBox.ForeColor = AppTheme.PrimaryText;
+                    groupBox.Font = AppTheme.ComponentFontLarge;
+                    ApplyThemeToControls(groupBox.Controls);
                 }
             }
         }
