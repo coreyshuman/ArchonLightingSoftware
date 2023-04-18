@@ -10,14 +10,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Forms
 {
     public partial class SequencerForm : Form
     {
-        private ApplicationData appData;
-        private UsbApplication.UsbDeviceManager usbDeviceManager;
-        private UserSettings userSettings;
+        private UsbControllerManager usbControllerManager;
+        private UsbControllerDevice usbController;
         private static Color lastColor;
         private static List<Color> lastColorsAll = new List<Color>();
         private static ColorDialog colorDialog = new ColorDialog();
@@ -31,25 +31,34 @@ namespace ArchonLightingSystem.Forms
         public SequencerForm()
         {
             InitializeComponent();
-        }
 
-        public void InitializeForm(UsbApplication.UsbDeviceManager ua, UserSettings us, List<ComboBoxItem> deviceAddressList, int controllerIdx)
-        {
-            usbDeviceManager = ua;
-            userSettings = us;
-            appData = usbDeviceManager.GetAppData(controllerIdx);
-            lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
             cboController.DisplayMember = "Text";
             cboController.ValueMember = "Value";
             cboDevice.DisplayMember = "Text";
             cboDevice.ValueMember = "Value";
+
+            AppTheme.ApplyThemeToForm(this);
+        }
+
+        public void InitializeForm(UsbControllerManager cm)
+        {
+            usbControllerManager = cm;
+
             cboController.Items.Clear();
-            cboController.Items.AddRange(deviceAddressList.OrderBy(d => d.Text).ToArray());
-            cboController.SelectedValue = controllerIdx;
-            for(int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
+            cboController.Items.AddRange(
+                usbControllerManager
+                .Controllers
+                .Select(controller =>
+                    new ComboBoxItem { Text = $"Address {controller.Address}", Value = controller.Address }
+                ).ToArray());
+
+            for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
                 cboDevice.Items.Add(new ComboBoxItem { Text = i.ToString(), Value = i });
             }
+
+            cboController.SelectedIndex = 0;  
+            cboDevice.SelectedIndex = 0;
         }
 
         private void SequencerForm_Load(object sender, EventArgs e)
@@ -155,8 +164,8 @@ namespace ArchonLightingSystem.Forms
                 ledFrame[device - 1, (i - 1) * 3 + 1] = colorStorage[step - 1, i - 1].R;
                 ledFrame[device - 1, (i - 1) * 3 + 2] = colorStorage[step - 1, i - 1].B;
             }
-            appData.LedFrameData = ledFrame;
-            appData.WriteLedFrame = true;
+            usbController.AppData.LedFrameData = ledFrame;
+            usbController.AppData.WriteLedFrame = true;
         }
 
         private EventHandler ColorUpdateClickEventHandler(int stepIdx, int ledIdx)
@@ -275,8 +284,8 @@ namespace ArchonLightingSystem.Forms
         private void CboController_SelectedIndexChanged(object sender, EventArgs e)
         {
             var item = ((ComboBoxItem)((ComboBox)sender).SelectedItem);
-            appData = usbDeviceManager.GetAppData(item.Value);
-            lblName.Text = userSettings.Controllers.Where(c => c.Address == appData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name;
+            usbController = usbControllerManager.GetControllerByAddress(item.Value);
+            lblName.Text = usbController.Settings.Name;
         }
 
         private void CboDevice_SelectedIndexChanged(object sender, EventArgs e)

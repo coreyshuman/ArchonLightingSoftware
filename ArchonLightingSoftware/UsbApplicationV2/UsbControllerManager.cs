@@ -3,12 +3,8 @@ using ArchonLightingSystem.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
-using ArchonLightingSystem.UsbApplication;
 using System.Threading;
-using System.Security.Cryptography;
-using System.Timers;
 using System.Collections.ObjectModel;
 
 namespace ArchonLightingSystem.UsbApplicationV2
@@ -23,6 +19,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private UserSettingsManager settingsManager = new UserSettingsManager();
         private UserSettings userSettings = null;
         private bool isRegistered = false;
+        private bool suppressErrors = false;
 
         private EventDrivenBackgroundTask usbEventBackgroundTask = null;
         private PeriodicBackgroundTask periodicBackgroundTask = null;
@@ -136,16 +133,24 @@ namespace ArchonLightingSystem.UsbApplicationV2
             periodicBackgroundTask.StartTask(processPeriodicTasks);
         }
 
+        public void SuppressErrors(bool suppress)
+        {
+            suppressErrors = suppress;
+        }
+
         private Task<BackgroundTaskResponse> processPeriodicTasks(CancellationToken cancellationToken)
         {
             // trigger usb event task to perform connection retries
             usbEventBackgroundTask.NextStep();
 
             // perform health checks
-            foreach(var controller in usbControllerInstances)
+            if (!suppressErrors)
             {
-                UsbApp.ControllerHealthCheck(controller);
-                UsbApp.FanHealthCheck(controller);
+                foreach (var controller in usbControllerInstances)
+                {
+                    UsbApp.ControllerHealthCheck(controller);
+                    UsbApp.FanHealthCheck(controller);
+                }
             }
 
             return Task.FromResult(BackgroundTaskResponse.Continue);

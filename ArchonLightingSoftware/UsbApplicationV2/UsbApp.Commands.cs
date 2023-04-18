@@ -197,7 +197,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
             finally
             {
-                ci.UsbDevice.Release(cancelToken);
+                ci.UsbDevice?.Release(cancelToken);
             }
         }
     }

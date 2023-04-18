@@ -215,12 +215,6 @@
     <Compile Include="SubformBase.Designer.cs">
       <DependentUpon>SubformBase.cs</DependentUpon>
     </Compile>
-    <Compile Include="UsbApplication\UsbApp.cs" />
-    <Compile Include="UsbApplication\UsbControllerInstance.cs" />
-    <Compile Include="UsbApplication\UsbDeviceManager.cs" />
-    <Compile Include="UsbApplication\UsbDriver.cs" />
-    <Compile Include="UsbApplication\UsbControllerEventArgs.cs" />
-    <Compile Include="UsbApplication\UsbSystemDefinitions.cs" />
     <Compile Include="Common\Util.cs" />
     <EmbeddedResource Include="Forms\AppForm.resx">
       <SubType>Designer</SubType>

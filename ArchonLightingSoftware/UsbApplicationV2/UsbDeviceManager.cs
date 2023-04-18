@@ -24,7 +24,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
     public class UsbDeviceManager : UsbSystemDefinitions
     {
-        public static uint USB_PACKET_SIZE { get; } = 64 + 1;
         public event EventHandler<UsbDeviceEventArgs> UsbDriverEvent;
 
         protected List<UsbDevice> usbDevices = new List<UsbDevice>();

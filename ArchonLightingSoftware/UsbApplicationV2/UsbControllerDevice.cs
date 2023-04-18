@@ -64,6 +64,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
         public void Disconnect()
         {
+            UsbDevice.Cancel();
             UsbDevice = null;
             IsDisconnected = true;
             IsConnected = false;

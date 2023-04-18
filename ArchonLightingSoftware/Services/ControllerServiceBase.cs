@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using ArchonLightingSystem.Models;
-using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.UsbApplicationV2;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Common;
 
@@ -45,18 +45,22 @@ namespace ArchonLightingSystem.Services
             }
         }
 
+        public void Pause(bool pause)
+        {
+            this.pause = pause;
+        }
+
         private int frequency = 2;
         private int period = 500;
-        private UserSettings userSettings = null;
-        private UsbDeviceManager usbDeviceManager = null;
+        private bool pause = false;
+        private UsbControllerManager usbControllerManager = null;
         private SensorMonitorManager hardwareManager = null;
         private BackgroundWorker serviceThread;
         private int controllerIdx = 0;
 
-        public void BeginService(UserSettings us, UsbDeviceManager ap, SensorMonitorManager hw)
+        public void BeginService(UsbControllerManager cm, SensorMonitorManager hw)
         {
-            userSettings = us;
-            usbDeviceManager = ap;
+            usbControllerManager = cm;
             hardwareManager = hw;
             serviceThread = new BackgroundWorker();
             serviceThread.WorkerSupportsCancellation = true;
@@ -76,13 +80,15 @@ namespace ArchonLightingSystem.Services
             {
                 try
                 {
+                    if (pause) continue;
+
                     var controllerContext = GetNextControllerContext();
                     if (controllerContext == null) continue;
-                    ServiceTask(controllerContext.Item1, controllerContext.Item2, controllerContext.Item3);
+                    ServiceTask(controllerContext.Item1, controllerContext.Item2);
                 }
                 catch (Exception ex)
                 {
-                    Logger.Write(Level.Error, $"ServiceThread Error: {ex.ToString()}");
+                    Logger.Write(Level.Error, $"ServiceThread Error: {ex}");
                 }
                 finally
                 {
@@ -96,32 +102,27 @@ namespace ArchonLightingSystem.Services
         /// Override this function and do your service tasks here.
         /// </summary>
         /// <param name="applicationData"></param>
-        /// <param name="controllerSettings"></param>
+        /// <param name="usbControllerDevice"></param>
         /// <param name="hardwareManager"></param>
-        public abstract void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager);
+        public abstract void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager);
 
-        public Tuple<ApplicationData, ControllerSettings, SensorMonitorManager> GetNextControllerContext()
+        public Tuple<UsbControllerDevice, SensorMonitorManager> GetNextControllerContext()
         {
             try
             {
-                if (++controllerIdx >= usbDeviceManager.DeviceCount)
+                if (++controllerIdx >= usbControllerManager.ActiveControllers.Count)
                 {
                     controllerIdx = 0;
                 }
 
-                var usbDevice = usbDeviceManager.GetDevice(controllerIdx);
-                var appData = usbDevice?.AppData;
-                if (appData == null)
-                {
-                    return null;
-                }
-                var controllerSettings = userSettings.GetControllerByAddress(appData.DeviceControllerData.DeviceAddress);
-                if (controllerSettings == null)
+                var usbControllerDevice = usbControllerManager.ActiveControllers[controllerIdx];
+
+                if (usbControllerDevice == null)
                 {
                     return null;
                 }
 
-                return new Tuple<ApplicationData, ControllerSettings, SensorMonitorManager>(appData, controllerSettings, hardwareManager);
+                return new Tuple<UsbControllerDevice, SensorMonitorManager>(usbControllerDevice, hardwareManager);
             }
             catch(Exception ex)
             {

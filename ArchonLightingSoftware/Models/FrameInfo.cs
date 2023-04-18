@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Models
 {
@@ -16,7 +16,7 @@ namespace ArchonLightingSystem.Models
 
         public FrameInfo()
         {
-            FrameData = new byte[UsbDriver.USB_PACKET_SIZE];
+            FrameData = new byte[UsbDeviceManager.USB_PACKET_SIZE];
             Reset();
         }
 

@@ -4,6 +4,7 @@ using System.Diagnostics;
 using System.Linq;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Services
 {
@@ -18,12 +19,12 @@ namespace ArchonLightingSystem.Services
             TaskFrequency = taskFrequency;
         }
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
+        public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             try
             {
-                Tuple<byte[], byte[]> values = CalculateFanSpeeds(applicationData, controllerSettings, hardwareManager);
-                SendFanSpeeds(applicationData, values);
+                Tuple<byte[], byte[]> values = CalculateFanSpeeds(usbControllerDevice, hardwareManager);
+                SendFanSpeeds(usbControllerDevice, values);
             }
             catch (Exception ex)
             {
@@ -38,7 +39,7 @@ namespace ArchonLightingSystem.Services
         /// <param name="controllerSettings"></param>
         /// <param name="hardwareManager"></param>
         /// <returns>Array of bytes containing speed values</returns>
-        private Tuple<byte[], byte[]> CalculateFanSpeeds(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
+        private Tuple<byte[], byte[]> CalculateFanSpeeds(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
             byte[] temperatureValues = new byte[DeviceControllerDefinitions.DevicePerController];
@@ -48,7 +49,7 @@ namespace ArchonLightingSystem.Services
                 speedValues[devIdx] = 0xFF;
                 temperatureValues[devIdx] = 0xFF;
 
-                var deviceSetting = controllerSettings.Devices.Where(d => d.Index == devIdx).FirstOrDefault();
+                var deviceSetting = usbControllerDevice.Settings.GetDeviceByIndex(devIdx);
                 if (deviceSetting != null)
                 {
                     var sensor = hardwareManager.GetSensorByIdentifier(deviceSetting.Sensor);
@@ -101,14 +102,14 @@ namespace ArchonLightingSystem.Services
         /// Send fan speed control values to the fan controller. Accepts array of 5 values for each fan output.
         /// 0-100 for override control, or 255 to use interval config speed.
         /// </summary>
-        private void SendFanSpeeds(ApplicationData applicationData, Tuple<byte[], byte[]> values)
+        private void SendFanSpeeds(UsbControllerDevice usbControllerDevice, Tuple<byte[], byte[]> values)
         {
             for(int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
-                applicationData.DeviceControllerData.AutoFanSpeedValue[i] = values.Item1[i];
-                applicationData.DeviceControllerData.TemperatureValue[i] = values.Item2[i];
+                usbControllerDevice.ControllerData.AutoFanSpeedValue[i] = values.Item1[i];
+                usbControllerDevice.ControllerData.TemperatureValue[i] = values.Item2[i];
             }
-            applicationData.UpdateFanSpeedPending = true;
+            usbControllerDevice.AppData.UpdateFanSpeedPending = true;
         }
 
         private float ScaleValue(float fromHigher, float toHigher, float fromLower, float toLower, float value)

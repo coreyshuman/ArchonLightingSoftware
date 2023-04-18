@@ -1,7 +1,7 @@
 ﻿using ArchonLightingSystem.Models;
-using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.OpenHardware;
 using System.Collections.Generic;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Services
 {
@@ -11,17 +11,17 @@ namespace ArchonLightingSystem.Services
 
         public ServiceManager()
         {
-            services.Add(new SensorUpdateService(5));
+            //services.Add(new SensorUpdateService(5));
             services.Add(new FanControllerService(2));
             services.Add(new LightControllerService(1000));
             services.Add(new TimeServiceController(30000));
         }
 
-        public void StartServices(UserSettings userSettings, UsbDeviceManager usbDeviceManager, SensorMonitorManager hardwareManager)
+        public void StartServices(UsbControllerManager usbControllerManager, SensorMonitorManager hardwareManager)
         {
             services.ForEach(service =>
             {
-                service.BeginService(userSettings, usbDeviceManager, hardwareManager);
+                service.BeginService(usbControllerManager, hardwareManager);
             });
         }
 

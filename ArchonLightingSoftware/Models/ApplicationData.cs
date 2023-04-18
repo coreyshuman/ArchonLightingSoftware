@@ -9,25 +9,23 @@ namespace ArchonLightingSystem.Models
 {
     public class ApplicationData
     {
-        public bool EepromReadPending;
-        public bool EepromReadDone;
-        public bool EepromWritePending;
-        public bool ReadConfigPending;
-        public bool DefaultConfigPending;
-        public bool UpdateConfigPending;
-        public bool WriteConfigPending;
-        public bool ReadDebugPending;
-        public bool ResetToBootloaderPending;
-        public bool UpdateFanSpeedPending;
-        public bool SendTimePending;
-        public bool WriteLedFrame;
-        public uint EepromAddress;
-        public uint EepromLength;
-        public string Debug;
+        public bool EepromReadPending { get; set; }
+        public bool EepromReadDone { get; set; }
+        public bool EepromWritePending { get; set; }
+        public bool ReadConfigPending { get; set; }
+        public bool DefaultConfigPending { get; set; }
+        public bool UpdateConfigPending { get; set; }
+        public bool WriteConfigPending { get; set; }
+        public bool ReadDebugPending { get; set; }
+        public bool ResetToBootloaderPending { get; set; }
+        public bool UpdateFanSpeedPending { get; set; }
+        public bool SendTimePending { get; set; }
+        public bool WriteLedFrame { get; set; }
+        public uint EepromAddress { get; set; }
+        public uint EepromLength { get; set; }
+        public string Debug { get; set; }
 
         public Byte[] TimeValue { get; set; }           // 3  bytes: hour, minute, second
-
-        public DeviceControllerData DeviceControllerData { get; set; }
 
         public byte[,] LedFrameData;
 
@@ -47,7 +45,6 @@ namespace ArchonLightingSystem.Models
             EepromLength = 1;
             Debug = "";
             TimeValue = new byte[3];
-            DeviceControllerData = new DeviceControllerData();
         }
     }
 }

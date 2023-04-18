@@ -3,7 +3,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Threading;
 using ArchonLightingSystem.Models;
-using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.UsbApplicationV2;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Common;
 
@@ -21,7 +21,7 @@ namespace ArchonLightingSystem.Services
             TaskFrequency = taskFrequency;
         }
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
+        public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             try
             {

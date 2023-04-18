@@ -1,12 +1,8 @@
 ﻿using System;
 using System.Threading;
-using System.ComponentModel;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
-using System.Linq;
 using System.Threading.Tasks;
-using System.Diagnostics;
-using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -20,41 +16,63 @@ namespace ArchonLightingSystem.UsbApplicationV2
             if (await controllerInstance.semaphore.WaitAsync(200))
             {
                 CancellationTokenSource cancelToken = null;
+
+                if(controllerInstance.IsDisconnected || controllerInstance.IsPaused)
+                {
+                    return;
+                }
+
                 try
                 {
                     cancelToken = controllerInstance.UsbDevice.GetCancellationToken();
                     await controllerInstance.UsbDevice.WaitAsync(cancelToken);
 
-                    // stop general tasks when paused
-                    if (!controllerInstance.IsPaused)
+                    if (controllerInstance.AppData.ResetToBootloaderPending)
                     {
-                        for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+                        controllerInstance.AppData.ResetToBootloaderPending = false;
+                        await ResetDeviceToBootloader(controllerInstance.UsbDevice, cancelToken);
+                        controllerInstance.Disconnect();
+                        return;
+                    }
+
+                    if (controllerInstance.AppData.WriteLedFrame)
+                    {
+                        controllerInstance.AppData.WriteLedFrame = false;
+                        await SendWriteLedFrameCmd(controllerInstance.UsbDevice, controllerInstance.AppData.LedFrameData, cancelToken);
+                    }
+
+                    for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+                    {
+                        rxtxBuffer[i] = controllerInstance.ControllerData.TemperatureValue[i];
+                    }
+                    if (await GenerateAndSendFrames(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController, cancelToken) > 0)
+                    {
+                        ControlPacket response = await GetDeviceResponse(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, defaultReadTimeout, cancelToken);
+                        if (response != null)
                         {
-                            rxtxBuffer[i] = controllerInstance.ControllerData.TemperatureValue[i];
-                        }
-                        if (await GenerateAndSendFrames(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController, cancelToken) > 0)
-                        {
-                            ControlPacket response = await GetDeviceResponse(controllerInstance.UsbDevice, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, defaultReadTimeout, cancelToken);
-                            if (response != null)
+                            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
                             {
-                                for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
-                                {
-                                    controllerInstance.ControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
-                                }
+                                controllerInstance.ControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
                             }
                         }
+                    }
 
-                        if (controllerInstance.AppData.UpdateFanSpeedPending)
-                        {
-                            await WriteFanSpeed(controllerInstance.UsbDevice, controllerInstance.AppData.DeviceControllerData.AutoFanSpeedValue, cancelToken);
-                            controllerInstance.AppData.UpdateFanSpeedPending = false;
-                        }
+                    if (controllerInstance.AppData.UpdateFanSpeedPending)
+                    {
+                        await WriteFanSpeed(controllerInstance.UsbDevice, controllerInstance.ControllerData.AutoFanSpeedValue, cancelToken);
+                        controllerInstance.AppData.UpdateFanSpeedPending = false;
+                    }
 
-                        if (controllerInstance.AppData.UpdateConfigPending)
-                        {
-                            await SendWriteConfigCmd(controllerInstance.UsbDevice, controllerInstance.ControllerData.DeviceConfig, cancelToken);
-                            controllerInstance.AppData.UpdateConfigPending = false;
-                        }
+                    if (controllerInstance.AppData.UpdateConfigPending)
+                    {
+                        await SendWriteConfigCmd(controllerInstance.UsbDevice, controllerInstance.ControllerData.DeviceConfig, cancelToken);
+                        controllerInstance.AppData.UpdateConfigPending = false;
+                    }
+
+                    if (controllerInstance.AppData.SendTimePending)
+                    {
+                        controllerInstance.AppData.SendTimePending = false;
+                        await SendSetTimeCmd(controllerInstance.UsbDevice, controllerInstance.AppData.TimeValue, cancelToken);
                     }
                 }
                 catch (Exception ex)
@@ -65,7 +83,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     if (cancelToken != null)
                     {
-                        controllerInstance.UsbDevice.Release(cancelToken);
+                        controllerInstance.UsbDevice?.Release(cancelToken);
                     }
                     controllerInstance.semaphore.Release();
                 }
@@ -198,87 +216,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             controllerInstance.Disconnect();
                         }
 
-                        if (controllerInstance.AppData.EepromReadPending)
-                        {
-                            controllerInstance.AppData.EepromReadPending = false;
 
-                            ControlPacket response = await ReadEeprom(controllerInstance, (byte)controllerInstance.AppData.EepromAddress, (byte)controllerInstance.AppData.EepromLength);
-                            controllerInstance.AppData.DeviceControllerData.UpdateEepromData(response.Data);
-                            controllerInstance.AppData.EepromReadDone = true;
-                        }
 
-                        if (controllerInstance.AppData.EepromWritePending)
-                        {
-                            controllerInstance.AppData.EepromWritePending = false;
-                            for (i = 0; i < UsbAppCommon.USB_BUFFER_SIZE; i++)
-                            {
-                                rxtxBuffer[i] = 0;
-                            }
-                            rxtxBuffer[0] = (byte)controllerInstance.AppData.EepromAddress;
-                            rxtxBuffer[1] = (byte)controllerInstance.AppData.EepromLength;
-                            for (i = 0; i < controllerInstance.AppData.EepromLength; i++)
-                            {
-                                rxtxBuffer[i + 2] = controllerInstance.AppData.DeviceControllerData.EepromData[i];
-                            }
-
-                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM, rxtxBuffer, 2 + controllerInstance.AppData.EepromLength) > 0)
-                            {
-                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_EEPROM);
-                                if (response != null)
-                                {
-                                    Console.WriteLine(response.Data[0]);
-                                }
-                            }
-                        }
-
-                        if (controllerInstance.AppData.ReadConfigPending)
-                        {
-                            controllerInstance.AppData.ReadConfigPending = false;
-
-                            ControlPacket response = await ReadConfig(controllerInstance);
-                            if (response != null)
-                            {
-                                controllerInstance.AppData.DeviceControllerData.DeviceConfig.FromBuffer(response.Data);
-                                controllerInstance.AppData.EepromReadDone = true;
-                            }
-                        }
-
-                        if (controllerInstance.AppData.DefaultConfigPending)
-                        {
-                            controllerInstance.AppData.DefaultConfigPending = false;
-
-                            ControlPacket response = await DefaultConfig(controllerInstance);
-                            if (response != null)
-                            {
-                                controllerInstance.AppData.ReadConfigPending = true;
-                            }
-                        }
-
-                        if (controllerInstance.AppData.UpdateConfigPending)
-                        {
-                            controllerInstance.AppData.UpdateConfigPending = false;
-                            await UpdateConfig(controllerInstance, controllerInstance.AppData.DeviceControllerData.DeviceConfig);
-                        }
-
-                        if (controllerInstance.AppData.WriteConfigPending)
-                        {
-                            controllerInstance.AppData.WriteConfigPending = false;
-                            byteCnt = 1;// AppData.DeviceConfig.ToBuffer(ref rxtxBuffer);
-                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG, rxtxBuffer, byteCnt) > 0)
-                            {
-                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_WRITE_CONFIG);
-                                if (response != null)
-                                {
-
-                                }
-                            }
-                        }
-
-                        if(controllerInstance.AppData.WriteLedFrame)
-                        {
-                            controllerInstance.AppData.WriteLedFrame = false;
-                            await WriteLedFrame(controllerInstance, controllerInstance.AppData.LedFrameData);
-                        }
+                        
 
                         if (controllerInstance.AppData.ReadDebugPending)
                         {
@@ -286,11 +226,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             await ReadDebug(controllerInstance);
                         }
 
-                        if (controllerInstance.AppData.SendTimePending)
-                        {
-                            controllerInstance.AppData.SendTimePending = false;
-                            await SetTime(controllerInstance, controllerInstance.AppData.TimeValue);
-                        }
+                        
                     }
                 }
                 catch (Exception ex)

@@ -5,7 +5,7 @@ using ArchonLightingSystem.ArchonLightingSDKIntegration;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
-
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem.Services
 {
@@ -13,7 +13,6 @@ namespace ArchonLightingSystem.Services
     {
         private MappedFileManager mappedFileManager = MappedFileManager.Instance;
         private byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
-        private DateTime tick = DateTime.Now;
 
         /// <summary>
         /// Service which periodically updates leds based on dynamic lighting options.
@@ -25,7 +24,7 @@ namespace ArchonLightingSystem.Services
         }
 
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
+        public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             try
             {
@@ -41,19 +40,13 @@ namespace ArchonLightingSystem.Services
                         }
                     }
 
-                    applicationData.LedFrameData = ledFrame;
-                    applicationData.WriteLedFrame = true;
+                    usbControllerDevice.AppData.LedFrameData = ledFrame;
+                    usbControllerDevice.AppData.WriteLedFrame = true;
                 }
             }
             catch (Exception ex)
             {
                 Logger.Write(Level.Error, $"LightServiceThread Error: {ex}");
-            }
-
-            if(applicationData.DeviceControllerData.DeviceAddress == 1)
-            {
-                //Console.WriteLine((DateTime.Now - tick).TotalMilliseconds);
-                tick = DateTime.Now;
             }
         }
     }

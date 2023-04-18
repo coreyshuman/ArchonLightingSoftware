@@ -14,13 +14,15 @@ using ArchonLightingSystem.Components;
 using ArchonLightingSystem.Common;
 using System.IO;
 using System.Threading;
+using ArchonLightingSystem.UsbApplicationV2;
 
 namespace ArchonLightingSystem
 {
     public partial class FirmwareUpdateForm : Form
     {
-        private UsbApplication.UsbDriver bootUsbDriver;
-        private UsbApplication.UsbDeviceManager usbDeviceManager;
+
+        private UsbDeviceManager usbDeviceManager;
+        private UsbControllerManager usbControllerManager;
         private bool isClosing = false;
         private bool isBusy = true;
         private DragWindowSupport dragSupport = new DragWindowSupport();
@@ -40,7 +42,6 @@ namespace ArchonLightingSystem
             InitializeComponent();
             dragSupport.Initialize(this);
             btn_UpdateAll.Enabled = false;
-            bootUsbDriver = new UsbApplication.UsbDriver();
             timer_ResetHardware.Enabled = true;
             lbl_Status.Text = firmwareManager.GetStatus();
         }
@@ -62,11 +63,11 @@ namespace ArchonLightingSystem
 
         
 
-        public void InitializeForm(AppForm parent, UsbApplication.UsbDeviceManager app)
+        public void InitializeForm(AppForm parent, UsbControllerManager usbControllerManager)
         {
-            usbDeviceManager = app;
+            usbDeviceManager = new UsbDeviceManager();
             parentForm = parent;
-            var appdata = app.GetAppData(0);
+            this.usbControllerManager = usbControllerManager;
 
             ImageList imageList = new ImageList { ImageSize = new Size(60, 32) };
             listView1.View = View.Details;
@@ -87,7 +88,9 @@ namespace ArchonLightingSystem
 
             firmwareManager.FirmwareEventHandler += new FirmwareEventDelgate(HandleBootloaderUpdates);
             firmwareManager.FirmwareLogHandler += new FirmwareLogDelegate(WriteLog);
-            firmwareManager.InitializeUsb(bootUsbDriver);
+            firmwareManager.InitializeUsb(usbDeviceManager);
+
+            AppTheme.ApplyThemeToForm(this);
 
         }
 
@@ -251,7 +254,7 @@ namespace ArchonLightingSystem
         //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
         protected override void WndProc(ref Message m)
         {
-            bootUsbDriver.HandleWindowEvent(ref m);
+            usbDeviceManager.HandleWindowEvent(ref m);
             base.WndProc(ref m);
         }
 
@@ -302,20 +305,22 @@ namespace ArchonLightingSystem
         {
             this.Cursor = Cursors.WaitCursor;
             firmwareManager.StartApp();
+            usbControllerManager.SuppressErrors(false);
             Thread.Sleep(1000);
-            usbDeviceManager.ClearDevices();
+            //usbDeviceManager.ClearDevices();
             // have main for redraw
-            parentForm.FormIsInitialized = false;
+            //parentForm.FormIsInitialized = false;
             CloseWindow();
         }
 
         private void timer_ResetHardware_Tick(object sender, EventArgs e)
         {
             timer_ResetHardware.Enabled = false;
-            foreach (var device in usbDeviceManager.UsbDevices)
+            usbControllerManager.SuppressErrors(true);
+            foreach (var controller in usbControllerManager.ActiveControllers)
             {
-                if(device.AppIsInitialized)
-                    device.AppData.ResetToBootloaderPending = true;
+                if(controller.IsConnected)
+                    controller.AppData.ResetToBootloaderPending = true;
             }
         }
 

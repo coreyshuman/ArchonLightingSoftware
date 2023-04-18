@@ -10,16 +10,16 @@ using System.Windows.Forms;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Interfaces;
 using ArchonLightingSystem.Components;
-using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.UsbApplicationV2;
 using ArchonLightingSystem.ArchonLightingSDKIntegration;
 
 namespace ArchonLightingSystem
 {
     public partial class DebugForm : Form
     {
-        private UsbDeviceManager usbDeviceManager;
+        private UsbControllerManager usbControllerManager;
         private DragWindowSupport dragSupport = new DragWindowSupport();
-        private int selectedAddressIdx = -1;
+        private int selectedAddress = -1;
         public DebugForm()
         {
             InitializeComponent();
@@ -28,21 +28,18 @@ namespace ArchonLightingSystem
             dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(UsbDeviceManager usbApplication)
+        public void InitializeForm(UsbControllerManager cm)
         {
-            usbDeviceManager = usbApplication;
-            var activeDevices = usbDeviceManager.UsbDevices
-                .Where(dev => dev.UsbDevice.IsAttached && dev.AppIsInitialized && dev.AppData.DeviceControllerData?.IsInitialized == true)
-                .Select((dev) => new ComboBoxItem { Text = dev.AppData.DeviceControllerData.DeviceAddress.ToString(), Value = usbDeviceManager.UsbDevices.IndexOf(dev) })
-                .ToList();
-            activeDevices.ForEach(dev =>
-            {
-                cbo_DeviceAddress.Items.Add(dev);
-            });
-            if (cbo_DeviceAddress.Items.Count > 0)
-            {
-                cbo_DeviceAddress.SelectedIndex = 0;
-            }
+            usbControllerManager = cm;
+            cbo_DeviceAddress.Items.Clear();
+            cbo_DeviceAddress.Items.AddRange(
+                usbControllerManager
+                .ActiveControllers
+                .Select(controller =>
+                    new ComboBoxItem { Text = $"Address {controller.Address}", Value = controller.Address }
+                ).ToArray());
+
+            AppTheme.ApplyThemeToForm(this);
         }
 
         public void UpdateFormData()
@@ -52,16 +49,16 @@ namespace ArchonLightingSystem
 
         private void btn_ReadDebug_Click(object sender, EventArgs e)
         {
-            if(selectedAddressIdx >= 0)
+            if(selectedAddress >= 0)
             {
-                usbDeviceManager.GetDevice(selectedAddressIdx).AppData.ReadDebugPending = true;
+                usbControllerManager.GetControllerByAddress(selectedAddress).AppData.ReadDebugPending = true;
                 updateFormTimer.Enabled = true;
             }
         }
 
         private void updateFormTimer_Tick(object sender, EventArgs e)
         {
-            txt_Debug.Text += usbDeviceManager.GetDevice(selectedAddressIdx).AppData.Debug;
+            txt_Debug.Text += usbControllerManager.GetControllerByAddress(selectedAddress).AppData.Debug;
             updateFormTimer.Enabled = false;
         }
 
@@ -72,7 +69,7 @@ namespace ArchonLightingSystem
 
         private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
         {
-            selectedAddressIdx = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
+            selectedAddress = ((ComboBoxItem)((ComboBox)sender).SelectedItem).Value;
         }
 
         private void btn_Close_Click(object sender, EventArgs e)

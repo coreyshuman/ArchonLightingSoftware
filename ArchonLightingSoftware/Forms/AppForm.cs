@@ -2,17 +2,14 @@ using System;
 using System.Windows.Forms;
 using ArchonLightingSystem.Components;
 using ArchonLightingSystem.Models;
-using ArchonLightingSystem.UsbApplication;
 using ArchonLightingSystem.Common;
 using System.Collections.Generic;
 using System.Linq;
-using System.Diagnostics;
 using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.Services;
 using ArchonLightingSystem.Forms;
 using ArchonLightingSystem.WindowsSystem.Startup;
-using System.Windows.Forms.DataVisualization.Charting;
 using ArchonLightingSystem.UsbApplicationV2;
 using System.Threading;
 
@@ -22,7 +19,6 @@ namespace ArchonLightingSystem
     {
         public bool FormIsInitialized { get; set; } = false;
 
-        private UsbApplication.UsbDeviceManager usbDeviceManager = null;
         private ConfigEditorForm configForm = null;
         private EepromEditorForm eepromForm = null;
         private DebugForm debugForm = null;
@@ -69,12 +65,8 @@ namespace ArchonLightingSystem
                 Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
-            usbDeviceManager = new UsbApplication.UsbDeviceManager();
-            //usbDeviceManager.UsbControllerEvent += UsbDeviceManager_UsbControllerEvent;
-            //usbDeviceManager.Connect(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
-
             // debug testing new manager
-            usbControllerManger = new UsbApplicationV2.UsbControllerManager();
+            usbControllerManger = new UsbControllerManager();
             usbControllerManger.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
             usbControllerManger.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
 
@@ -87,7 +79,7 @@ namespace ArchonLightingSystem
                 hardwareManager.Close();
             };
 
-            serviceManager.StartServices(userSettings, usbDeviceManager, hardwareManager);
+            serviceManager.StartServices(usbControllerManger, hardwareManager);
 
             allowVisible = !startInBackground;
             isHidden = startInBackground;
@@ -401,7 +393,7 @@ namespace ArchonLightingSystem
             if (sequencerForm == null || sequencerForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
-                sequencerForm.InitializeForm(usbDeviceManager, userSettings, null, 0);
+                sequencerForm.InitializeForm(usbControllerManger);
                 sequencerForm.Location = this.Location;
                 sequencerForm.Show();
             }
@@ -473,7 +465,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 debugForm = new DebugForm();
-                debugForm.InitializeForm(usbDeviceManager);
+                debugForm.InitializeForm(usbControllerManger);
                 debugForm.Show();
             }
             if (debugForm.WindowState == FormWindowState.Minimized)
@@ -486,7 +478,7 @@ namespace ArchonLightingSystem
 
         private void updateFirmwareToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < usbDeviceManager.DeviceCount; i++)
+            for (int i = 0; i < usbControllerManger.ActiveControllers.Count; i++)
             {
                 // todo implement
                 // deinitialize devices to switch to bootloader mode.
@@ -497,7 +489,7 @@ namespace ArchonLightingSystem
             if (firmwareForm == null || firmwareForm.IsDisposed)
             {
                 firmwareForm = new FirmwareUpdateForm();
-                firmwareForm.InitializeForm(this, usbDeviceManager);
+                firmwareForm.InitializeForm(this, usbControllerManger);
                 firmwareForm.Show();
             }
             if (firmwareForm.WindowState == FormWindowState.Minimized)

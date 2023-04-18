@@ -7,7 +7,6 @@ using System.Linq;
 using System.Threading.Tasks;
 using System.Diagnostics;
 using ArchonLightingSystem.Interfaces;
-using ArchonLightingSystem.UsbApplication;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -363,11 +362,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             {
                 Trace.WriteLine($"Invalid CRC. Expected [{crc:X2}] Received [{rxCrc:X2}]");
                 return 0;
-            }
-
-            if(multipacket)
-            {
-                Trace.WriteLine($"_multi [{(uint)(controlPacket.Cmd):X2}] ({dataLen})");
             }
 
             // skip Report ID, CMD and LEN

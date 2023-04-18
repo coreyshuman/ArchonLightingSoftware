@@ -1,6 +1,7 @@
 ﻿using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
+using ArchonLightingSystem.UsbApplicationV2;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -23,16 +24,16 @@ namespace ArchonLightingSystem.Services
         }
 
 
-        public override void ServiceTask(ApplicationData applicationData, ControllerSettings controllerSettings, SensorMonitorManager hardwareManager)
+        public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             try
             {
                 var time = DateTime.Now;
-                applicationData.TimeValue[0] = (byte)time.Hour;
-                applicationData.TimeValue[1] = (byte)time.Minute;
-                applicationData.TimeValue[2] = (byte)time.Second;
+                usbControllerDevice.AppData.TimeValue[0] = (byte)time.Hour;
+                usbControllerDevice.AppData.TimeValue[1] = (byte)time.Minute;
+                usbControllerDevice.AppData.TimeValue[2] = (byte)time.Second;
 
-                applicationData.SendTimePending = true;
+                usbControllerDevice.AppData.SendTimePending = true;
                 Logger.Write(Level.Trace, "time controller service tick");
             }
             catch (Exception ex)

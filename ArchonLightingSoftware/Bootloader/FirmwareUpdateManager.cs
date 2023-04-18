@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.ComponentModel;
 using ArchonLightingSystem.Common;
-using ArchonLightingSystem.UsbApplication;
+using ArchonLightingSystem.UsbApplicationV2;
 using System.Diagnostics;
 using System.Timers;
 
@@ -83,7 +83,7 @@ namespace ArchonLightingSystem.Bootloader
         private Bootloader bootloader;
         private UInt16 firmwareCRC;
         private string hexFirmwareVersion;
-        private UsbDriver bootUsbDriver;
+        private UsbDeviceManager usbDeviceManager;
         private List<FirmwareDevice> firmwareDevices = new List<FirmwareDevice>();
         private Timer usbUpdateTimer = new Timer(2000);
 
@@ -95,10 +95,10 @@ namespace ArchonLightingSystem.Bootloader
             bootloader = new Bootloader();
         }
 
-        public void InitializeUsb(UsbDriver usbDriver)
+        public void InitializeUsb(UsbDeviceManager usbDriver)
         {
-            bootUsbDriver = usbDriver;
-            bootloader.InitializeBootloader(bootUsbDriver, new ProgressChangedEventHandler((object changeSender, ProgressChangedEventArgs args) =>
+            usbDeviceManager = usbDriver;
+            bootloader.InitializeBootloader(usbDeviceManager, new ProgressChangedEventHandler((object changeSender, ProgressChangedEventArgs args) =>
             {
                 BootloaderStatus status = (BootloaderStatus)args.UserState;
                 firmwareDevices.Where(device => device.DeviceIndex == status.DeviceIndex).ToList().ForEach((device) =>
@@ -253,7 +253,7 @@ namespace ArchonLightingSystem.Bootloader
 
         private void UsbPollTick(object sender, EventArgs e)
         {
-            while (bootUsbDriver.DeviceCount > firmwareDevices.Count)
+            while (usbDeviceManager.DeviceCount > firmwareDevices.Count)
             {
                 WriteLog(Level.Information, "Bootloader found, getting info...");
                 var device = new FirmwareDevice
@@ -266,7 +266,7 @@ namespace ArchonLightingSystem.Bootloader
 
             if (Status == ManagerStatus.Disconnected)
             {
-                bootUsbDriver.InitializeDevice(Definitions.BootloaderVid, Definitions.BootloaderPid);
+                usbDeviceManager.RegisterUsbDevice(Definitions.BootloaderVid, Definitions.BootloaderPid);
                 Status = LoadFirmware() ? ManagerStatus.Idle : ManagerStatus.NoFile;
                 OnFirmwareEvent();
             }
