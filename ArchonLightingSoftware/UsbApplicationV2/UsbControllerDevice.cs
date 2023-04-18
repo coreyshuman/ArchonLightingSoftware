@@ -19,6 +19,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             get { return Settings.AlertOnDisconnect || hasConnected; } 
         }
         public bool IsConnected { get; private set; }
+        public int FailedHealthCheckCount { get; set; }
 
 
         // old flags
@@ -35,9 +36,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private bool hasConnected = false;
         private BackgroundWorker ReadWriteThread;
         private int consecutiveErrors = 0;
-
-        public event EventHandler<EventArgs> ControllerReadyEvent;
-        public event EventHandler<UsbControllerErrorEventArgs> ControllerErrorEvent;
 
         public UsbControllerDevice(int address, ControllerSettings settings)
         {
@@ -69,6 +67,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             UsbDevice = null;
             IsDisconnected = true;
             IsConnected = false;
+            ControllerData.Reset();
         }
 
         public void Connect(UsbDevice usbDevice, DeviceControllerData controllerData)
@@ -92,17 +91,15 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                         consecutiveErrors = 0;
 
-                        Thread.Sleep(25);
+                        Thread.Sleep(100);
 
                     }
                     else
                     {
-                        // device disconnected or paused
                         Thread.Sleep(1000);
                     }
 
                 }
-                // todo - use different exception types to handle various errors
                 catch (Exception exc)
                 {
                     /*

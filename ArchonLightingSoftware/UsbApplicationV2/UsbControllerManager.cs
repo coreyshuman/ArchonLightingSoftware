@@ -141,6 +141,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
             // trigger usb event task to perform connection retries
             usbEventBackgroundTask.NextStep();
 
+            // perform health checks
+            foreach(var controller in usbControllerInstances)
+            {
+                UsbApp.ControllerHealthCheck(controller);
+                UsbApp.FanHealthCheck(controller);
+            }
+
             return Task.FromResult(BackgroundTaskResponse.Continue);
         }
 

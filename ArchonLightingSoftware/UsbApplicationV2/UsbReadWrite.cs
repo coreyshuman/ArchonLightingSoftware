@@ -64,6 +64,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 return Task.FromResult(0u);
             }
 
+            if (cancelToken.IsCancellationRequested)
+            {
+                return Task.FromResult(0u);
+            }
+
             try
             {
                 // Set output buffer to 0xFF.
@@ -94,6 +99,12 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
 
                 var lastError = Marshal.GetLastWin32Error();
+
+                if (lastError == ERROR_DEVICE_NOT_CONNECTED)
+                {
+                    cancelToken.Cancel();
+                    return Task.FromResult(0u);
+                }
 
                 if (lastError == ERROR_IO_PENDING)
                 {
@@ -232,6 +243,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 return Task.FromResult(0u);
             }
 
+            if (cancelToken.IsCancellationRequested)
+            {
+                return Task.FromResult(0u);
+            }
+
             try
             {
                 // Set the first byte in the buffer to the Report ID.
@@ -258,6 +274,12 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
 
                 var lastError = Marshal.GetLastWin32Error();
+
+                if (lastError == ERROR_DEVICE_NOT_CONNECTED)
+                {
+                    cancelToken.Cancel();
+                    return Task.FromResult(0u);
+                }
 
                 if (lastError == ERROR_IO_PENDING)
                 {

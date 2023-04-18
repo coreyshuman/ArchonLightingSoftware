@@ -21,20 +21,14 @@ namespace ArchonLightingSystem.Models
         public UInt32 BootStatusFlag { get; set; }
         public Byte[] AutoFanSpeedValue { get; set; }
         public Byte[] TemperatureValue { get; set; }
+        public Byte[] FanFailedHealthCheckCount { get; set; }
 
         private bool isInitialized;
 
         public DeviceControllerData()
         {
-            DeviceAddress = 0;
-            MeasuredFanRpm = new UInt16[DeviceControllerDefinitions.DevicePerController];
-            EepromData = new byte[DeviceControllerDefinitions.EepromSize];
-            DeviceConfig = new DeviceControllerConfig();
-            BootloaderVersion = new Version();
-            ApplicationVersion = new Version();
-            AutoFanSpeedValue = new byte[DeviceControllerDefinitions.DevicePerController];
-            TemperatureValue = new byte[DeviceControllerDefinitions.DevicePerController];
-            isInitialized = false;
+            FanFailedHealthCheckCount = new byte[DeviceControllerDefinitions.DevicePerController];
+            Reset();
         }
 
         public void InitializeDevice(Byte deviceAddress, Byte[] eepromData, Byte[] deviceConfig, Byte[] bootVer, Byte[] appVer, Byte[] bootStatus)
@@ -46,6 +40,19 @@ namespace ArchonLightingSystem.Models
             DeviceConfig.FromBuffer(deviceConfig);
             BootStatusFlag = Util.UInt32FromBytes(bootStatus[0], bootStatus[1], bootStatus[2], bootStatus[4]);
             isInitialized = true;
+        }
+
+        public void Reset()
+        {
+            DeviceAddress = 0;
+            MeasuredFanRpm = new UInt16[DeviceControllerDefinitions.DevicePerController];
+            EepromData = new byte[DeviceControllerDefinitions.EepromSize];
+            DeviceConfig = new DeviceControllerConfig();
+            BootloaderVersion = new Version();
+            ApplicationVersion = new Version();
+            AutoFanSpeedValue = new byte[DeviceControllerDefinitions.DevicePerController];
+            TemperatureValue = new byte[DeviceControllerDefinitions.DevicePerController];
+            isInitialized = false;
         }
 
         public void UpdateBootloaderVersion(Byte[] data, uint len)

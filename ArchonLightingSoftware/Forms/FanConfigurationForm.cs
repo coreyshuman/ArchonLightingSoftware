@@ -17,6 +17,7 @@ using ArchonLightingSystem.OpenHardware;
 using System.Collections.ObjectModel;
 using ArchonLightingSystem.Components;
 using System.Windows.Forms.DataVisualization.Charting;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.Forms
 {
@@ -24,7 +25,6 @@ namespace ArchonLightingSystem.Forms
     {
         private const string fanCurveCopyPasteKey = "fanCurve";
         private SensorMonitorManager hardwareManager;
-        private ApplicationData appData;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private Node currentNode = null;
         private string identifier = "";
@@ -40,19 +40,20 @@ namespace ArchonLightingSystem.Forms
             }
         }
 
+        #region initializers
         public FanConfigurationForm()
         {
             InitializeComponent();
             dragSupport.Initialize(this);
         }
 
-        public void InitializeForm(ApplicationData ad, SensorMonitorManager hm, DeviceSettings settings)
+        public void InitializeForm(SensorMonitorManager hm, DeviceSettings settings)
         {
-            appData = ad;
             hardwareManager = hm;
             deviceSettings = settings;
 
-            useFanCheckbox.Checked = settings.UseFanCurve;
+            chk_UseFan.Checked = settings.UseFanCurve;
+            chk_AlertFanStopped.Checked = settings.AlertOnFanStopped;
             identifier = settings.Sensor;
             if(identifier != "")
             {
@@ -61,6 +62,8 @@ namespace ArchonLightingSystem.Forms
 
             InitializeGrid();
             InitializeFanCurve();
+
+            AppTheme.ApplyThemeToForm(this);
         }
 
         void InitializeGrid()
@@ -142,6 +145,7 @@ namespace ArchonLightingSystem.Forms
 
             UpdateFanCurveChart();
         }
+        #endregion
 
         void StoreChartPointLocation(ChartArea ca, Series s, DataPoint dp)
         {
@@ -170,12 +174,12 @@ namespace ArchonLightingSystem.Forms
         private void LoadGridForNode(Node topNode = null)
         {
             listView1.Items.Clear();
-            Collection<Node> nodes = null;
+            Collection<Node> nodes;
 
-            if(topNode == null)
+            if (topNode == null)
             {
                 nodes = hardwareManager.Nodes;
-                currentNode = null;
+                currentNode = hardwareManager.Root;
             }
             else
             {
@@ -215,6 +219,16 @@ namespace ArchonLightingSystem.Forms
                 item.Tag = node;
                 listView1.Items.Add(item);
             }
+
+            string path = string.Empty;
+            var tempNode = currentNode;
+            while(tempNode != null)
+            {
+                path = tempNode.Text + " > " + path;
+                tempNode = tempNode.Parent;
+            }
+
+            lbl_Path.Text = path;
         }
 
         private void SelectSensor(SensorNode node)
@@ -228,65 +242,7 @@ namespace ArchonLightingSystem.Forms
             {
                 deviceSettings.Sensor = Identifier;
                 deviceSettings.SensorName = sensor.Name.Trim();
-            }
-        }
-
-        private void listView1_ItemActivate(object sender, EventArgs e)
-        {
-            int selectedIndex = ((ListView)sender).SelectedIndices[0];
-            Node node = (Node)listView1.Items[selectedIndex].Tag;
-            if(node?.Nodes.Count > 0)
-            {
-                LoadGridForNode(node);
-            }
-            else if(node.GetType() == typeof(SensorNode))
-            {
-                SelectSensor((SensorNode)node);
-            }
-        }
-
-        private void btn_Back_Click(object sender, EventArgs e)
-        {
-            if(currentNode?.Parent != null)
-            {
-                LoadGridForNode(currentNode.Parent);
-            }
-        }
-
-        private void btn_Close_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void btn_OK_Click(object sender, EventArgs e)
-        {
-            this.Close();
-        }
-
-        private void listView1_ItemChecked(object sender, ItemCheckedEventArgs e)
-        {
-            var test = 1;
-        }
-
-        private void listView1_Click(object sender, EventArgs e)
-        {
-            Node node = (Node)((ListView)sender).FocusedItem.Tag;
-
-            if (node.GetType() == typeof(SensorNode))
-            {
-                SelectSensor((SensorNode)node);
-            }
-        }
-
-        private void fanCurveChart_PrePaint(object sender, ChartPaintEventArgs e)
-        {
-            var pointSeries = fanCurveChart.Series[1];
-            var pointPoints = pointSeries.Points;
-            var chart = fanCurveChart.ChartAreas[0];
-
-            foreach (DataPoint dp in pointPoints)
-            {
-                StoreChartPointLocation(chart, pointSeries, dp);
+                deviceSettings.SensorType = sensor.SensorType;
             }
         }
 
@@ -304,6 +260,114 @@ namespace ArchonLightingSystem.Forms
             dp.Color = AppTheme.PrimaryLowLight;
             selectedDataPoint = dp;
             lastSelectedDataPoint = dp;
+        } 
+
+        private void incrementPointValue(DataPoint dp, double value)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            value += dp.YValues[0];
+            if (value > 100) value = 100f;
+            else if (value < 0) value = 0f;
+
+            int pointIndex = pointPoints.IndexOf(dp);
+            deviceSettings.FanCurveValues[pointIndex] = (int)value;
+            UpdateFanCurveChart();
+            fanCurveChart.Invalidate();
+        }
+
+        /// <summary>
+        /// Select a point based on the positive or negative index offset from the current point.
+        /// If the offset goes out of bounds, the first or last point in the series is selected depending on offset direction.
+        /// </summary>
+        /// <param name="currentPoint"></param>
+        /// <param name="offsetIndex"></param>
+        private void selectAdjacentPoint(DataPoint currentPoint, int offsetIndex)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            int pointIndex = pointPoints.IndexOf(currentPoint);
+
+            pointIndex += offsetIndex;
+            if (pointIndex > pointPoints.Count - 1) pointIndex = pointPoints.Count - 1;
+            else if (pointIndex < 0) pointIndex = 0;
+
+            clearSelectedPoint();
+            selectPoint(pointPoints[pointIndex]);
+        }
+
+        #region form_events
+        private void listView1_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
+        }
+
+        private void FanConfigurationForm_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
+        }
+
+        private void FanCurveChart_KeyDown(object sender, KeyEventArgs e)
+        {
+            HandleKeyPress(sender, e);
+        }
+
+        private void HandleKeyPress(object sender, KeyEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+            var chart = fanCurveChart.ChartAreas[0];
+            var keyCode = e.KeyCode;
+
+            if (lastSelectedDataPoint != null)
+            {
+                if (keyCode == Keys.W)
+                {
+                    incrementPointValue(lastSelectedDataPoint, 10);
+                }
+                else if (keyCode == Keys.S)
+                {
+                    incrementPointValue(lastSelectedDataPoint, -10);
+                }
+                else if (keyCode == Keys.D)
+                {
+                    selectAdjacentPoint(lastSelectedDataPoint, 1);
+                }
+                else if (keyCode == Keys.A)
+                {
+                    selectAdjacentPoint(lastSelectedDataPoint, -1);
+                }
+            }
+            e.SuppressKeyPress = true;
+        }
+
+        private void chk_AlertFanStopped_CheckedChanged(object sender, EventArgs e)
+        {
+            deviceSettings.AlertOnFanStopped = chk_AlertFanStopped.Checked;
+        }
+
+        private void useFanCheckbox_CheckedChanged(object sender, EventArgs e)
+        {
+            deviceSettings.UseFanCurve = chk_UseFan.Checked;
+        }
+
+        private void listView1_ItemChecked(object sender, ItemCheckedEventArgs e)
+        {
+        }
+
+        private void fanCurveChart_MouseUp(object sender, MouseEventArgs e)
+        {
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            if (selectedDataPoint != null)
+            {
+                int pointIndex = pointPoints.IndexOf(selectedDataPoint);
+                deviceSettings.FanCurveValues[pointIndex] = (int)selectedDataPoint.YValues[0];
+                selectedDataPoint = null;
+                UpdateFanCurveChart();
+            }
         }
 
         private void fanCurveChart_MouseDown(object sender, MouseEventArgs e)
@@ -323,7 +387,6 @@ namespace ArchonLightingSystem.Forms
                 }
             }
         }
-
         private void fanCurveChart_MouseMove(object sender, MouseEventArgs e)
         {
             var pointSeries = fanCurveChart.Series[1];
@@ -363,25 +426,6 @@ namespace ArchonLightingSystem.Forms
             }
         }
 
-        private void fanCurveChart_MouseUp(object sender, MouseEventArgs e)
-        {
-            var pointSeries = fanCurveChart.Series[1];
-            var pointPoints = pointSeries.Points;
-
-            if (selectedDataPoint != null)
-            {
-                int pointIndex = pointPoints.IndexOf(selectedDataPoint);
-                deviceSettings.FanCurveValues[pointIndex] = (int)selectedDataPoint.YValues[0];
-                selectedDataPoint = null;
-                UpdateFanCurveChart();
-            }
-        }
-
-        private void useFanCheckbox_CheckedChanged(object sender, EventArgs e)
-        {
-            deviceSettings.UseFanCurve = useFanCheckbox.Checked;
-        }
-
         private void btnCopyFanCurve_Click(object sender, EventArgs e)
         {
             CopyPasteDictionary.Copy(fanCurveCopyPasteKey, deviceSettings.FanCurveValues);
@@ -393,83 +437,71 @@ namespace ArchonLightingSystem.Forms
             UpdateFanCurveChart();
         }
 
-        private void incrementPointValue(DataPoint dp, double value)
+        private void btn_ClearSelection_Click(object sender, EventArgs e)
         {
-            var pointSeries = fanCurveChart.Series[1];
-            var pointPoints = pointSeries.Points;
-
-            value += dp.YValues[0];
-            if (value > 100) value = 100f;
-            else if (value < 0) value = 0f;
-
-            int pointIndex = pointPoints.IndexOf(dp);
-            deviceSettings.FanCurveValues[pointIndex] = (int)value;
-            UpdateFanCurveChart();
-            fanCurveChart.Invalidate();
+            identifier = string.Empty;
+            lbl_Selected.Text = "...";
+            LoadGridForNode(null);
+            deviceSettings.Sensor = Identifier;
+            deviceSettings.SensorName = string.Empty;
+            deviceSettings.SensorType = SensorType.Temperature;
         }
 
-        /// <summary>
-        /// Select a point based on the positive or negative index offset from the current point.
-        /// If the offset goes out of bounds, the first or last point in the series is selected depending on offset direction.
-        /// </summary>
-        /// <param name="currentPoint"></param>
-        /// <param name="offsetIndex"></param>
-        private void selectAdjacentPoint(DataPoint currentPoint, int offsetIndex)
+        private void btn_Back_Click(object sender, EventArgs e)
         {
-            var pointSeries = fanCurveChart.Series[1];
-            var pointPoints = pointSeries.Points;
-            int pointIndex = pointPoints.IndexOf(currentPoint);
-
-            pointIndex += offsetIndex;
-            if (pointIndex > pointPoints.Count - 1) pointIndex = pointPoints.Count - 1;
-            else if (pointIndex < 0) pointIndex = 0;
-
-            clearSelectedPoint();
-            selectPoint(pointPoints[pointIndex]);
+            if (currentNode?.Parent != null)
+            {
+                LoadGridForNode(currentNode.Parent);
+            }
         }
 
-        private void HandleKeyPress(object sender, KeyEventArgs e)
+        private void btn_Close_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void btn_OK_Click(object sender, EventArgs e)
+        {
+            this.Close();
+        }
+
+        private void listView1_Click(object sender, EventArgs e)
+        {
+            Node node = (Node)((ListView)sender).FocusedItem.Tag;
+
+            if (node.GetType() == typeof(SensorNode))
+            {
+                SelectSensor((SensorNode)node);
+            }
+        }
+
+        private void fanCurveChart_PrePaint(object sender, ChartPaintEventArgs e)
         {
             var pointSeries = fanCurveChart.Series[1];
             var pointPoints = pointSeries.Points;
             var chart = fanCurveChart.ChartAreas[0];
-            var keyCode = e.KeyCode;
 
-            if (lastSelectedDataPoint != null)
+            foreach (DataPoint dp in pointPoints)
             {
-                if(keyCode == Keys.W)
-                {
-                    incrementPointValue(lastSelectedDataPoint, 10);
-                }
-                else if(keyCode == Keys.S)
-                {
-                    incrementPointValue(lastSelectedDataPoint, -10);
-                }
-                else if(keyCode == Keys.D)
-                {
-                    selectAdjacentPoint(lastSelectedDataPoint, 1);
-                }
-                else if (keyCode == Keys.A)
-                {
-                    selectAdjacentPoint(lastSelectedDataPoint, -1);
-                }
+                StoreChartPointLocation(chart, pointSeries, dp);
             }
-            e.SuppressKeyPress = true;
         }
 
-        private void listView1_KeyDown(object sender, KeyEventArgs e)
+        private void listView1_ItemActivate(object sender, EventArgs e)
         {
-            HandleKeyPress(sender, e);
+            int selectedIndex = ((ListView)sender).SelectedIndices[0];
+            Node node = (Node)listView1.Items[selectedIndex].Tag;
+            if (node?.Nodes.Count > 0)
+            {
+                LoadGridForNode(node);
+            }
+            else if (node.GetType() == typeof(SensorNode))
+            {
+                SelectSensor((SensorNode)node);
+            }
         }
+        #endregion
 
-        private void FanConfigurationForm_KeyDown(object sender, KeyEventArgs e)
-        {
-            HandleKeyPress(sender, e);
-        }
-
-        private void FanCurveChart_KeyDown(object sender, KeyEventArgs e)
-        {
-            HandleKeyPress(sender, e);
-        }
+        
     }
 }

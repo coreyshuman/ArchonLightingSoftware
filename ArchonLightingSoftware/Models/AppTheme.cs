@@ -5,6 +5,11 @@ using System.Windows.Forms.ComponentModel;
 
 namespace ArchonLightingSystem.Models
 {
+    public class ThemeTag
+    {
+        public bool small { get; set; }
+    }
+
     public static class AppTheme
     {
         public static Color Background = Color.FromArgb(32, 32, 32);
@@ -15,6 +20,7 @@ namespace ArchonLightingSystem.Models
         public static Color SecondaryLowLight = Color.FromArgb(244, 91, 105);
         public static Color PrimaryText = Color.FromArgb(232, 233, 243);
 
+        public static Font ComponentFontSmall = new Font(FontFamily.GenericSansSerif, 7.0f, FontStyle.Regular);
         public static Font ComponentFont = new Font(FontFamily.GenericSansSerif, 9.75f, FontStyle.Regular);
         public static Font ComponentFontLarge = new Font(FontFamily.GenericSansSerif, 12f, FontStyle.Bold);
         public static Font FormFont = new Font(FontFamily.GenericSansSerif, 9.75f, FontStyle.Bold);
@@ -36,6 +42,11 @@ namespace ArchonLightingSystem.Models
                     label.BackColor = Color.Transparent;
                     label.ForeColor = AppTheme.PrimaryText;
                     label.Font = AppTheme.FormFont;
+
+                    if(label.Tag is ThemeTag tag)
+                    {
+                        if (tag.small) label.Font = AppTheme.ComponentFontSmall;
+                    }
                 }
 
                 if (control is Button button)

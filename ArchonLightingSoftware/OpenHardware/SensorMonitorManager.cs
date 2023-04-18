@@ -75,6 +75,11 @@ namespace ArchonLightingSystem.OpenHardware
             }
         }
 
+        public Node Root
+        {
+            get { return rootNode; }
+        }
+
         public void UpdateReadings()
         {
             computer.Accept(updateVisitor);

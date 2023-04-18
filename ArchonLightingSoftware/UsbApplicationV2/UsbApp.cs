@@ -213,7 +213,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             Byte[] usbBuffer = new byte[UsbDeviceManager.USB_PACKET_SIZE];
             Byte[] packetsBuffer = new byte[UsbAppCommon.USB_BUFFER_SIZE];
 
-            Logger.Write(Level.Trace, $"SendFrames {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)}");
+            //Logger.Write(Level.Trace, $"SendFrames {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)}");
 
             byteCnt = GenerateFrames(cmd, frameData, frameLen, ref packetsBuffer, UsbAppCommon.USB_BUFFER_SIZE);
             while (byteCnt > 0)
@@ -293,7 +293,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 // validate frame and load data into controlPacket
                 ValidateFrame(frameInfo, controlPacket);
 
-                Logger.Write(Level.Trace, $"ReadFrame {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)}");
+                //Logger.Write(Level.Trace, $"ReadFrame {usbDevice.ShortName} cmd: {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)}");
                     
                 if (frameInfo.FrameValid)
                 {

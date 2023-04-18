@@ -71,6 +71,51 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
             }
         }
+
+        public static void ControllerHealthCheck(UsbControllerDevice controller)
+        {
+            if (controller.IsActive && !controller.IsConnected)
+            {
+                controller.FailedHealthCheckCount++;
+            }
+
+            if (controller.IsActive && controller.IsConnected)
+            {
+                controller.FailedHealthCheckCount = 0;
+            }
+
+            if (controller.FailedHealthCheckCount > 3)
+            {
+                Logger.Write(Level.Error, $"Device Address {controller.Address} Failed Health Check ({controller.Settings.Name})");
+                controller.FailedHealthCheckCount = 0;
+            }
+        }
+
+        public static void FanHealthCheck(UsbControllerDevice controller)
+        {
+            for(int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
+            {
+                var deviceSettings = controller.Settings.Devices[i];
+
+                if (!deviceSettings.AlertOnFanStopped) continue;
+                if (!controller.IsConnected) continue;
+
+                if (controller.ControllerData.MeasuredFanRpm[i] > 1)
+                {
+                    controller.ControllerData.FanFailedHealthCheckCount[i] = 0;
+                    continue;
+                }
+
+                controller.ControllerData.FanFailedHealthCheckCount[i]++;
+
+                if(controller.ControllerData.FanFailedHealthCheckCount[i] > 2)
+                {
+                    controller.ControllerData.FanFailedHealthCheckCount[i] = 0;
+                    Logger.Write(Level.Error, $"Device Address {controller.Address} Fan #{i+1} Failed ({controller.Settings.Name})");
+                }
+            }
+        }
+
         /*
         public static async Task DeviceDoWork(UsbControllerDevice controllerInstance)
         {

@@ -35,9 +35,6 @@ namespace ArchonLightingSystem
 
         UsbApplicationV2.UsbControllerManager usbControllerManger;
 
-        
-        private int selectedAddressIdx = 0;
-        private int selectedAddress = 0;
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private UserSettingsManager settingsManager = new UserSettingsManager();
@@ -47,11 +44,12 @@ namespace ArchonLightingSystem
         private bool allowClose = false;
         private bool formIsBusy = false;
         private string lastNotification = "";
+        private bool disableNotification = false;
         private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1,1);
 
         private UsbControllerDevice usbControllerDevice = null;
 
-
+        #region initializers
         public unsafe AppForm(bool startInBackground)
         {
             InitializeComponent();
@@ -80,8 +78,6 @@ namespace ArchonLightingSystem
             usbControllerManger.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
             usbControllerManger.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
 
-            FormUpdateTimer.Enabled = true;
-
             startWithWindowsToolStripMenuItem.Enabled = startupManager.IsAvailable;
             startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
 
@@ -99,41 +95,12 @@ namespace ArchonLightingSystem
             InitializeForm();
         }
 
-        
-
-        protected override void SetVisibleCore(bool value)
-        {
-            if (!allowVisible)
-            {
-                value = false;
-                if (!this.IsHandleCreated) CreateHandle();
-            }
-            base.SetVisibleCore(value);
-        }
-
-        protected override void OnFormClosing(FormClosingEventArgs e)
-        {
-            if (!allowClose)
-            {
-                HideForm();
-                e.Cancel = true;
-            }
-            base.OnFormClosing(e);
-        }
-
-        void DragWindowEventHandler(object sender, DragWindowEventArgs args)
-        {
-            Settings.Default.MainWindowLocation = args.Location;
-            Settings.Default.Save();
-            Logger.Write(Level.Trace, $"Window dragged: {args.Location}");
-        }
-
         void InitializeForm()
         {
             cbo_DeviceAddress.DisplayMember = "Text";
             cbo_DeviceAddress.ValueMember = "Value";
 
-            for(int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
+            for (int i = 1; i <= DeviceControllerDefinitions.DevicePerController; i++)
             {
                 ControllerComponent component = new ControllerComponent();
                 deviceComponents.Add(component);
@@ -146,16 +113,9 @@ namespace ArchonLightingSystem
 
             lbl_Disconnected.ForeColor = AppTheme.PrimaryLowLight;
         }
+        #endregion
 
-        void HandleLogEvent(object sender, LogEventArgs eventArgs)
-        {
-            UpdateStatusBar(eventArgs.Log.Message);
-            if(eventArgs.Log.Level == Level.Error )
-            {
-                ShowTaskbarNotification("Archon Error", eventArgs.Log.Message);
-                SetErrorIcon(true);
-            }
-        }
+        #region update_form_methods
 
         void UpdateStatusBar(string msg) 
         {
@@ -188,6 +148,7 @@ namespace ArchonLightingSystem
                 cbo_DeviceAddress.Enabled = !formIsBusy;
                 txt_ControllerName.Enabled = device.IsConnected && !formIsBusy;
                 btn_SaveConfig.Enabled = device.IsConnected && !formIsBusy;
+                chk_AlertOnDisconnect.Enabled = device.IsConnected && !formIsBusy;
             }
             finally
             {
@@ -203,64 +164,12 @@ namespace ArchonLightingSystem
                 return;
             }
 
-            FormUpdateTimer.Enabled = false;
-
             txt_ControllerName.Text = controller.Settings.Name;
+            chk_AlertOnDisconnect.Checked = controller.Settings.AlertOnDisconnect;
 
             for (int i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
             {
                 deviceComponents[i].UpdateComponentData(controller);
-            }
-            //FormUpdateTimer.Enabled = true;
-        }
-
-        //This is a callback function that gets called when a Windows message is received by the form.
-        //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
-        protected override void WndProc(ref Message m)
-        {
-            usbControllerManger?.HandleWindowEvent(ref m);
-
-            usbDeviceManager?.HandleWindowEvent(ref m);
-            
-            base.WndProc(ref m);
-        }
-
-        private void UsbControllerManger_UsbControllerEvent(object sender, UsbApplicationV2.UsbControllerEventArgs e)
-        {
-            UpdateDeviceComboBox();
-            UpdateFormState(usbControllerDevice, null);
-            UpdateFormData(usbControllerDevice);
-        }
-
-        private void UsbDeviceManager_UsbControllerEvent(object sender, UsbApplication.UsbControllerEventArgs e)
-        {
-            
-            if (e is UsbControllerAddedEventArgs)
-            {
-                var controllerInstance = e.ControllerInstance;
-                var comboBoxItem = new ComboBoxItem
-                {
-                    Text = controllerInstance.AppData.DeviceControllerData.DeviceAddress.ToString() +
-                                $" ({userSettings.Controllers.Where(c => c.Address == controllerInstance.AppData.DeviceControllerData.DeviceAddress).FirstOrDefault()?.Name ?? ""})",
-                    Value = usbDeviceManager.UsbDevices.IndexOf(controllerInstance)
-                };
-
-                //deviceAddressList.Add(comboBoxItem);
-
-                var addr = controllerInstance.AppData?.DeviceControllerData.DeviceAddress;
-                var firmwareVer = controllerInstance.AppData?.DeviceControllerData.ApplicationVersion;
-                var bootVer = controllerInstance.AppData?.DeviceControllerData.BootloaderVersion;
-                Logger.Write(Level.Information, $"Device {addr} added. Firmware: {firmwareVer} Bootloader: {bootVer}");
-            }
-            else if (e is UsbControllerRemovedEventArgs)
-            {
-                UsbControllerRemovedEventArgs evtArgs = e as UsbControllerRemovedEventArgs;
-                Logger.Write(Level.Information, $"Device {evtArgs?.ControllerInstance?.AppData?.DeviceControllerData.DeviceAddress} removed");
-            }
-            else if (e is UsbApplication.UsbControllerErrorEventArgs)
-            {
-                UsbApplication.UsbControllerErrorEventArgs errorArgs = e as UsbApplication.UsbControllerErrorEventArgs;
-                Logger.Write(Level.Error, $"Error on Device {errorArgs.ControllerAddress}: {errorArgs.Message}");
             }
         }
 
@@ -293,56 +202,60 @@ namespace ArchonLightingSystem
                 cbo_DeviceAddress.SelectedIndex = 0;
             }
         }
-
-        private async void FormUpdateTimer_Tick(object sender, EventArgs e)
+        
+        public void HideForm()
         {
-            var usbDevice = usbDeviceManager.GetDevice(selectedAddressIdx);
-            if(usbDevice == null)
+            Hide();
+            isHidden = true;
+            foreach (var deviceComponent in deviceComponents)
             {
-                return;
+                deviceComponent.Hide();
             }
+        }
 
-            if (await usbDevice.semaphore.WaitAsync(200))
+        public void ShowForm()
+        {
+            if (isHidden)
             {
-                try
+                allowVisible = true;
+                Show();
+                isHidden = false;
+                foreach (var deviceComponent in deviceComponents)
                 {
-                    //Check if user interface on the form should be enabled or not, based on the attachment state of the USB device.
-                    //Update the various status indicators on the form with the latest info obtained from the ReadWriteThread()
-                    if (usbDevice.UsbDevice.IsAttached == true && usbDevice.AppIsInitialized)
-                    {
-                        if (!FormIsInitialized && usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.IsInitialized == true)
-                        {
-                            //UpdateFormData(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
-                            FormIsInitialized = true;
-                        }
-                    }
-                }
-                catch(Exception ex)
-                {
-                    Trace.WriteLine($"ForUpdateTick Error: {ex.ToString()}");
-                    Logger.Write(Level.Trace, $"ForUpdateTick Error: {ex.ToString()}");
-                }
-                finally
-                {
-                    usbDevice.semaphore.Release();
+                    deviceComponent.Show();
                 }
             }
+        }
+        #endregion
+
+        #region notify_icon
+        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
+        {
+            SetErrorIcon(false);
+            ShowForm();
         }
 
         private void ShowTaskbarNotification(string title, string content, int duration = 5000)
         {
             // simple skip to ignore repeating notifications (failed device retrying, for example)
-            if (title == lastNotification) return;
-            
+            //if (content == lastNotification) return;
+
+            if (disableNotification) return;
+
+           // if (notifyIcon1.Visible) return;
+
             if (InvokeRequired)
             {
                 this.Invoke(new Action<string, string, int>(ShowTaskbarNotification), new object[] { title, content, duration });
                 return;
             }
-            notifyIcon1.BalloonTipTitle = "Archon Lighting: " + title;
+
+            notifyIcon1.BalloonTipTitle = title;
             notifyIcon1.BalloonTipText = content;
+            notifyIcon1.BalloonTipIcon = ToolTipIcon.Error;
+            notifyIcon1.Icon = Resources.darkarchon;
             notifyIcon1.ShowBalloonTip(duration);
-            lastNotification = title;
+            lastNotification = content;
         }
 
         private void SetErrorIcon(bool error)
@@ -354,6 +267,154 @@ namespace ArchonLightingSystem
             }
             notifyIcon1.Icon = error ? Resources.darkarchon : Resources.archon;
             this.Icon = notifyIcon1.Icon;
+        }
+        #endregion
+
+
+        #region event_handlers
+        //This is a callback function that gets called when a Windows message is received by the form.
+        //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
+        protected override void WndProc(ref Message m)
+        {
+            usbControllerManger?.HandleWindowEvent(ref m);
+            base.WndProc(ref m);
+        }
+
+        private void UsbControllerManger_UsbControllerEvent(object sender, UsbApplicationV2.UsbControllerEventArgs e)
+        {
+            UpdateDeviceComboBox();
+            UpdateFormState(usbControllerDevice, null);
+            UpdateFormData(usbControllerDevice);
+        }
+
+        void DragWindowEventHandler(object sender, DragWindowEventArgs args)
+        {
+            Settings.Default.MainWindowLocation = args.Location;
+            Settings.Default.Save();
+        }
+
+        void HandleLogEvent(object sender, LogEventArgs eventArgs)
+        {
+            UpdateStatusBar(eventArgs.Log.Message);
+            if (eventArgs.Log.Level == Level.Error)
+            {
+                ShowTaskbarNotification("Archon Error", eventArgs.Log.Message);
+                SetErrorIcon(true);
+            }
+        }
+        #endregion
+
+        #region form_events
+        private void txt_ControllerName_Leave(object sender, EventArgs e)
+        {
+            usbControllerDevice.Settings.Name = txt_ControllerName.Text;
+            usbControllerDevice.Settings.Save();
+        }
+
+        private void AppForm_FormClosed(object sender, FormClosedEventArgs e)
+        {
+            serviceManager.StopServices();
+            hardwareManager.Close();
+        }
+
+        private void chk_AlertOnDisconnect_CheckedChanged(object sender, EventArgs e)
+        {
+            var check = (CheckBox)sender;
+
+            usbControllerDevice.Settings.AlertOnDisconnect = check.Checked;
+            usbControllerDevice.Settings.Save();
+        }
+
+        private void btn_SaveConfig_Click(object sender, EventArgs e)
+        {
+            usbControllerDevice.AppData.WriteConfigPending = true;
+        }
+
+        private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            var cbo = (ComboBox)sender;
+
+            if (cbo.SelectedIndex == -1)
+            {
+                return;
+            }
+
+            var item = (ComboBoxItem)(cbo.SelectedItem);
+
+            usbControllerDevice = usbControllerManger.GetControllerByAddress(item.Value);
+            UpdateFormState(usbControllerDevice, null);
+            UpdateFormData(usbControllerDevice);
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            if (!allowClose)
+            {
+                HideForm();
+                e.Cancel = true;
+            }
+            base.OnFormClosing(e);
+        }
+
+        // Override visibility behavior
+        protected override void SetVisibleCore(bool value)
+        {
+            if (!allowVisible)
+            {
+                value = false;
+                if (!this.IsHandleCreated) CreateHandle();
+            }
+            base.SetVisibleCore(value);
+        }
+        #endregion
+
+        #region toolstrip
+        private void toolStripMenuItem_ViewLog_Click(object sender, EventArgs e)
+        {
+            if (logForm == null || logForm.IsDisposed)
+            {
+                logForm = new LogForm();
+                logForm.Location = this.Location;
+                logForm.Show();
+            }
+            if (logForm.WindowState == FormWindowState.Minimized)
+            {
+                logForm.WindowState = FormWindowState.Normal;
+            }
+            logForm.Focus();
+        }
+
+        private void startWithWindowsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (!startupManager.IsAvailable)
+            {
+                MessageBox.Show("The startup service is not available.");
+                return;
+            }
+
+            startupManager.Startup = !startupManager.Startup;
+            startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
+        }
+
+        private void sequencerToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (sequencerForm == null || sequencerForm.IsDisposed)
+            {
+                sequencerForm = new SequencerForm();
+                sequencerForm.InitializeForm(usbDeviceManager, userSettings, null, 0);
+                sequencerForm.Location = this.Location;
+                sequencerForm.Show();
+            }
+            if (sequencerForm.WindowState == FormWindowState.Minimized)
+            {
+                sequencerForm.WindowState = FormWindowState.Normal;
+            }
+            sequencerForm.Focus();
+        }
+
+        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            HideForm();
         }
 
         /*
@@ -387,7 +448,7 @@ namespace ArchonLightingSystem
             }
             configForm.Location = this.Location;
             configForm.Focus();
-            
+
             //OpenSubform<ConfigEditorForm>(configForm);
         }
 
@@ -425,8 +486,9 @@ namespace ArchonLightingSystem
 
         private void updateFirmwareToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            for(int i = 0; i < usbDeviceManager.DeviceCount; i++)
+            for (int i = 0; i < usbDeviceManager.DeviceCount; i++)
             {
+                // todo implement
                 // deinitialize devices to switch to bootloader mode.
                 // prepare form for reinitialization
                 // usbDeviceManager.GetDevice(i).PauseUsb = true;
@@ -446,129 +508,18 @@ namespace ArchonLightingSystem
             firmwareForm.Focus();
         }
 
-        private void btn_SaveConfig_Click(object sender, EventArgs e)
-        {
-            usbDeviceManager.GetAppData(selectedAddressIdx).WriteConfigPending = true;
-        }
-
-        private void btn_ResetToBoot_Click(object sender, EventArgs e)
-        {
-            usbDeviceManager.GetAppData(selectedAddressIdx).ResetToBootloaderPending = true;
-        }
-
-        private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            var cbo = (ComboBox)sender;
-            
-            if(cbo.SelectedIndex == -1)
-            {
-                return;
-            }
-
-            var item = (ComboBoxItem)(cbo.SelectedItem);
-            selectedAddressIdx = item.Value;
-            //selectedAddress = (int)usbDeviceManager.GetAppData(selectedAddressIdx)?.DeviceControllerData?.DeviceAddress;
-            //UpdateFormSettings(usbDeviceManager.GetAppData(selectedAddressIdx).DeviceControllerData);
-            usbControllerDevice = usbControllerManger.GetControllerByAddress(item.Value);
-            UpdateFormState(usbControllerDevice, null);
-            UpdateFormData(usbControllerDevice);
-        }
-
-        private void closeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            HideForm();
-        }
-
-        private void notifyIcon1_MouseDoubleClick(object sender, MouseEventArgs e)
-        {
-            ShowForm();
-        }
-
-        public void HideForm()
-        {
-            Hide();
-            FormUpdateTimer.Enabled = false;
-            isHidden = true;
-            foreach (var deviceComponent in deviceComponents)
-            {
-                deviceComponent.Hide();
-            }
-        }
-
-        public void ShowForm()
-        {
-            if (isHidden)
-            {
-                allowVisible = true;
-                Show();
-                FormUpdateTimer.Enabled = true;
-                isHidden = false;
-                foreach (var deviceComponent in deviceComponents)
-                {
-                    deviceComponent.Show();
-                }
-            }
-        }
-
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)
         {
             allowClose = true;
             this.Close();
         }
+        #endregion
 
-        private void txt_ControllerName_Leave(object sender, EventArgs e)
+        private void disableNotificationToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
-            userSettings.Controllers.Where(c => c.Address == selectedAddress).FirstOrDefault().Name = txt_ControllerName.Text;
-        }
+            var notifMenuItem = (ToolStripMenuItem)sender;
 
-        private void startWithWindowsToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if(!startupManager.IsAvailable)
-            {
-                MessageBox.Show("The startup service is not available.");
-                return;
-            }
-
-            startupManager.Startup = !startupManager.Startup;
-            startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
-        }
-
-        private void sequencerToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (sequencerForm == null || sequencerForm.IsDisposed)
-            {
-                sequencerForm = new SequencerForm();
-                sequencerForm.InitializeForm(usbDeviceManager, userSettings, null, selectedAddressIdx);
-                sequencerForm.Location = this.Location;
-                sequencerForm.Show();
-            }
-            if (sequencerForm.WindowState == FormWindowState.Minimized)
-            {
-                sequencerForm.WindowState = FormWindowState.Normal;
-            }
-            sequencerForm.Focus();
-        }
-
-        private void AppForm_FormClosed(object sender, FormClosedEventArgs e)
-        {
-            serviceManager.StopServices();
-            hardwareManager.Close();
-        }
-
-        private void toolStripMenuItem_ViewLog_Click(object sender, EventArgs e)
-        {
-            if (logForm == null || logForm.IsDisposed)
-            {
-                logForm = new LogForm();
-                //logForm.InitializeForm(usbDeviceManager, userSettings, deviceAddressList, selectedAddressIdx);
-                logForm.Location = this.Location;
-                logForm.Show();
-            }
-            if (logForm.WindowState == FormWindowState.Minimized)
-            {
-                logForm.WindowState = FormWindowState.Normal;
-            }
-            logForm.Focus();
+            disableNotification = notifMenuItem.Checked;
         }
     }
 } 

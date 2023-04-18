@@ -10,6 +10,8 @@ using static ArchonLightingSystem.Bootloader.FirmwareUpdateManager;
 using static System.Windows.Forms.VisualStyles.VisualStyleElement;
 using System.Reflection;
 using System.Net;
+using System.Windows.Forms;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.Models
 {
@@ -21,8 +23,13 @@ namespace ArchonLightingSystem.Models
         public string Name { get; set; }
         public string Sensor { get; set; }
         public string SensorName { get; set; }
+        public SensorType? SensorType { get; set; }
         public List<int> FanCurveValues { get; set; } = new List<int>();
         public bool UseFanCurve { get; set; }
+        public bool AlertOnFanStopped { get; set; }
+
+        [XmlIgnore]
+        private UserSettingsManager manager = null;
 
         public DeviceSettings()
         {
@@ -60,6 +67,11 @@ namespace ArchonLightingSystem.Models
             FanCurveValues.Add(100);
         }
 
+        public void RegisterManager(UserSettingsManager manager)
+        {
+            this.manager = manager;
+        }
+
         public void Validate()
         {
             lock(FanCurveValues)
@@ -77,6 +89,11 @@ namespace ArchonLightingSystem.Models
                     if (FanCurveValues[i] > 100) FanCurveValues[i] = 100;
                 }
             }
+
+            if(Sensor.IsNotNullOrEmpty() && !SensorType.HasValue)
+            {
+                SensorType = LibreHardwareMonitor.Hardware.SensorType.Temperature;
+            }
         }
     }
 
@@ -88,6 +105,10 @@ namespace ArchonLightingSystem.Models
         public string Name { get; set; }
         public bool AlertOnDisconnect { get; set; }
         public List<DeviceSettings> Devices { get; } = new List<DeviceSettings>();
+
+        // Reference to parent settings
+        [XmlIgnore]
+        private UserSettings userSettings = null;
 
         public ControllerSettings()
         {
@@ -108,6 +129,21 @@ namespace ArchonLightingSystem.Models
         {
             Address = index;
             Name = $"Controller {index + 1}";
+        }
+
+        public void Save()
+        {
+            userSettings?.Save();
+        }
+
+        public void RevertChanges()
+        {
+            userSettings?.RevertChanges();
+        }
+
+        public void RegisterParent(UserSettings userSettings)
+        {
+            this.userSettings = userSettings;
         }
 
         public void Validate()
@@ -143,7 +179,7 @@ namespace ArchonLightingSystem.Models
     public class UserSettings
     {
         [XmlIgnore]
-        public UserSettingsManager Manager { get; set; } = null;
+        private UserSettingsManager manager = null;
 
         public List<ControllerSettings> Controllers { get; private set; } = new List<ControllerSettings>();
 
@@ -158,18 +194,24 @@ namespace ArchonLightingSystem.Models
 
         public void Save()
         {
-            Manager?.SaveSettings(this);
+            manager?.SaveSettings(this);
         }
 
         public void RevertChanges()
         {
-            var revertedSettings = Manager?.GetSettings();
+            var revertedSettings = manager?.GetSettings();
             Controllers = revertedSettings.Controllers;
         }
 
         public ControllerSettings GetControllerByAddress(int address)
         {
             return Controllers.Where(c => c.Address == address).FirstOrDefault();
+        }
+
+        public void RegisterManager(UserSettingsManager manager)
+        {
+            this.manager = manager;
+            Controllers.ForEach(c => c.RegisterParent(this));
         }
 
         public void Validate()
@@ -232,7 +274,7 @@ namespace ArchonLightingSystem.Models
                     var settings = (UserSettings)xs.Deserialize(sr);
                     sr.Close();
                     settings.Validate();
-                    settings.Manager = this;
+                    settings.RegisterManager(this);
                     LoadPlatformVariables(settings);
                     return settings;
                 }
@@ -248,7 +290,7 @@ namespace ArchonLightingSystem.Models
         {
             var settings = new UserSettings();
             settings.Validate();
-            settings.Manager = this;
+            settings.RegisterManager(this);
             LoadPlatformVariables(settings);
             return settings;
         }

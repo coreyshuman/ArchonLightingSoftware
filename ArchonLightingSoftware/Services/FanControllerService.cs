@@ -68,10 +68,11 @@ namespace ArchonLightingSystem.Services
                     {
                         int lowerBoundValue = 0;
                         int calculatedFanSpeed = 0;
+                        int step = 10;
                         List<int> fanCurveValues = deviceSetting.FanCurveValues;
                         for (int i = 0; i < fanCurveValues.Count; i++)
                         {
-                            int comparedTemperature = i * 10;
+                            int comparedTemperature = i * step;
                             if (temperature > comparedTemperature)
                             {
                                 lowerBoundValue = fanCurveValues[i];
@@ -80,7 +81,7 @@ namespace ArchonLightingSystem.Services
                             {
                                 if (temperature != comparedTemperature)
                                 {
-                                    calculatedFanSpeed = ((fanCurveValues[i] - lowerBoundValue) / 10) * (temperature - (comparedTemperature - 10)) + lowerBoundValue; // y = (y2-y1)/(x2-x1)*(x-x1) + y1
+                                    calculatedFanSpeed = ((fanCurveValues[i] - lowerBoundValue) / step) * (temperature - (comparedTemperature - step)) + lowerBoundValue; // y = (y2-y1)/(x2-x1)*(x-x1) + y1
                                 }
                                 else
                                 {

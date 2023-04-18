@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Windows.Forms.Design;
+using ArchonLightingSystem.Models;
 
 namespace ArchonLightingSystem.Components
 {
@@ -209,6 +210,7 @@ namespace ArchonLightingSystem.Components
             lblValue.Left = 0;
             lblValue.Top = 0;
             lblValue.Height = 20;
+            lblValue.Tag = new ThemeTag() { small = true };
             lblValue.Font = new Font("Microsoft San Serif", 7);
             lblValue.Text = maximum.ToString();
             lblValue.TextAlign = ContentAlignment.MiddleCenter;

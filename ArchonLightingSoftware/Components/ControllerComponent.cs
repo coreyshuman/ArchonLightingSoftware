@@ -31,7 +31,7 @@ namespace ArchonLightingSystem.Components
         private GroupBox grpDev;
         private GroupBox grpFan;
         private FanSpeedBar fanBar;
-        private FanSpeedBar tempBar;
+        private FanSpeedBar sensorBar;
         private TrackBar fanCtrl;
         private ComboBox lightingMode;
         private ComboBox lightingSpeed;
@@ -39,8 +39,8 @@ namespace ArchonLightingSystem.Components
         private Button btnFanConfig;
         private IList<Button> buttons;
         private Timer fanUpdateTimer;
+        Label lblSensorUnits;
 
-        private UserSettings userSettings = null;
         private int devIdx = 0;
         private ISensor sensor = null;
 
@@ -64,7 +64,7 @@ namespace ArchonLightingSystem.Components
             grpDev = new GroupBox();
             grpFan = new GroupBox();
             fanBar = new FanSpeedBar();
-            tempBar = new FanSpeedBar();
+            sensorBar = new FanSpeedBar();
             fanCtrl = new TrackBar();
             buttons = new List<Button>();
             lightingMode = new ComboBox();
@@ -84,15 +84,9 @@ namespace ArchonLightingSystem.Components
                 }
 
                 fanBar.Value = deviceControllerData.MeasuredFanRpm[deviceIdx];
-                if(sensor != null && sensor.Value.HasValue)
-                {
-                    tempBar.Value = (int)Math.Round(sensor.Value.Value);
-                }
-                else
-                {
-                    tempBar.Value = 0;
-                }
-                if(deviceSettings.UseFanCurve)
+                sensorBar.Value = GetSensorBarValue();
+
+                if (deviceSettings.UseFanCurve)
                 {
                     var calculatedFanSpeed = deviceControllerData.AutoFanSpeedValue[deviceIdx];
                     fanCtrl.Value = calculatedFanSpeed == 0xFF ? fanCtrl.Value : calculatedFanSpeed;
@@ -122,6 +116,7 @@ namespace ArchonLightingSystem.Components
             Button btnFanConfigTemplate = (Button)fanTemplate.Controls["btn_FanConfig"];
             Label lblFanControlTemplate = (Label)fanTemplate.Controls["lbl_FanControls"];
             Label lblFanUnitsTemplate = (Label)fanTemplate.Controls["lbl_FanUnits"];
+            Label lblSensorUnitsTemplate = (Label)fanTemplate.Controls["lbl_SensorUnits"];
 
             Util.CopyObjectProperties<GroupBox>(grpDev, deviceTemplate, new string[] { "ForeColor", "BackColor", "Width", "Top", "Height" });
             grpDev.Left = deviceTemplate.Left + (deviceTemplate.Width + 10) * (compNum - 1);
@@ -189,14 +184,21 @@ namespace ArchonLightingSystem.Components
             lblFanControls.Show();
 
             Label lblFanUnits = new Label();
-            Util.CopyObjectProperties<Label>(lblFanUnits, lblFanUnitsTemplate, new string[] { "ForeColor", "BackColor", "Font", "Left", "Text", "Width", "Top", "Height" });
+            Util.CopyObjectProperties<Label>(lblFanUnits, lblFanUnitsTemplate, new string[] { "ForeColor", "BackColor", "Font", "Left", "Text", "Width", "Top", "Height", "TextAlign" });
             lblFanUnits.Parent = grpFan;
+            lblFanUnits.Tag = new ThemeTag() { small = true };
             lblFanUnits.Show();
+
+            lblSensorUnits = new Label();
+            Util.CopyObjectProperties<Label>(lblSensorUnits, lblSensorUnitsTemplate, new string[] { "ForeColor", "BackColor", "Font", "Left", "Text", "Width", "Top", "Height", "TextAlign" });
+            lblSensorUnits.Parent = grpFan;
+            lblSensorUnits.Tag = new ThemeTag() { small = true };
+            lblSensorUnits.Show();
 
             btnFanConfig = new Button();
             Util.CopyObjectProperties<Button>(btnFanConfig, btnFanConfigTemplate, new string[] { "FlatStyle", "ForeColor", "Text", "BackColor", "Width", "Top", "Left", "Height" });
             btnFanConfig.Parent = grpFan;
-            btnFanConfig.Click += OpenConfigFormEventHandler(devIdx);
+            btnFanConfig.Click += OpenConfigFormEventHandler;
             btnFanConfig.Show();
 
 
@@ -214,19 +216,19 @@ namespace ArchonLightingSystem.Components
             fanBar.Parent = grpFan;
             fanBar.Show();
 
-            tempBar.Left = fanTemperature.Left;
-            tempBar.Top = fanTemperature.Top;
-            tempBar.Width = fanTemperature.Width;
-            tempBar.Height = fanTemperature.Height;
-            tempBar.BorderStyle = fanTemperature.BorderStyle;
-            tempBar.BarColor = System.Drawing.Color.FromArgb(185, 49, 79);
-            tempBar.ForeColor = grpFan.ForeColor;
-            tempBar.UseAverage = true;
-            tempBar.Minimum = 0;
-            tempBar.Maximum = 120;
-            tempBar.Value = 0;
-            tempBar.Parent = grpFan;
-            tempBar.Show();
+            sensorBar.Left = fanTemperature.Left;
+            sensorBar.Top = fanTemperature.Top;
+            sensorBar.Width = fanTemperature.Width;
+            sensorBar.Height = fanTemperature.Height;
+            sensorBar.BorderStyle = fanTemperature.BorderStyle;
+            sensorBar.BarColor = System.Drawing.Color.FromArgb(185, 49, 79);
+            sensorBar.ForeColor = grpFan.ForeColor;
+            sensorBar.UseAverage = true;
+            sensorBar.Minimum = 0;
+            sensorBar.Maximum = 120;
+            sensorBar.Value = 0;
+            sensorBar.Parent = grpFan;
+            sensorBar.Show();
 
             Util.CopyObjectProperties<TrackBar>(fanCtrl, fanCtrlTemplate, 
                 new string[] { "BackColor", "Width", "Top", "Left", "Height", "Minimum", "Maximum", "TickFrequency", "SmallChange", "LargeChange", "Orientation" });
@@ -242,49 +244,46 @@ namespace ArchonLightingSystem.Components
         public void Show()
         {
             fanBar.Show();
-            tempBar.Show();
+            sensorBar.Show();
         }
 
         public void Hide()
         {
             fanBar.Hide();
-            tempBar.Hide();
+            sensorBar.Hide();
         }
 
-        private EventHandler OpenConfigFormEventHandler(int deviceIdx)
+        private void OpenConfigFormEventHandler(object sender, EventArgs e)
         {
-            return (object sender, EventArgs e) =>
+            if (usbController == null || !usbController.IsConnected)
             {
-                if (usbController == null || !usbController.IsConnected)
-                {
-                    return;
-                }
+                return;
+            }
 
-                ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
-                form.InitializeForm(applicationData, hardwareManager, deviceSettings);
-                form.Location = parentForm.Location;
-                DialogResult res = form.ShowDialog(parentForm);
-                if(res == DialogResult.OK)
-                {
-                    userSettings.Save();
-                    LoadConfig();
-                }
-                else
-                {
-                    userSettings.RevertChanges();
-                }
-            };
+            ArchonLightingSystem.Forms.FanConfigurationForm form = new ArchonLightingSystem.Forms.FanConfigurationForm();
+            form.InitializeForm(hardwareManager, deviceSettings);
+            form.Location = parentForm.Location;
+            DialogResult res = form.ShowDialog(parentForm);
+            if(res == DialogResult.OK)
+            {
+                usbController.Settings.Save();
+                LoadConfig();
+            }
+            else
+            {
+                usbController.Settings.RevertChanges();
+            }
         }
 
         public int Temperature
         {
             get
             {
-                return tempBar.Value;
+                return sensorBar.Value;
             }
             set
             {
-                tempBar.Value = value;
+                sensorBar.Value = value;
             }
         }
 
@@ -306,6 +305,97 @@ namespace ArchonLightingSystem.Components
             fanCtrl.BackColor = fanCtrl.Enabled ? grpFan.BackColor : Color.FromArgb(unchecked((int)0xFF661111));
             btnFanConfig.Text = deviceSettings.SensorName.IsNotNullOrEmpty() ? deviceSettings.SensorName : "Configure...";
             sensor = hardwareManager.GetSensorByIdentifier(deviceSettings.Sensor);
+
+            LoadSensorBarConfig();
+        }
+
+        private void LoadSensorBarConfig()
+        {
+            string label;
+            int maximum = 100;
+
+            switch (sensor?.SensorType)
+            {
+                case SensorType.Voltage: 
+                    label = "mV";
+                    maximum = 13000;
+                    break;
+                case SensorType.Clock: 
+                    label = "MHz";
+                    maximum = 6000;
+                    break;
+                case SensorType.Load: 
+                    label = "%"; 
+                    maximum = 100;
+                    break;
+                case SensorType.Fan: 
+                    label = "RPM"; 
+                    maximum = 3000;
+                    break;
+                case SensorType.Flow: 
+                    label = "L/h"; 
+                    maximum = 100;
+                    break;
+                case SensorType.Control: 
+                    label = "%"; 
+                    maximum = 100;
+                    break;
+                case SensorType.Level: 
+                    label = "%";
+                    maximum = 100;
+                    break;
+                case SensorType.Power: 
+                    label = "W"; 
+                    
+                    break;
+                case SensorType.Data: 
+                    label = "GB";
+                    maximum = 1000;
+                    break;
+                case SensorType.SmallData: 
+                    label = "MB";
+                    maximum = 1000;
+                    break;
+                case SensorType.Factor: 
+                    label = "";
+                    maximum = 100;
+                    break;
+                case SensorType.Frequency: 
+                    label = "Hz";
+                    maximum = 1000;
+                    break;
+                case SensorType.Throughput: 
+                    label = "MB/s";
+                    maximum = 10000;
+                    break;
+                default: // fall-through
+                case SensorType.Temperature: 
+                    label = "°C";
+                    maximum = 100;
+                    break;
+            }
+
+            lblSensorUnits.Text = label;
+            sensorBar.Maximum = maximum;
+        }
+
+        private int GetSensorBarValue()
+        {
+            float? value = sensor?.Value;
+
+            if(!value.HasValue) return 0;
+
+            if (sensor.SensorType == SensorType.Throughput)
+            {
+                return (int)(value / 1048576); // MB/s
+            }
+
+            if (sensor.SensorType == SensorType.Voltage)
+            {
+                return (int)(value * 1000); // mV
+            }
+
+            return (int)(value.Value);
         }
 
         private void UpdateUI(int deviceIdx)
@@ -347,7 +437,7 @@ namespace ArchonLightingSystem.Components
         {
             return (object sender, EventArgs e) =>
             {
-                if (userSettings == null)
+                if (deviceSettings == null)
                 {
                     return;
                 }
@@ -355,11 +445,9 @@ namespace ArchonLightingSystem.Components
                 try
                 {
                     TextBox txt = (TextBox)sender;
-                    if (userSettings != null)
-                    {
-                        deviceSettings.Name = txt.Text;
-                        userSettings.Save();
-                    }
+                    deviceSettings.Name = txt.Text;
+                    usbController.Settings.Save();
+
                 }
                 catch(Exception ex)
                 {

@@ -31,7 +31,6 @@ namespace ArchonLightingSystem
         {
             this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(AppForm));
-            this.FormUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.optionsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editConfigToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,6 +64,7 @@ namespace ArchonLightingSystem
             this.txt_Name = new System.Windows.Forms.TextBox();
             this.lbl_Name = new System.Windows.Forms.Label();
             this.grp_FanSpeed1 = new System.Windows.Forms.GroupBox();
+            this.lbl_SensorUnits = new System.Windows.Forms.Label();
             this.lbl_FanUnits = new System.Windows.Forms.Label();
             this.btn_FanConfig = new System.Windows.Forms.Button();
             this.lbl_FanControls = new System.Windows.Forms.Label();
@@ -81,8 +81,9 @@ namespace ArchonLightingSystem
             this.label2 = new System.Windows.Forms.Label();
             this.txt_ControllerName = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
-            this.chk_Enabled = new System.Windows.Forms.CheckBox();
+            this.chk_AlertOnDisconnect = new System.Windows.Forms.CheckBox();
             this.lbl_Disconnected = new System.Windows.Forms.Label();
+            this.disableNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -90,11 +91,6 @@ namespace ArchonLightingSystem
             this.grp_FanSpeed1.SuspendLayout();
             this.notifiyIconContextMenu.SuspendLayout();
             this.SuspendLayout();
-            // 
-            // FormUpdateTimer
-            // 
-            this.FormUpdateTimer.Interval = 50;
-            this.FormUpdateTimer.Tick += new System.EventHandler(this.FormUpdateTimer_Tick);
             // 
             // menuStrip1
             // 
@@ -418,6 +414,7 @@ namespace ArchonLightingSystem
             // 
             // grp_FanSpeed1
             // 
+            this.grp_FanSpeed1.Controls.Add(this.lbl_SensorUnits);
             this.grp_FanSpeed1.Controls.Add(this.lbl_FanUnits);
             this.grp_FanSpeed1.Controls.Add(this.btn_FanConfig);
             this.grp_FanSpeed1.Controls.Add(this.lbl_FanControls);
@@ -432,16 +429,27 @@ namespace ArchonLightingSystem
             this.grp_FanSpeed1.TabStop = false;
             this.grp_FanSpeed1.Text = "Fan Speed";
             // 
+            // lbl_SensorUnits
+            // 
+            this.lbl_SensorUnits.AutoSize = true;
+            this.lbl_SensorUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lbl_SensorUnits.Location = new System.Drawing.Point(14, 106);
+            this.lbl_SensorUnits.MinimumSize = new System.Drawing.Size(36, 16);
+            this.lbl_SensorUnits.Name = "lbl_SensorUnits";
+            this.lbl_SensorUnits.Size = new System.Drawing.Size(36, 16);
+            this.lbl_SensorUnits.TabIndex = 77;
+            this.lbl_SensorUnits.Text = "*C";
+            this.lbl_SensorUnits.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
             // lbl_FanUnits
             // 
             this.lbl_FanUnits.AutoSize = true;
             this.lbl_FanUnits.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lbl_FanUnits.Location = new System.Drawing.Point(16, 102);
-            this.lbl_FanUnits.MinimumSize = new System.Drawing.Size(82, 20);
+            this.lbl_FanUnits.Location = new System.Drawing.Point(60, 106);
             this.lbl_FanUnits.Name = "lbl_FanUnits";
-            this.lbl_FanUnits.Size = new System.Drawing.Size(82, 20);
+            this.lbl_FanUnits.Size = new System.Drawing.Size(37, 16);
             this.lbl_FanUnits.TabIndex = 76;
-            this.lbl_FanUnits.Text = "°C      RPM";
+            this.lbl_FanUnits.Text = "RPM";
             this.lbl_FanUnits.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // btn_FanConfig
@@ -543,6 +551,7 @@ namespace ArchonLightingSystem
             // 
             // notifyIcon1
             // 
+            this.notifyIcon1.BalloonTipIcon = System.Windows.Forms.ToolTipIcon.Error;
             this.notifyIcon1.ContextMenuStrip = this.notifiyIconContextMenu;
             this.notifyIcon1.Icon = ((System.Drawing.Icon)(resources.GetObject("notifyIcon1.Icon")));
             this.notifyIcon1.Text = "Archon Lighting Controller";
@@ -552,14 +561,15 @@ namespace ArchonLightingSystem
             // notifiyIconContextMenu
             // 
             this.notifiyIconContextMenu.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.closeToolStripMenuItem1});
+            this.closeToolStripMenuItem1,
+            this.disableNotificationToolStripMenuItem});
             this.notifiyIconContextMenu.Name = "notifiyIconContextMenu";
-            this.notifiyIconContextMenu.Size = new System.Drawing.Size(104, 26);
+            this.notifiyIconContextMenu.Size = new System.Drawing.Size(188, 48);
             // 
             // closeToolStripMenuItem1
             // 
             this.closeToolStripMenuItem1.Name = "closeToolStripMenuItem1";
-            this.closeToolStripMenuItem1.Size = new System.Drawing.Size(103, 22);
+            this.closeToolStripMenuItem1.Size = new System.Drawing.Size(187, 22);
             this.closeToolStripMenuItem1.Text = "Close";
             this.closeToolStripMenuItem1.Click += new System.EventHandler(this.closeToolStripMenuItem1_Click);
             // 
@@ -588,21 +598,22 @@ namespace ArchonLightingSystem
             // 
             this.label3.AutoSize = true;
             this.label3.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label3.Location = new System.Drawing.Point(978, 46);
+            this.label3.Location = new System.Drawing.Point(532, 81);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(140, 20);
+            this.label3.Size = new System.Drawing.Size(148, 20);
             this.label3.TabIndex = 81;
-            this.label3.Text = "Controller Enabled";
+            this.label3.Text = "Alert on Disconnect";
             // 
-            // chk_Enabled
+            // chk_AlertOnDisconnect
             // 
-            this.chk_Enabled.AutoSize = true;
-            this.chk_Enabled.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.chk_Enabled.Location = new System.Drawing.Point(1033, 82);
-            this.chk_Enabled.Name = "chk_Enabled";
-            this.chk_Enabled.Size = new System.Drawing.Size(15, 14);
-            this.chk_Enabled.TabIndex = 82;
-            this.chk_Enabled.UseVisualStyleBackColor = true;
+            this.chk_AlertOnDisconnect.AutoSize = true;
+            this.chk_AlertOnDisconnect.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chk_AlertOnDisconnect.Location = new System.Drawing.Point(511, 84);
+            this.chk_AlertOnDisconnect.Name = "chk_AlertOnDisconnect";
+            this.chk_AlertOnDisconnect.Size = new System.Drawing.Size(15, 14);
+            this.chk_AlertOnDisconnect.TabIndex = 82;
+            this.chk_AlertOnDisconnect.UseVisualStyleBackColor = true;
+            this.chk_AlertOnDisconnect.CheckedChanged += new System.EventHandler(this.chk_AlertOnDisconnect_CheckedChanged);
             // 
             // lbl_Disconnected
             // 
@@ -615,6 +626,14 @@ namespace ArchonLightingSystem
             this.lbl_Disconnected.TabIndex = 83;
             this.lbl_Disconnected.Text = "Disconnected";
             // 
+            // disableNotificationToolStripMenuItem
+            // 
+            this.disableNotificationToolStripMenuItem.CheckOnClick = true;
+            this.disableNotificationToolStripMenuItem.Name = "disableNotificationToolStripMenuItem";
+            this.disableNotificationToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.disableNotificationToolStripMenuItem.Text = "Suppress Notification";
+            this.disableNotificationToolStripMenuItem.CheckedChanged += new System.EventHandler(this.disableNotificationToolStripMenuItem_CheckedChanged);
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -622,7 +641,7 @@ namespace ArchonLightingSystem
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(1331, 736);
             this.Controls.Add(this.lbl_Disconnected);
-            this.Controls.Add(this.chk_Enabled);
+            this.Controls.Add(this.chk_AlertOnDisconnect);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.txt_ControllerName);
             this.Controls.Add(this.label2);
@@ -659,7 +678,6 @@ namespace ArchonLightingSystem
         }
 
         #endregion
-        private System.Windows.Forms.Timer FormUpdateTimer;
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem optionsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem editConfigToolStripMenuItem;
@@ -705,12 +723,14 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txt_ControllerName;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.CheckBox chk_Enabled;
+        private System.Windows.Forms.CheckBox chk_AlertOnDisconnect;
         private System.Windows.Forms.ToolStripMenuItem settingsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem startWithWindowsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem sequencerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem_ViewLog;
         private System.Windows.Forms.Label lbl_Disconnected;
+        private System.Windows.Forms.Label lbl_SensorUnits;
+        private System.Windows.Forms.ToolStripMenuItem disableNotificationToolStripMenuItem;
     }
 }
 
