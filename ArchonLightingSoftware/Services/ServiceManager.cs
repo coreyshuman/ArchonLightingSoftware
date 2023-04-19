@@ -2,6 +2,7 @@
 using ArchonLightingSystem.OpenHardware;
 using System.Collections.Generic;
 using ArchonLightingSystem.UsbApplicationV2;
+using ArchonLightingSystem.Common;
 
 namespace ArchonLightingSystem.Services
 {
@@ -30,6 +31,15 @@ namespace ArchonLightingSystem.Services
             services.ForEach(service =>
             {
                 service.CloseService();
+            });
+        }
+
+        public void PauseServices(bool pause)
+        {
+            Logger.Write(Level.Trace, $"{(pause ? "Pause" : "Unpause")} services");
+            services.ForEach(service =>
+            {
+                service.Pause(pause);
             });
         }
     }

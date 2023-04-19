@@ -149,9 +149,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     //sources, not just your USB hardware device.  Therefore, must check to find out if any changes relavant
                     //to your device (with known VID/PID) took place before doing any kind of opening or closing of handles/endpoints.
                     //(the message could have been totally unrelated to your application/USB device)
-                    Logger.Write(Level.Debug, $"Windows Event {m.WParam}, {m.LParam}");
+                    Logger.Write(Level.Debug, $"UsbManger {deviceIDToFind} Windows Event {m.WParam}, {m.LParam}");
                     UpdateDeviceStatus();
-                    
                 }
             }
         }
@@ -178,53 +177,49 @@ namespace ArchonLightingSystem.UsbApplicationV2
             {
                 try
                 {
-                    if (CheckIfPresentAndGetUSBDevicePath())    //Check and make sure at least one device with matching VID/PID is attached
+                    QueryUsbDevices();
+
+                    usbDevices.ForEach(device =>
                     {
-                        usbDevices.ForEach(device =>
+                        //We obtained the proper device path (from QueryUsbDevices function call), and it
+                        //is now possible to open read and write handles to the device.
+                        if (device.IsFound && ((device.IsAttached == false) || (device.IsAttachedButBroken == true)))
                         {
-                            //If executes to here, this means the device is currently attached and was found.
-                            //This code needs to decide however what to do, based on whether or not the device was previously known to be
-                            //attached or not.
-                            if (device.IsFound && ((device.IsAttached == false) || (device.IsAttachedButBroken == true)))    //Check the previous attachment state
-                            {
-                                uint ErrorStatusWrite;
-                                uint ErrorStatusRead;
+                            uint errorStatusWrite;
+                            uint errorStatusRead;
 
-                                //We obtained the proper device path (from CheckIfPresentAndGetUSBDevicePath() function call), and it
-                                //is now possible to open read and write handles to the device.
-                                device.WriteHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
-                                ErrorStatusWrite = (uint)Marshal.GetLastWin32Error();
-                                device.ReadHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
-                                ErrorStatusRead = (uint)Marshal.GetLastWin32Error();
+                            device.WriteHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_WRITE, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
+                            errorStatusWrite = (uint)Marshal.GetLastWin32Error();
+                            device.ReadHandleToUSBDevice = CreateFile(device.DevicePath, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, IntPtr.Zero, OPEN_EXISTING, FILE_FLAG_OVERLAPPED, IntPtr.Zero);
+                            errorStatusRead = (uint)Marshal.GetLastWin32Error();
 
-                                if ((ErrorStatusWrite == ERROR_SUCCESS) && (ErrorStatusRead == ERROR_SUCCESS))
-                                {
-                                    device.IsAttached = true;       //Let the rest of the PC application know the USB device is connected, and it is safe to read/write to it
-                                    device.IsAttachedButBroken = false;
-                                    usbEventArgs.ConnectedDevices.Add(device);
-                                }
-                                else //for some reason the device was physically plugged in, but one or both of the read/write handles didn't open successfully...
-                                {
-                                    device.IsAttached = false;      //Let the rest of this application known not to read/write to the device.
-                                    device.IsAttachedButBroken = true;   //Flag so that next time a WM_DEVICECHANGE message occurs, can retry to re-open read/write pipes
-                                    if (ErrorStatusWrite == ERROR_SUCCESS)
-                                        device.WriteHandleToUSBDevice.Close();
-                                    if (ErrorStatusRead == ERROR_SUCCESS)
-                                        device.ReadHandleToUSBDevice.Close();
-                                }
-                                usbEventArgs.EventCount++;
-                            }
-                            //Device must not be connected (or not programmed with correct firmware)
-                            else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
+                            if ((errorStatusWrite == ERROR_SUCCESS) && (errorStatusRead == ERROR_SUCCESS))
                             {
-                                DetachDevice(device);
-                                usbEventArgs.EventCount++;
-                                usbEventArgs.DisconnectedDevices.Add(device);
+                                device.IsAttached = true;
+                                device.IsAttachedButBroken = false;
+                                usbEventArgs.ConnectedDevices.Add(device);
                             }
-                            //else we did find the device, but IsAttached was already true.  In this case, don't do anything to the read/write handles,
-                            //since the WM_DEVICECHANGE message presumably wasn't caused by our USB device.  
-                        });
-                    }
+                            else //for some reason the device was physically plugged in, but one or both of the read/write handles didn't open successfully...
+                            {
+                                device.IsAttached = false;
+                                device.IsAttachedButBroken = true;   //Flag so that next time a WM_DEVICECHANGE message occurs, can retry to re-open read/write pipes
+                                if (errorStatusWrite == ERROR_SUCCESS)
+                                    device.WriteHandleToUSBDevice.Close();
+                                if (errorStatusRead == ERROR_SUCCESS)
+                                    device.ReadHandleToUSBDevice.Close();
+                            }
+                            usbEventArgs.EventCount++;
+                        }
+                        //Device must not be connected (or not programmed with correct firmware)
+                        else if (!device.IsFound && (device.IsAttached || device.IsAttachedButBroken))
+                        {
+                            DetachDevice(device);
+                            usbEventArgs.EventCount++;
+                            usbEventArgs.DisconnectedDevices.Add(device);
+                        }
+                        //Else device was already connected and configured
+                    });
+                    
                     if (usbEventArgs.EventCount > 0)
                     {
                         OnUsbDriverEvent(usbEventArgs);
@@ -242,51 +237,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
         }
 
         /// <summary>
-        /// Check if a USB device is currently plugged in with a matching VID and PID.
+        /// Query connected HID devices and update our usb devices list
         /// </summary>
-        /// <returns>Returns BOOL.  TRUE when device with matching VID/PID found.  FALSE if device with VID/PID could not be found.</returns>
-        private bool CheckIfPresentAndGetUSBDevicePath()
+        private void QueryUsbDevices()
         {
-            /* 
-		    Before we can "connect" our application to our USB embedded device, we must first find the device.
-		    A USB bus can have many devices simultaneously connected, so somehow we have to find our device only.
-		    This is done with the Vendor ID (VID) and Product ID (PID).  Each USB product line should have
-		    a unique combination of VID and PID.  
-
-		    Microsoft has created a number of functions which are useful for finding plug and play devices.  Documentation
-		    for each function used can be found in the MSDN library.  We will be using the following functions (unmanaged C functions):
-
-		    SetupDiGetClassDevs()					//provided by setupapi.dll, which comes with Windows
-		    SetupDiEnumDeviceInterfaces()			//provided by setupapi.dll, which comes with Windows
-		    GetLastError()							//provided by kernel32.dll, which comes with Windows
-		    SetupDiDestroyDeviceInfoList()			//provided by setupapi.dll, which comes with Windows
-		    SetupDiGetDeviceInterfaceDetail()		//provided by setupapi.dll, which comes with Windows
-		    SetupDiGetDeviceRegistryProperty()		//provided by setupapi.dll, which comes with Windows
-		    CreateFile()							//provided by kernel32.dll, which comes with Windows
-
-            In order to call these unmanaged functions, the Marshal class is very useful.
-             
-		    We will also be using the following unusual data types and structures.  Documentation can also be found in
-		    the MSDN library:
-
-		    PSP_DEVICE_INTERFACE_DATA
-		    PSP_DEVICE_INTERFACE_DETAIL_DATA
-		    SP_DEVINFO_DATA
-		    HDEVINFO
-		    HANDLE
-		    GUID
-
-		    The ultimate objective of the following code is to get the device path, which will be used elsewhere for getting
-		    read and write handles to the USB device.  Once the read/write handles are opened, only then can this
-		    PC application begin reading/writing to the USB device using the WriteFile() and ReadFile() functions.
-
-		    Getting the device path is a multi-step round about process, which requires calling several of the
-		    SetupDixxx() functions provided by setupapi.dll.
-		    */
+            IntPtr pDeviceInfoTable = IntPtr.Zero;
 
             try
             {
-                IntPtr deviceInfoTable = IntPtr.Zero;
                 SP_DEVICE_INTERFACE_DATA interfaceDataStructure = new SP_DEVICE_INTERFACE_DATA();
                 SP_DEVICE_INTERFACE_DETAIL_DATA detailedInterfaceDataStructure = new SP_DEVICE_INTERFACE_DETAIL_DATA();
                 SP_DEVINFO_DATA devInfoData = new SP_DEVINFO_DATA();
@@ -296,38 +254,34 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 uint dwRegSize = 0;
                 uint dwRegSize2 = 0;
                 uint structureSize = 0;
-                IntPtr propertyValueBuffer = IntPtr.Zero;
+                IntPtr pPropertyValueBuffer = IntPtr.Zero;
+                String deviceIDFromRegistry;
                 bool matchFound = false;
                 uint errorStatus;
-                uint loopCounter = 0;
 
-                Trace.WriteLine("USB CheckIfPresent");
+                Trace.WriteLine($"Query usb devices {deviceIDToFind}");
 
-                // clear check flag on existing devices so we can verify they are plugged in
+                // clear IsFound flag on existing devices so we can verify they are plugged in
                 usbDevices.Select(dev => { return dev.IsFound = false; }).ToList();
 
                 //First populate a list of plugged in devices (by specifying "DIGCF_PRESENT"), which are of the specified class GUID. 
-                deviceInfoTable = SetupDiGetClassDevs(ref InterfaceClassGuid, IntPtr.Zero, IntPtr.Zero, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
+                pDeviceInfoTable = SetupDiGetClassDevs(ref InterfaceClassGuid, IntPtr.Zero, IntPtr.Zero, DIGCF_PRESENT | DIGCF_DEVICEINTERFACE);
 
-                if (deviceInfoTable != IntPtr.Zero)
+                if (pDeviceInfoTable != IntPtr.Zero)
                 {
                     //Now look through the list we just populated.  We are trying to see if any of them match our device. 
                     while (true)
                     {
                         interfaceDataStructure.cbSize = (uint)Marshal.SizeOf(interfaceDataStructure);
-                        if (SetupDiEnumDeviceInterfaces(deviceInfoTable, IntPtr.Zero, ref InterfaceClassGuid, interfaceIndex, ref interfaceDataStructure))
+                        if (false == SetupDiEnumDeviceInterfaces(pDeviceInfoTable, IntPtr.Zero, ref InterfaceClassGuid, interfaceIndex, ref interfaceDataStructure))
                         {
                             errorStatus = (uint)Marshal.GetLastWin32Error();
                             if (errorStatus == ERROR_NO_MORE_ITEMS) //Did we reach the end of the list of matching devices in the DeviceInfoTable?
                             {
-                                SetupDiDestroyDeviceInfoList(deviceInfoTable);  //Clean up the old structure we no longer need.
                                 break;
                             }
-                        }
-                        else    //Else some other kind of unknown error ocurred...
-                        {
-                            errorStatus = (uint)Marshal.GetLastWin32Error();
-                            SetupDiDestroyDeviceInfoList(deviceInfoTable);  //Clean up the old structure we no longer need.
+
+                            Logger.Write(Level.Error, $"USB EnumDevice unknown WIN32 error: 0x{errorStatus:X}");
                             break;
                         }
 
@@ -336,31 +290,36 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                         //Initialize an appropriate SP_DEVINFO_DATA structure.  We need this structure for SetupDiGetDeviceRegistryProperty().
                         devInfoData.cbSize = (uint)Marshal.SizeOf(devInfoData);
-                        SetupDiEnumDeviceInfo(deviceInfoTable, interfaceIndex, ref devInfoData);
+                        SetupDiEnumDeviceInfo(pDeviceInfoTable, interfaceIndex, ref devInfoData);
 
                         //First query for the size of the hardware ID, so we can know how big a buffer to allocate for the data.
-                        SetupDiGetDeviceRegistryProperty(deviceInfoTable, ref devInfoData, SPDRP_HARDWAREID, ref dwRegType, IntPtr.Zero, 0, ref dwRegSize);
+                        SetupDiGetDeviceRegistryProperty(pDeviceInfoTable, ref devInfoData, SPDRP_HARDWAREID, ref dwRegType, IntPtr.Zero, 0, ref dwRegSize);
 
                         //Allocate a buffer for the hardware ID.
                         //Should normally work, but could throw exception "OutOfMemoryException" if not enough resources available.
-                        propertyValueBuffer = Marshal.AllocHGlobal((int)dwRegSize);
+                        try
+                        {
+                            pPropertyValueBuffer = Marshal.AllocHGlobal((int)dwRegSize);
 
-                        //Retrieve the hardware IDs for the current device we are looking at.  PropertyValueBuffer gets filled with a 
-                        //REG_MULTI_SZ (array of null terminated strings).  To find a device, we only care about the very first string in the
-                        //buffer, which will be the "device ID".  The device ID is a string which contains the VID and PID, in the example 
-                        //format "Vid_04d8&Pid_003f".
-                        SetupDiGetDeviceRegistryProperty(deviceInfoTable, ref devInfoData, SPDRP_HARDWAREID, ref dwRegType, propertyValueBuffer, dwRegSize, ref dwRegSize2);
+                            //Retrieve the hardware IDs for the current device we are looking at.  PropertyValueBuffer gets filled with a 
+                            //REG_MULTI_SZ (array of null terminated strings).  To find a device, we only care about the very first string in the
+                            //buffer, which will be the "device ID".  The device ID is a string which contains the VID and PID, in the example 
+                            //format "Vid_04d8&Pid_00ff".
+                            SetupDiGetDeviceRegistryProperty(pDeviceInfoTable, ref devInfoData, SPDRP_HARDWAREID, ref dwRegType, pPropertyValueBuffer, dwRegSize, ref dwRegSize2);
 
-                        //Now check if the first string in the hardware ID matches the device ID of the USB device we are trying to find.
-                        String DeviceIDFromRegistry = Marshal.PtrToStringUni(propertyValueBuffer); //Make a new string, fill it with the contents from the PropertyValueBuffer
-
-                        Marshal.FreeHGlobal(propertyValueBuffer);       //No longer need the PropertyValueBuffer, free the memory to prevent potential memory leaks
+                            //Now check if the first string in the hardware ID matches the device ID of the USB device we are trying to find.
+                            deviceIDFromRegistry = Marshal.PtrToStringUni(pPropertyValueBuffer); //Make a new string, fill it with the contents from the PropertyValueBuffer
+                        }
+                        finally
+                        {
+                            Marshal.FreeHGlobal(pPropertyValueBuffer);
+                        }
 
                         //Convert both strings to lower case.  This makes the code more robust/portable accross OS Versions
-                        DeviceIDFromRegistry = DeviceIDFromRegistry.ToLowerInvariant();
+                        deviceIDFromRegistry = deviceIDFromRegistry.ToLowerInvariant();
 
                         //Now check if the hardware ID we are looking at contains the correct VID/PID
-                        matchFound = DeviceIDFromRegistry.Contains(deviceIDToFind);
+                        matchFound = deviceIDFromRegistry.Contains(deviceIDToFind);
                         if (matchFound == true)
                         {
                             //Device must have been found.  In order to open I/O file handle(s), we will need the actual device path first.
@@ -369,67 +328,73 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             //get the structure (after we have allocated enough memory for the structure.)
                             detailedInterfaceDataStructure.cbSize = (uint)Marshal.SizeOf(detailedInterfaceDataStructure);
                             //First call populates "StructureSize" with the correct value
-                            SetupDiGetDeviceInterfaceDetail(deviceInfoTable, ref interfaceDataStructure, IntPtr.Zero, 0, ref structureSize, IntPtr.Zero);
+                            SetupDiGetDeviceInterfaceDetail(pDeviceInfoTable, ref interfaceDataStructure, IntPtr.Zero, 0, ref structureSize, IntPtr.Zero);
+                            //We expect the result of the last function to return an error of ERROR_INSUFFICIENT_BUFFER
+                            errorStatus = (uint)Marshal.GetLastWin32Error();
+                            if(errorStatus != ERROR_INSUFFICIENT_BUFFER)
+                            {
+                                Logger.Write(Level.Error, $"USB DeviceDetail structSize unknown WIN32 error: 0x{errorStatus:X}");
+                                continue;
+                            }
+
                             //Need to call SetupDiGetDeviceInterfaceDetail() again, this time specifying a pointer to a SP_DEVICE_INTERFACE_DETAIL_DATA buffer with the correct size of RAM allocated.
                             //First need to allocate the unmanaged buffer and get a pointer to it.
                             IntPtr pUnmanagedDetailedInterfaceDataStructure = IntPtr.Zero;  //Declare a pointer.
-                            pUnmanagedDetailedInterfaceDataStructure = Marshal.AllocHGlobal((int)structureSize);    //Reserve some unmanaged memory for the structure.
-                            detailedInterfaceDataStructure.cbSize = 6; //Initialize the cbSize parameter (4 bytes for DWORD + 2 bytes for unicode null terminator)
-                            Marshal.StructureToPtr(detailedInterfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, false); //Copy managed structure contents into the unmanaged memory buffer.
-
-                            //Now call SetupDiGetDeviceInterfaceDetail() a second time to receive the device path in the structure at pUnmanagedDetailedInterfaceDataStructure.
-                            if (SetupDiGetDeviceInterfaceDetail(deviceInfoTable, ref interfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, structureSize, IntPtr.Zero, IntPtr.Zero))
+                            try
                             {
-                                //Need to extract the path information from the unmanaged "structure".  The path starts at (pUnmanagedDetailedInterfaceDataStructure + sizeof(DWORD)).
-                                IntPtr pToDevicePath = new IntPtr((uint)pUnmanagedDetailedInterfaceDataStructure.ToInt32() + 4);  //Add 4 to the pointer (to get the pointer to point to the path, instead of the DWORD cbSize parameter)
-                                string devicePath = Marshal.PtrToStringUni(pToDevicePath); //Now copy the path information into the globally defined DevicePath String.
+                                pUnmanagedDetailedInterfaceDataStructure = Marshal.AllocHGlobal((int)structureSize);    //Reserve some unmanaged memory for the structure.
+                                detailedInterfaceDataStructure.cbSize = 6; //Initialize the cbSize parameter (4 bytes for DWORD + 2 bytes for unicode null terminator)
+                                Marshal.StructureToPtr(detailedInterfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, false); //Copy managed structure contents into the unmanaged memory buffer.
 
-                                // if device already exists in our list, set IsStillActive to true. Otherwise, add to list
-                                var foundDevice = usbDevices.Where(dev => dev.DevicePath == devicePath).FirstOrDefault();
-                                if (foundDevice != null)
+                                //Now call SetupDiGetDeviceInterfaceDetail() a second time to receive the device path in the structure at pUnmanagedDetailedInterfaceDataStructure.
+                                if (SetupDiGetDeviceInterfaceDetail(pDeviceInfoTable, ref interfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, structureSize, IntPtr.Zero, IntPtr.Zero))
                                 {
-                                    foundDevice.IsFound = true;
-                                }
-                                else
-                                {
-                                    usbDevices.Add(new UsbDevice { DevicePath = devicePath, IsFound = true });
-                                }
+                                    //Need to extract the path information from the unmanaged "structure".  The path starts at (pUnmanagedDetailedInterfaceDataStructure + sizeof(DWORD)).
+                                    IntPtr pToDevicePath = new IntPtr((uint)pUnmanagedDetailedInterfaceDataStructure.ToInt32() + 4);  //Add 4 to the pointer (to get the pointer to point to the path, instead of the DWORD cbSize parameter)
+                                    string devicePath = Marshal.PtrToStringUni(pToDevicePath); //Now copy the path information into the globally defined DevicePath String.
 
-                                //We now have the proper device path, and we can finally use the path to open I/O handle(s) to the device.
-                                Marshal.FreeHGlobal(pUnmanagedDetailedInterfaceDataStructure);  //No longer need this unmanaged SP_DEVICE_INTERFACE_DETAIL_DATA buffer.  We already extracted the path information.
+                                    // if device already exists in our list, set IsFound to true. Otherwise, add to list
+                                    var foundDevice = usbDevices.Where(dev => dev.DevicePath == devicePath).FirstOrDefault();
+                                    if (foundDevice != null)
+                                    {
+                                        foundDevice.IsFound = true;
+                                    }
+                                    else
+                                    {
+                                        usbDevices.Add(new UsbDevice { DevicePath = devicePath, IsFound = true });
+                                    }
+
+                                    //We now have the proper device path, and we can finally use the path to open I/O handle(s) to the device.
+                                }
+                                else //Some unknown failure occurred
+                                {
+                                    errorStatus = (uint)Marshal.GetLastWin32Error();
+                                    Logger.Write(Level.Error, $"USB DeviceDetail unknown WIN32 error: 0x{errorStatus:X}");
+                                }
                             }
-                            else //Some unknown failure occurred
+                            finally
                             {
-                                uint ErrorCode = (uint)Marshal.GetLastWin32Error();
-                                Trace.WriteLine($"USB unknown error code {ErrorCode}");
-                                Marshal.FreeHGlobal(pUnmanagedDetailedInterfaceDataStructure);  //No longer need this unmanaged SP_DEVICE_INTERFACE_DETAIL_DATA buffer.  We already extracted the path information.
+                                if(pUnmanagedDetailedInterfaceDataStructure != IntPtr.Zero)
+                                    Marshal.FreeHGlobal(pUnmanagedDetailedInterfaceDataStructure);
                             }
                         }
 
                         interfaceIndex++;
-                        //Keep looping until we either find a device with matching VID and PID, or until we run out of devices to check.
-                        //However, just in case some unexpected error occurs, keep track of the number of loops executed.
-                        //If the number of loops exceeds a very large number, exit anyway, to prevent inadvertent infinite looping.
-                        loopCounter++;
-                        if (loopCounter == 100000)
-                        {
-                            break;
-                        }
-                    }//end of while(true)
-
-                    SetupDiDestroyDeviceInfoList(deviceInfoTable);	//Clean up the old structure we no longer need.
+                    }
 
                     var deviceFoundCount = usbDevices.Where(dev => dev.IsFound == true).Count();
-                    Trace.WriteLine($"USB found {deviceFoundCount} device(s)");
-                    return deviceFoundCount > 0;
+                    Trace.WriteLine($"USB search found {deviceFoundCount} device(s) {deviceIDToFind}");
                 }
-                return false;
-            }//end of try
+            }
             catch (Exception ex)
             {
-                //Something went wrong if PC gets here.  Maybe a Marshal.AllocHGlobal() failed due to insufficient resources or something.
-                Trace.WriteLine($"CheckIfPresent Error: {ex}");
-                return false;
+                //Something went wrong if we get here. Maybe a Marshal.AllocHGlobal() failed due to insufficient resources or something.
+                Trace.WriteLine($"USB CheckIfPresent Error: {ex}");
+            }
+            finally
+            {
+                if(pDeviceInfoTable != IntPtr.Zero)
+                    SetupDiDestroyDeviceInfoList(pDeviceInfoTable);	//Clean up the old structure we no longer need.
             }
         }
     }

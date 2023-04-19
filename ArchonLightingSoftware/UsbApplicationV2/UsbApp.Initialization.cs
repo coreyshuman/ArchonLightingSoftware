@@ -110,6 +110,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     usbDevice.Wait(cancelToken);
                                     initState++;
                                     retryCount = 0;
+                                    await ClearReadBuffer(usbDevice, cancelToken);
                                     continue;
                                 case DeviceInitializationState.ReadBootloader:
                                     response = await ReadBootloaderInfo(usbDevice, cancelToken);

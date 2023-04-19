@@ -273,7 +273,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return (outBufferLen); // Return buffer length.
         }
 
-        private static async Task<ControlPacket> GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout = 200, CancellationTokenSource cancelToken = null)
+        private static async Task<ControlPacket> GetDeviceResponse(IUsbDevice usbDevice, UsbAppCommon.CONTROL_CMD cmd, uint readTimeout, CancellationTokenSource cancelToken)
         {
             uint byteCnt;
             FrameInfo frameInfo = new FrameInfo();
@@ -322,6 +322,12 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
 
             return null;
+        }
+
+        public static async Task ClearReadBuffer(IUsbDevice usbDevice, CancellationTokenSource cancelToken)
+        {
+            FrameInfo dummyFrame = new FrameInfo();
+            while (await usbIO.Read(usbDevice, dummyFrame.FrameData, UsbDeviceManager.USB_PACKET_SIZE, 20, cancelToken) > 0) ;
         }
 
         private static uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)

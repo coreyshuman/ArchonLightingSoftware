@@ -38,7 +38,7 @@ namespace ArchonLightingSystem.Common
 
             cancellationTokenSource.Token.ThrowIfCancellationRequested();
 
-            return Task.Factory.StartNew(async () =>
+            return Task.Run(async () =>
             {
                 try
                 {
@@ -62,11 +62,7 @@ namespace ArchonLightingSystem.Common
                 }
 
                 return Task.CompletedTask;
-            },
-            cancellationTokenSource.Token,
-            TaskCreationOptions.LongRunning,
-            TaskScheduler.Default
-            );
+            });
         }
 
         public void SetPeriod(int milliSeconds)

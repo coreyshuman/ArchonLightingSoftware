@@ -29,6 +29,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private object disconnectedDevicesLock = new object();
         private List<UsbDevice> pendingRetryDevices = new List<UsbDevice>();
         private SemaphoreSlim pendingSemaphore = new SemaphoreSlim(1, 1);
+        private Task testTask= null;
 
         private async Task<BackgroundTaskResponse> processPendingDevices(CancellationToken token)
         {
@@ -129,7 +130,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
 
-            usbEventBackgroundTask.StartTask(processPendingDevices);
+            testTask = usbEventBackgroundTask.StartTask(processPendingDevices);
             periodicBackgroundTask.StartTask(processPeriodicTasks);
         }
 

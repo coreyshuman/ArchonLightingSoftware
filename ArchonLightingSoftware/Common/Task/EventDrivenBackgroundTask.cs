@@ -18,7 +18,7 @@ namespace ArchonLightingSystem.Common
         {
             if (recurringAction == null) throw new ArgumentException(nameof(recurringAction));
 
-            return Task.Factory.StartNew(async () =>
+            return Task.Run( async () =>
             {
                 try
                 {
@@ -26,7 +26,6 @@ namespace ArchonLightingSystem.Common
                     {
                         await recurringAction(cancellationTokenSource.Token);
                         autoResetEvent.WaitOne();
-
                     }
                 }
                 catch(Exception ex)
@@ -43,11 +42,7 @@ namespace ArchonLightingSystem.Common
                 }
 
                 return Task.CompletedTask;
-            }, 
-            cancellationTokenSource.Token, 
-            TaskCreationOptions.LongRunning, 
-            TaskScheduler.Default
-            );
+            });
         }
 
         public void NextStep()

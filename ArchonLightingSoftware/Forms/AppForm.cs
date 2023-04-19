@@ -85,6 +85,7 @@ namespace ArchonLightingSystem
             isHidden = startInBackground;
 
             InitializeForm();
+            UpdateFormState(null, false);
         }
 
         void InitializeForm()
@@ -136,11 +137,21 @@ namespace ArchonLightingSystem
 
             try
             {
+                if (device == null)
+                {
+                    lbl_Disconnected.Visible = true;
+                    cbo_DeviceAddress.Enabled = !formIsBusy;
+                    txt_ControllerName.Enabled = false;
+                    btn_SaveConfig.Enabled = false;
+                    chk_AlertOnDisconnect.Enabled = false;
+                    return;
+                }
+
                 lbl_Disconnected.Visible = device.IsDisconnected;
                 cbo_DeviceAddress.Enabled = !formIsBusy;
-                txt_ControllerName.Enabled = device.IsConnected && !formIsBusy;
+                txt_ControllerName.Enabled = !formIsBusy;
                 btn_SaveConfig.Enabled = device.IsConnected && !formIsBusy;
-                chk_AlertOnDisconnect.Enabled = device.IsConnected && !formIsBusy;
+                chk_AlertOnDisconnect.Enabled = !formIsBusy;
             }
             finally
             {
@@ -154,6 +165,11 @@ namespace ArchonLightingSystem
             {
                 this.BeginInvoke(new Action<UsbControllerDevice>(UpdateFormData), new object[] { usbControllerDevice });
                 return;
+            }
+
+            if(controller == null)
+            {
+                return; // todo disable form components
             }
 
             txt_ControllerName.Text = controller.Settings.Name;
@@ -490,14 +506,13 @@ namespace ArchonLightingSystem
             {
                 firmwareForm = new FirmwareUpdateForm();
                 firmwareForm.InitializeForm(this, usbControllerManger);
-                firmwareForm.Show();
             }
-            if (firmwareForm.WindowState == FormWindowState.Minimized)
-            {
-                firmwareForm.WindowState = FormWindowState.Normal;
-            }
+
             firmwareForm.Location = this.Location;
-            firmwareForm.Focus();
+            serviceManager.PauseServices(true);
+            firmwareForm.ShowDialog(this);
+            serviceManager.PauseServices(false);
+            firmwareForm.Dispose();
         }
 
         private void closeToolStripMenuItem1_Click(object sender, EventArgs e)

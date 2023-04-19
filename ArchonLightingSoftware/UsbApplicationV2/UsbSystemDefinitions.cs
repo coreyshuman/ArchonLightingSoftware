@@ -44,6 +44,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
         internal const uint WAIT_FAILED = 0xFFFFFFFF;
         //GetLastError definitions
         internal const uint ERROR_IO_PENDING = 0x000003E5;
+        internal const uint ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
 
 
         //Various structure definitions for structures that this code will be using

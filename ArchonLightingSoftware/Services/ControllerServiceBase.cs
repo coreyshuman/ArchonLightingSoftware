@@ -110,6 +110,8 @@ namespace ArchonLightingSystem.Services
         {
             try
             {
+                if (usbControllerManager.ActiveControllers.Count == 0) return null;
+
                 if (++controllerIdx >= usbControllerManager.ActiveControllers.Count)
                 {
                     controllerIdx = 0;

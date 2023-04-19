@@ -31,7 +31,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     {
                         controllerInstance.AppData.ResetToBootloaderPending = false;
                         await ResetDeviceToBootloader(controllerInstance.UsbDevice, cancelToken);
-                        controllerInstance.Disconnect();
                         return;
                     }
 
@@ -81,10 +80,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
                 finally
                 {
-                    if (cancelToken != null)
-                    {
-                        controllerInstance.UsbDevice?.Release(cancelToken);
-                    }
+                    controllerInstance.UsbDevice.Release(cancelToken);
                     controllerInstance.semaphore.Release();
                 }
             }
@@ -102,7 +98,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 controller.FailedHealthCheckCount = 0;
             }
 
-            if (controller.FailedHealthCheckCount > 3)
+            if (controller.FailedHealthCheckCount > 3 && controller.Settings.AlertOnDisconnect)
             {
                 Logger.Write(Level.Error, $"Device Address {controller.Address} Failed Health Check ({controller.Settings.Name})");
                 controller.FailedHealthCheckCount = 0;
