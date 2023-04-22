@@ -35,6 +35,14 @@ namespace ArchonLightingSystem.Models
             int i, j;
             Crc = Util.UInt16FromBytes(buffer[0], buffer[1]);
             Length = Util.UInt16FromBytes(buffer[2], buffer[3]);
+
+            if(Length > ConfigLength)
+            {
+                Logger.Write(Level.Warning, $"Invalid device config length, expect={ConfigLength} received={Length}");
+                Length = (ushort)ConfigLength;
+                return;
+            }
+
             for(i=0; i<DeviceControllerDefinitions.DevicePerController; i++)
             {
                 FanSpeed[i] = buffer[i + FanSpeedOffset];

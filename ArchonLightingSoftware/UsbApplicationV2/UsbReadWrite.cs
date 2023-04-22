@@ -110,7 +110,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     if (cancelToken.IsCancellationRequested)
                     {
-                        CancelIo(device.WriteHandleToUSBDevice);
+                        CancelIoEx(device.WriteHandleToUSBDevice, ref HIDOverlapped);
                         return Task.FromResult(0u);
                     }
 
@@ -122,7 +122,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         {
                             if (cancelToken.IsCancellationRequested)
                             {
-                                CancelIo(device.WriteHandleToUSBDevice);
+                                CancelIoEx(device.WriteHandleToUSBDevice, ref HIDOverlapped);
                                 taskCompletionSource.SetResult(0u);
                                 return;
                             }
@@ -131,7 +131,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                             if (cancelToken.IsCancellationRequested)
                             {
-                                CancelIo(device.WriteHandleToUSBDevice);
+                                CancelIoEx(device.WriteHandleToUSBDevice, ref HIDOverlapped);
                                 taskCompletionSource.SetResult(0u);
                                 return;
                             }
@@ -161,13 +161,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     break;
                             }
 
-                            CancelIo(device.WriteHandleToUSBDevice);
+                            CancelIoEx(device.WriteHandleToUSBDevice, ref HIDOverlapped);
                             taskCompletionSource.SetResult(0u);
                         }
                         catch (Exception ex)
                         {
                             Trace.WriteLine($"Undefined UsbWrite thread Error: {ex.Message}");
-                            CancelIo(device.ReadHandleToUSBDevice);
+                            CancelIoEx(device.WriteHandleToUSBDevice, ref HIDOverlapped);
                             taskCompletionSource.SetException(ex);
                         }
                         finally
@@ -285,7 +285,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 {
                     if (cancelToken.IsCancellationRequested)
                     {
-                        CancelIo(device.ReadHandleToUSBDevice);
+                        CancelIoEx(device.ReadHandleToUSBDevice, ref HIDOverlapped);
                         return Task.FromResult(0u);
                     }
 
@@ -299,7 +299,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                             if (cancelToken.IsCancellationRequested)
                             {
-                                CancelIo(device.ReadHandleToUSBDevice);
+                                CancelIoEx(device.ReadHandleToUSBDevice, ref HIDOverlapped);
                                 taskCompletionSource.SetResult(0u);
                                 return;
                             }
@@ -329,13 +329,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     break;
                             }
 
-                            CancelIo(device.ReadHandleToUSBDevice);
+                            CancelIoEx(device.ReadHandleToUSBDevice, ref HIDOverlapped);
                             taskCompletionSource.SetResult(0u);
                         }
                         catch (Exception ex)
                         {
                             Trace.WriteLine($"Undefined UsbWrite thread Error: {ex.Message}");
-                            CancelIo(device.ReadHandleToUSBDevice);
+                            CancelIoEx(device.ReadHandleToUSBDevice, ref HIDOverlapped);
                             taskCompletionSource.SetException(ex);
                         }
                         finally

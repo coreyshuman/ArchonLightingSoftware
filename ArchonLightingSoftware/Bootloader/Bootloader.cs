@@ -384,13 +384,14 @@ namespace ArchonLightingSystem.Bootloader
         /// <summary>
         /// Transmit frame if there is data to send.
         /// </summary>
-        private async Task TransmitTask(uint deviceIdx)
+        private async Task<bool> TransmitTask(uint deviceIdx)
         {
             switch (bootState[deviceIdx].txState)
             {
                 case TxStates.FIRST_TRY:
                     if (bootState[deviceIdx].RetryCount > 0)
                     {
+                        Logger.Write(Level.Trace, $"Send Packet First Try");
                         // There is something to send.
                         await WritePort(deviceIdx, bootState[deviceIdx].TxPacket, bootState[deviceIdx].TxPacketLen);
                         bootState[deviceIdx].RetryCount--;
@@ -398,6 +399,7 @@ namespace ArchonLightingSystem.Bootloader
                         bootState[deviceIdx].txState = TxStates.RE_TRY;
                         // Next retry should be attempted only after a delay.
                         bootState[deviceIdx].NextRetryTimeInMs = (UInt64)Util.GetCurrentUnixTimestampMillis() + bootState[deviceIdx].TxRetryDelay;
+                        return true;
                     }
                     break;
 
@@ -406,16 +408,19 @@ namespace ArchonLightingSystem.Bootloader
                     {
                         if (bootState[deviceIdx].NextRetryTimeInMs < (UInt64)Util.GetCurrentUnixTimestampMillis())
                         {
+                            Logger.Write(Level.Trace, $"Send Packet Retry");
                             // Delay elapsed. Its time to retry.
                             bootState[deviceIdx].NextRetryTimeInMs = (UInt64)Util.GetCurrentUnixTimestampMillis() + bootState[deviceIdx].TxRetryDelay;
                             await WritePort(deviceIdx, bootState[deviceIdx].TxPacket, bootState[deviceIdx].TxPacketLen);
                             // Decrement retry count.
                             bootState[deviceIdx].RetryCount--;
                             UpdateProgress(deviceIdx);
+                            return true;
                         }
                     }
                     else
                     {
+                        Logger.Write(Level.Trace, $"Send Failed Retries");
                         // Retries Exceeded
                         bootState[deviceIdx].bootloaderStatus.NoResponseFromDevice = true;
                         // Reset the state
@@ -423,6 +428,7 @@ namespace ArchonLightingSystem.Bootloader
                     }
                     break;
             }
+            return false;
         }
 
         /// <summary>
@@ -469,6 +475,7 @@ namespace ArchonLightingSystem.Bootloader
             switch ((BootloaderCmd)cmd)
 	        {
 	            case BootloaderCmd.READ_BOOT_INFO:
+                    Logger.Write(Level.Trace, $"Send Read Boot");
                     buff[buffLen++] = (byte)cmd;
                     bootState[deviceIdx].MaxRetry = bootState[deviceIdx].RetryCount = retries;
                     bootState[deviceIdx].TxRetryDelay = delayInMs; // in ms
@@ -481,6 +488,7 @@ namespace ArchonLightingSystem.Bootloader
                     break;
 
 	            case BootloaderCmd.JMP_TO_APP:
+                    Logger.Write(Level.Trace, $"Send Jump App");
                     buff[buffLen++] = (byte)cmd;
                     bootState[deviceIdx].MaxRetry = bootState[deviceIdx].RetryCount = 1;
                     bootState[deviceIdx].TxRetryDelay = 10; // in ms
@@ -638,6 +646,9 @@ namespace ArchonLightingSystem.Bootloader
         {
             uint index = 0;
             CancellationTokenSource tokenSource = new CancellationTokenSource();
+            var device = usbDeviceManager.GetDevice((int)deviceIdx);
+            await device.WaitAsync(tokenSource);
+
             try
             {
                 while (bufflen - index > 0)
@@ -647,7 +658,7 @@ namespace ArchonLightingSystem.Bootloader
                     byte[] usbBuff = new byte[64];
                     uint sendLen = (bufflen - index) > 64 ? 64 : bufflen - index;
                     Util.CopyArray(ref usbBuff, 0, ref buffer, index, (int)sendLen);
-                    await usbReadWrite.Write(usbDeviceManager.GetDevice((int)deviceIdx), usbBuff, sendLen, tokenSource);
+                    await usbReadWrite.Write(device, usbBuff, sendLen, tokenSource);
                     index += sendLen;
                     if (bufflen - index > 0)
                     {
@@ -657,7 +668,7 @@ namespace ArchonLightingSystem.Bootloader
             }
             finally
             {
-                tokenSource.Dispose();
+                device.Release(tokenSource);
             }
         }
 
@@ -671,14 +682,15 @@ namespace ArchonLightingSystem.Bootloader
         async Task<UInt32> ReadPort(uint deviceIdx, byte[] buffer, UInt32 bufflen)
         {
             CancellationTokenSource tokenSource = new CancellationTokenSource();
+            var device = usbDeviceManager.GetDevice((int)deviceIdx);
+            await device.WaitAsync(tokenSource);
             try { 
-                return await usbReadWrite.Read(usbDeviceManager.GetDevice((int)deviceIdx), buffer, 65, 200, tokenSource);
+                return await usbReadWrite.Read(device, buffer, bufflen, 200, tokenSource);
             }
             finally
             {
-                tokenSource.Dispose();
+                device.Release(tokenSource);
             }
         }
-
     }
 }

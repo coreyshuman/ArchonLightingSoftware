@@ -213,7 +213,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             if (deviceControllerConfig == null)
             {
-                Logger.Write(Level.Error, $"Failed to initialize {device.ShortName}");
+                Logger.Write(Level.Warning, $"Failed to initialize {device.ShortName}");
                 if(await pendingSemaphore.WaitAsync(300))
                 { 
                     try

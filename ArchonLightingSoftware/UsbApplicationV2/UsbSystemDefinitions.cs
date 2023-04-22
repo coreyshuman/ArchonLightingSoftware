@@ -216,6 +216,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
             SafeFileHandle hFile
         );
 
+        //Uses a handle (created with CreateFile()), and lets us cancel an overlapped IO 
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern uint CancelIoEx(
+            SafeFileHandle hFile,
+            ref OVERLAPPED lpOverlapped
+        );
+
         //Uses a handle (created with CreateFile()), and lets us get the result from an overlapped IO event
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool GetOverlappedResult(

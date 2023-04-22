@@ -239,6 +239,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
             uint frameDataCount = 0;
             UInt16 crc = 0;
 
+            if (dataLen + 4 > outBufferMaxLen)
+            {
+                throw new Exception("GenerateFrame dataLen larger than buffer.");
+            }
+
             do
             {
                 if (outBufferLen >= outBufferMaxLen)
@@ -327,7 +332,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
         public static async Task ClearReadBuffer(IUsbDevice usbDevice, CancellationTokenSource cancelToken)
         {
             FrameInfo dummyFrame = new FrameInfo();
-            while (await usbIO.Read(usbDevice, dummyFrame.FrameData, UsbDeviceManager.USB_PACKET_SIZE, 20, cancelToken) > 0) ;
+            while (true)
+            {
+                var readTask = usbIO.Read(usbDevice, dummyFrame.FrameData, UsbDeviceManager.USB_PACKET_SIZE, 20, cancelToken);
+                var res = await readTask;
+                if (res == 0) break;
+
+                await Task.Delay(5);
+            }
         }
 
         private static uint ValidateFrame(FrameInfo frameInfo, ControlPacket controlPacket)

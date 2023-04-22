@@ -64,7 +64,7 @@ namespace ArchonLightingSystem.Bootloader
         {
             if(deviceIdx >= deviceCount)
             {
-                return 0;
+                throw new Exception("Invalid device index");
             }
             return HexFileCurrentLine[deviceIdx];
         }
@@ -73,7 +73,7 @@ namespace ArchonLightingSystem.Bootloader
         {
             if(address >= VirtualFlash.Length)
             {
-                return 0;
+                throw new Exception("Invalid device index");
             }
             return VirtualFlash[address];
         }
@@ -128,7 +128,6 @@ namespace ArchonLightingSystem.Bootloader
         /// <returns>Length of the hex record in bytes</returns>
         public UInt16 GetNextHexRecord(uint deviceIdx, ref byte[] HexRec, uint buffStartAddress, UInt32 BuffLen)
         {
-	        UInt16 len = 0;
             string line;
             if(HexFileCurrentLine[deviceIdx] == HexFile.Length)
             {
@@ -142,9 +141,14 @@ namespace ArchonLightingSystem.Bootloader
 			    // Not a valid hex record.
 			    return 0;
 		    }
+
+            if((line.Length - 1) / 2 + buffStartAddress > BuffLen)
+            {
+                throw new Exception("HexRec buffer length too short");
+            }
+
 		    // Convert rest to hex.
-		    len = ConvertAsciiToHex(line.Substring(1), ref HexRec, buffStartAddress);
-	        return len;
+		    return ConvertAsciiToHex(line.Substring(1), ref HexRec, buffStartAddress);
         }
 
          /// <summary>
@@ -177,7 +181,6 @@ namespace ArchonLightingSystem.Bootloader
         private UInt16 ConvertAsciiToHex(string AsciiRec, ref Byte[] HexRec, uint buffStartAddress)
         {
             UInt16 i;
-            List<string> hexValues = new List<string>();
             // split asci into 2-character hex values
             for (i = 0; i < AsciiRec.Length; i += 2)
             {
