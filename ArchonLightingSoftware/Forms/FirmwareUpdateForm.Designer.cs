@@ -40,7 +40,6 @@
             this.formUpdateTimer = new System.Windows.Forms.Timer(this.components);
             this.btn_OpenHexFile = new System.Windows.Forms.Button();
             this.btn_StartApp = new System.Windows.Forms.Button();
-            this.timer_ResetHardware = new System.Windows.Forms.Timer(this.components);
             this.btn_UpdateSelected = new System.Windows.Forms.Button();
             this.txt_Log = new System.Windows.Forms.TextBox();
             this.SuspendLayout();
@@ -50,6 +49,7 @@
             this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.listView1.GridLines = true;
+            this.listView1.HideSelection = false;
             this.listView1.Location = new System.Drawing.Point(24, 87);
             this.listView1.Margin = new System.Windows.Forms.Padding(4);
             this.listView1.Name = "listView1";
@@ -65,7 +65,7 @@
             this.label1.Location = new System.Drawing.Point(32, 15);
             this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(118, 16);
+            this.label1.Size = new System.Drawing.Size(117, 16);
             this.label1.TabIndex = 1;
             this.label1.Text = "Current Version:";
             // 
@@ -75,7 +75,7 @@
             this.lbl_CurrentVersion.Location = new System.Drawing.Point(158, 15);
             this.lbl_CurrentVersion.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lbl_CurrentVersion.Name = "lbl_CurrentVersion";
-            this.lbl_CurrentVersion.Size = new System.Drawing.Size(32, 16);
+            this.lbl_CurrentVersion.Size = new System.Drawing.Size(31, 16);
             this.lbl_CurrentVersion.TabIndex = 2;
             this.lbl_CurrentVersion.Text = "v?.?";
             // 
@@ -97,7 +97,7 @@
             this.lbl_Status.Location = new System.Drawing.Point(95, 37);
             this.lbl_Status.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.lbl_Status.Name = "lbl_Status";
-            this.lbl_Status.Size = new System.Drawing.Size(66, 16);
+            this.lbl_Status.Size = new System.Drawing.Size(65, 16);
             this.lbl_Status.TabIndex = 5;
             this.lbl_Status.Text = "Loading...";
             // 
@@ -108,7 +108,7 @@
             this.label3.Location = new System.Drawing.Point(32, 37);
             this.label3.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
             this.label3.Name = "label3";
-            this.label3.Size = new System.Drawing.Size(55, 16);
+            this.label3.Size = new System.Drawing.Size(54, 16);
             this.label3.TabIndex = 4;
             this.label3.Text = "Status:";
             // 
@@ -147,11 +147,6 @@
             this.btn_StartApp.Text = "Start App";
             this.btn_StartApp.UseVisualStyleBackColor = false;
             this.btn_StartApp.Click += new System.EventHandler(this.btn_StartApp_Click);
-            // 
-            // timer_ResetHardware
-            // 
-            this.timer_ResetHardware.Interval = 500;
-            this.timer_ResetHardware.Tick += new System.EventHandler(this.timer_ResetHardware_Tick);
             // 
             // btn_UpdateSelected
             // 
@@ -219,7 +214,6 @@
         private System.Windows.Forms.Timer formUpdateTimer;
         private System.Windows.Forms.Button btn_OpenHexFile;
         private System.Windows.Forms.Button btn_StartApp;
-        private System.Windows.Forms.Timer timer_ResetHardware;
         private System.Windows.Forms.Button btn_UpdateSelected;
         private System.Windows.Forms.TextBox txt_Log;
     }

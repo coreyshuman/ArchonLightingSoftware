@@ -1,11 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Properties;
 using ArchonLightingSystem.Models;
@@ -20,14 +15,12 @@ namespace ArchonLightingSystem
 {
     public partial class FirmwareUpdateForm : Form
     {
-
+        #region initializers
         private UsbDeviceManager usbDeviceManager;
-        private UsbControllerManager usbControllerManager;
         private bool isClosing = false;
         private bool isBusy = true;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private FirmwareUpdateManager firmwareManager = new FirmwareUpdateManager();
-        private AppForm parentForm;
         
 
         private enum Image
@@ -42,8 +35,8 @@ namespace ArchonLightingSystem
             InitializeComponent();
             dragSupport.Initialize(this);
             btn_UpdateAll.Enabled = false;
-            timer_ResetHardware.Enabled = true;
             lbl_Status.Text = firmwareManager.GetStatus();
+            InitializeForm();
         }
 
         private void InitializeProgressBar(int deviceIdx)
@@ -61,13 +54,9 @@ namespace ArchonLightingSystem
                 bar.Show();
         }
 
-        
-
-        public void InitializeForm(AppForm parent, UsbControllerManager usbControllerManager)
+        public void InitializeForm()
         {
             usbDeviceManager = new UsbDeviceManager();
-            parentForm = parent;
-            this.usbControllerManager = usbControllerManager;
 
             ImageList imageList = new ImageList { ImageSize = new Size(60, 32) };
             listView1.View = View.Details;
@@ -91,9 +80,10 @@ namespace ArchonLightingSystem
             firmwareManager.InitializeUsb(usbDeviceManager);
 
             AppTheme.ApplyThemeToForm(this);
-
         }
+        #endregion
 
+        #region update_ui
         private void WriteLog(object sender, string log)
         {
             if (this.IsDisposed) return;
@@ -223,7 +213,9 @@ namespace ArchonLightingSystem
             isBusy = false;
             this.Cursor = Cursors.Default;
         }
+        #endregion
 
+        #region event_handlers
         private void btn_Cancel_Click(object sender, EventArgs e)
         {
             if(isBusy)
@@ -305,23 +297,10 @@ namespace ArchonLightingSystem
         {
             this.Cursor = Cursors.WaitCursor;
             firmwareManager.StartApp();
-            usbControllerManager.SuppressErrors(false);
-            Thread.Sleep(1000);
-            //usbDeviceManager.ClearDevices();
-            // have main for redraw
-            //parentForm.FormIsInitialized = false;
-            CloseWindow();
-        }
 
-        private void timer_ResetHardware_Tick(object sender, EventArgs e)
-        {
-            timer_ResetHardware.Enabled = false;
-            usbControllerManager.SuppressErrors(true);
-            foreach (var controller in usbControllerManager.ActiveControllers)
-            {
-                if(controller.IsConnected)
-                    controller.AppData.ResetToBootloaderPending = true;
-            }
+            Thread.Sleep(1000);
+
+            CloseWindow();
         }
 
         private void btn_UpdateSelected_Click(object sender, EventArgs e)
@@ -350,5 +329,6 @@ namespace ArchonLightingSystem
             SetFormIsUpdating();
             firmwareManager.VerifyFlash();
         }
+        #endregion
     }
 }

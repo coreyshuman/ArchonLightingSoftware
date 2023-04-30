@@ -29,7 +29,7 @@ namespace ArchonLightingSystem
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
 
-        UsbApplicationV2.UsbControllerManager usbControllerManger;
+        UsbApplicationV2.UsbControllerManager usbControllerManager;
 
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private DragWindowSupport dragSupport = new DragWindowSupport();
@@ -66,9 +66,9 @@ namespace ArchonLightingSystem
             }
 
             // debug testing new manager
-            usbControllerManger = new UsbControllerManager();
-            usbControllerManger.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
-            usbControllerManger.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
+            usbControllerManager = new UsbControllerManager();
+            usbControllerManager.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
+            usbControllerManager.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
 
             startWithWindowsToolStripMenuItem.Enabled = startupManager.IsAvailable;
             startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
@@ -79,7 +79,7 @@ namespace ArchonLightingSystem
                 hardwareManager.Close();
             };
 
-            serviceManager.StartServices(usbControllerManger, hardwareManager);
+            serviceManager.StartServices(usbControllerManager, hardwareManager);
 
             allowVisible = !startInBackground;
             isHidden = startInBackground;
@@ -114,7 +114,7 @@ namespace ArchonLightingSystem
         {
             if (InvokeRequired)
             {
-                this.Invoke(new Action<string>(UpdateStatusBar), new object[] { msg });
+                this.BeginInvoke(new Action<string>(UpdateStatusBar), new object[] { msg });
                 return;
             }
             statusLabel.Text = msg; 
@@ -192,7 +192,7 @@ namespace ArchonLightingSystem
             var lastSelected = (ComboBoxItem)cbo_DeviceAddress.SelectedItem;
             cbo_DeviceAddress.Items.Clear();
             cbo_DeviceAddress.Items.AddRange(
-                usbControllerManger.ActiveControllers.Select(c =>
+                usbControllerManager.ActiveControllers.Select(c =>
                     new ComboBoxItem() { 
                         Text = $"{c.Address} {c.Settings.Name}",
                         Value = c.Address
@@ -201,8 +201,8 @@ namespace ArchonLightingSystem
             );
             if(lastSelected != null)
             {
-                var selectedController = usbControllerManger.ActiveControllers.Where(c => c.Address == lastSelected.Value).FirstOrDefault();
-                cbo_DeviceAddress.SelectedIndex = usbControllerManger.ActiveControllers.IndexOf(selectedController);
+                var selectedController = usbControllerManager.ActiveControllers.Where(c => c.Address == lastSelected.Value).FirstOrDefault();
+                cbo_DeviceAddress.SelectedIndex = usbControllerManager.ActiveControllers.IndexOf(selectedController);
             }
 
             if (cbo_DeviceAddress.Items.Count > 0 && cbo_DeviceAddress.SelectedItem == null)
@@ -284,7 +284,7 @@ namespace ArchonLightingSystem
         //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
         protected override void WndProc(ref Message m)
         {
-            usbControllerManger?.HandleWindowEvent(ref m);
+            usbControllerManager?.HandleWindowEvent(ref m);
             base.WndProc(ref m);
         }
 
@@ -349,7 +349,7 @@ namespace ArchonLightingSystem
 
             var item = (ComboBoxItem)(cbo.SelectedItem);
 
-            usbControllerDevice = usbControllerManger.GetControllerByAddress(item.Value);
+            usbControllerDevice = usbControllerManager.GetControllerByAddress(item.Value);
             UpdateFormState(usbControllerDevice, null);
             UpdateFormData(usbControllerDevice);
         }
@@ -409,7 +409,7 @@ namespace ArchonLightingSystem
             if (sequencerForm == null || sequencerForm.IsDisposed)
             {
                 sequencerForm = new SequencerForm();
-                sequencerForm.InitializeForm(usbControllerManger);
+                sequencerForm.InitializeForm(usbControllerManager);
                 sequencerForm.Location = this.Location;
                 sequencerForm.Show();
             }
@@ -447,7 +447,7 @@ namespace ArchonLightingSystem
             if (configForm == null || configForm.IsDisposed)
             {
                 configForm = new ConfigEditorForm();
-                configForm.InitializeForm(usbControllerManger);
+                configForm.InitializeForm(usbControllerManager);
                 configForm.Show();
             }
             if (configForm.WindowState == FormWindowState.Minimized)
@@ -465,7 +465,7 @@ namespace ArchonLightingSystem
             if (eepromForm == null || eepromForm.IsDisposed)
             {
                 eepromForm = new EepromEditorForm();
-                eepromForm.InitializeForm(usbControllerManger);
+                eepromForm.InitializeForm(usbControllerManager);
                 eepromForm.Show();
             }
             if (eepromForm.WindowState == FormWindowState.Minimized)
@@ -481,7 +481,7 @@ namespace ArchonLightingSystem
             if (debugForm == null || debugForm.IsDisposed)
             {
                 debugForm = new DebugForm();
-                debugForm.InitializeForm(usbControllerManger);
+                debugForm.InitializeForm(usbControllerManager);
                 debugForm.Show();
             }
             if (debugForm.WindowState == FormWindowState.Minimized)
@@ -494,24 +494,24 @@ namespace ArchonLightingSystem
 
         private void updateFirmwareToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            for (int i = 0; i < usbControllerManger.ActiveControllers.Count; i++)
-            {
-                // todo implement
-                // deinitialize devices to switch to bootloader mode.
-                // prepare form for reinitialization
-                // usbDeviceManager.GetDevice(i).PauseUsb = true;
-                // formIsInitialized = false;
-            }
             if (firmwareForm == null || firmwareForm.IsDisposed)
             {
                 firmwareForm = new FirmwareUpdateForm();
-                firmwareForm.InitializeForm(this, usbControllerManger);
             }
 
             firmwareForm.Location = this.Location;
+            usbControllerManager.SuppressErrors(true);
             serviceManager.PauseServices(true);
+
+            foreach (var controller in usbControllerManager.ActiveControllers)
+            {
+                if (controller.IsConnected)
+                    controller.AppData.ResetToBootloaderPending = true;
+            }
+
             firmwareForm.ShowDialog(this);
             serviceManager.PauseServices(false);
+            usbControllerManager.SuppressErrors(false);
             firmwareForm.Dispose();
         }
 

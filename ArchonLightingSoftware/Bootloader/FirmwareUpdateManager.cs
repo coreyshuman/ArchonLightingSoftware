@@ -253,22 +253,29 @@ namespace ArchonLightingSystem.Bootloader
 
         private void UsbPollTick(object sender, EventArgs e)
         {
-            while (usbDeviceManager.DeviceCount > firmwareDevices.Count)
+            try
             {
-                WriteLog(Level.Information, "Bootloader found, getting info...");
-                var device = new FirmwareDevice
+                while (usbDeviceManager.DeviceCount > firmwareDevices.Count)
                 {
-                    DeviceIndex = firmwareDevices.Count
-                };
-                firmwareDevices.Add(device);
-                bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.READ_BOOT_INFO, 3, 500);
-            }
+                    WriteLog(Level.Information, "Bootloader found, getting info...");
+                    var device = new FirmwareDevice
+                    {
+                        DeviceIndex = firmwareDevices.Count
+                    };
+                    firmwareDevices.Add(device);
+                    bootloader.SendCommand((uint)device.DeviceIndex, BootloaderCmd.READ_BOOT_INFO, 3, 500);
+                }
 
-            if (Status == ManagerStatus.Disconnected)
+                if (Status == ManagerStatus.Disconnected)
+                {
+                    usbDeviceManager.RegisterUsbDevice(Definitions.BootloaderVid, Definitions.BootloaderPid);
+                    Status = LoadFirmware() ? ManagerStatus.Idle : ManagerStatus.NoFile;
+                    OnFirmwareEvent();
+                }
+            }
+            catch(Exception ex)
             {
-                usbDeviceManager.RegisterUsbDevice(Definitions.BootloaderVid, Definitions.BootloaderPid);
-                Status = LoadFirmware() ? ManagerStatus.Idle : ManagerStatus.NoFile;
-                OnFirmwareEvent();
+                Logger.Write(Level.Error, ex.Message);
             }
         }
 
