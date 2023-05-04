@@ -13,13 +13,13 @@ namespace ArchonLightingSystem.Components
 {
     public class FanSpeedBar
     {
-        private UInt16[] fanBuffer;
+        private double[] fanBuffer;
         private Panel container;
         private Panel bar;
         private Label lblValue;
-        private int maximum = 100;
-        private int minimum = 0;
-        private int value = 0;
+        private double maximum = 100;
+        private double minimum = 0;
+        private double value = 0;
         private bool useAverage = false;
         private bool hidden = false;
 
@@ -122,7 +122,7 @@ namespace ArchonLightingSystem.Components
             }
         }
 
-        public int Maximum
+        public double Maximum
         {
             get
             {
@@ -139,7 +139,7 @@ namespace ArchonLightingSystem.Components
             }
         }
 
-        public int Minimum
+        public double Minimum
         {
             get
             {
@@ -156,7 +156,7 @@ namespace ArchonLightingSystem.Components
             }
         }
 
-        public int Value
+        public double Value
         {
             get
             {
@@ -198,7 +198,7 @@ namespace ArchonLightingSystem.Components
             container = new Panel();
             bar = new Panel();
             lblValue = new Label();
-            fanBuffer = new UInt16[20];
+            fanBuffer = new double[20];
 
             maximum = 100;
             minimum = 0;
@@ -238,10 +238,10 @@ namespace ArchonLightingSystem.Components
             hidden = true;
         }
 
-        public void SetFanSpeedValue(int v)
+        public void SetFanSpeedValue(double v)
         {
             int i;
-            int total = 0;
+            double total = 0;
             if (v > maximum) v = maximum;
             if (v < minimum) v = minimum;
             value = v;
@@ -252,7 +252,7 @@ namespace ArchonLightingSystem.Components
                 {
                     fanBuffer[i] = fanBuffer[i - 1];
                 }
-                fanBuffer[0] = (UInt16)value;
+                fanBuffer[0] = value;
                 for (i = 0; i < fanBuffer.Length; i++)
                 {
                     total += fanBuffer[i];
@@ -266,7 +266,15 @@ namespace ArchonLightingSystem.Components
                 int top = container.Height - size;
                 bar.Height = size;
                 bar.Top = top;
-                lblValue.Text = value.ToString();
+                if(value < 100)
+                {
+                    lblValue.Text = value.ToString("00.##");
+                } 
+                else
+                {
+                    lblValue.Text = ((int)value).ToString();
+                }
+                
             }
         }
     }

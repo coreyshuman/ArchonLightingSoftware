@@ -12,8 +12,8 @@ namespace ArchonLightingSystem.Services
 
         public ServiceManager()
         {
-            //services.Add(new SensorUpdateService(5));
-            services.Add(new FanControllerService(2));
+            services.Add(new SensorUpdateService(5));
+            services.Add(new FanControllerService(5));
             services.Add(new LightControllerService(1000));
             services.Add(new TimeServiceController(30000));
         }

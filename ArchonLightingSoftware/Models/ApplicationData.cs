@@ -24,6 +24,7 @@ namespace ArchonLightingSystem.Models
         public uint EepromAddress { get; set; }
         public uint EepromLength { get; set; }
         public string Debug { get; set; }
+        public Byte[] FanSpeedTargetValue { get; set; }
 
         public Byte[] TimeValue { get; set; }           // 3  bytes: hour, minute, second
 
@@ -45,6 +46,7 @@ namespace ArchonLightingSystem.Models
             EepromLength = 1;
             Debug = "";
             TimeValue = new byte[3];
+            FanSpeedTargetValue = new Byte[DeviceControllerDefinitions.DevicePerController];
         }
     }
 }

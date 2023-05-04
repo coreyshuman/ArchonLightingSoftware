@@ -60,6 +60,11 @@ namespace ArchonLightingSystem.Forms
                 currentNode = hardwareManager.GetParentNodeByIdentifier(identifier);
             }
 
+            num_hysteresisDecrease.Value = settings.DecreaseHysteresis;
+            num_hysteresisIncrease.Value = settings.IncreaseHysteresis;
+            num_stepDecrease.Value = settings.DecreaseStep;
+            num_stepIncrease.Value = settings.IncreaseStep;
+
             InitializeGrid();
             InitializeFanCurve();
 
@@ -94,9 +99,7 @@ namespace ArchonLightingSystem.Forms
         void InitializeFanCurve()
         {
             var lineSeries = fanCurveChart.Series[0];
-            var linePoints = lineSeries.Points;
             var pointSeries = fanCurveChart.Series[1];
-            var pointPoints = pointSeries.Points;
             var chart = fanCurveChart.ChartAreas[0];
             fanCurveChart.Titles.Add("Fan Curve");
             fanCurveChart.Titles[0].ForeColor = AppTheme.PrimaryText;
@@ -112,38 +115,55 @@ namespace ArchonLightingSystem.Forms
             chart.AxisY.LabelStyle.ForeColor = AppTheme.PrimaryText;
             chart.AxisY.MajorGrid.LineColor = AppTheme.PrimaryText;
             chart.AxisY.MajorTickMark.LineColor = AppTheme.PrimaryText;
-            chart.AxisX.Maximum = 100;
-            chart.AxisX.Minimum = 0;
-            chart.AxisX.Interval = 10;
+
+            var sensor = hardwareManager.GetSensorByIdentifier(Identifier);
+            SetFanCurveRange(sensor);
+            UpdateFanCurveChart();
+        }
+
+        void SetFanCurveRange(ISensor sensor)
+        {
+            string label = SensorUnits.GetLabel(sensor);
+            double[] range = SensorUnits.GetRange(sensor);
+            int pointCount = range.Length;
+            double min = SensorUnits.GetMin(sensor);
+            double interval = SensorUnits.GetInterval(sensor);
+
+            var chart = fanCurveChart.ChartAreas[0];
+            var lineSeries = fanCurveChart.Series[0];
+            var linePoints = lineSeries.Points;
+            var pointSeries = fanCurveChart.Series[1];
+            var pointPoints = pointSeries.Points;
+
+            linePoints.Clear();
+            pointPoints.Clear();
+
+            chart.AxisY.Title = "Fan Speed %";
+            chart.AxisX.Title = label;
+
             chart.AxisY.Maximum = 100;
             chart.AxisY.Minimum = 0;
             chart.AxisY.Interval = 10;
+            chart.AxisX.Maximum = range[range.Length - 1];
+            chart.AxisX.Minimum = min;
+            chart.AxisX.Interval = interval;
 
-            // default points
-            linePoints.AddXY(0, 10);
-            linePoints.AddXY(10, 10);
-            linePoints.AddXY(20, 10);
-            linePoints.AddXY(30, 10);
-            linePoints.AddXY(40, 20);
-            linePoints.AddXY(50, 40);
-            linePoints.AddXY(60, 60);
-            linePoints.AddXY(70, 80);
-            linePoints.AddXY(80, 100);
-            linePoints.AddXY(90, 100);
-            linePoints.AddXY(100, 100);
-            pointPoints.AddXY(0, 10);
-            pointPoints.AddXY(10, 10);
-            pointPoints.AddXY(20, 10);
-            pointPoints.AddXY(30, 10);
-            pointPoints.AddXY(40, 20);
-            pointPoints.AddXY(50, 40);
-            pointPoints.AddXY(60, 60);
-            pointPoints.AddXY(70, 80);
-            pointPoints.AddXY(80, 100);
-            pointPoints.AddXY(90, 100);
-            pointPoints.AddXY(100, 100);
+            for (int i = 0; i < range.Length; i++)
+            {
+                int defaultFanCurveVal = 30;
 
-            UpdateFanCurveChart();
+                if(i > pointCount * 0.75)
+                {
+                    defaultFanCurveVal = 100;
+                }
+                else if (i >= pointCount / 2)
+                {
+                    defaultFanCurveVal = (int)Math.Round(40 + 60 * (i - pointCount / 2) * (1 / (pointCount * 0.3)));
+                }
+
+                linePoints.AddXY(range[i], defaultFanCurveVal);
+                pointPoints.AddXY(range[i], defaultFanCurveVal);
+            }
         }
         #endregion
 
@@ -236,6 +256,7 @@ namespace ArchonLightingSystem.Forms
             lbl_Selected.Text = node.Text;
             identifier = node.Sensor.Identifier.ToString();
             var sensor = hardwareManager.GetSensorByIdentifier(Identifier);
+            SetFanCurveRange(sensor);
             deviceSettings.Sensor = null;
             deviceSettings.SensorName = null;
             if (sensor != null)
@@ -441,6 +462,7 @@ namespace ArchonLightingSystem.Forms
         {
             identifier = string.Empty;
             lbl_Selected.Text = "...";
+            SetFanCurveRange(null);
             LoadGridForNode(null);
             deviceSettings.Sensor = Identifier;
             deviceSettings.SensorName = string.Empty;
@@ -500,8 +522,28 @@ namespace ArchonLightingSystem.Forms
                 SelectSensor((SensorNode)node);
             }
         }
+
+        private void num_hysteresisIncrease_ValueChanged(object sender, EventArgs e)
+        {
+            deviceSettings.IncreaseHysteresis = (int)num_hysteresisIncrease.Value;
+        }
+
+        private void num_hysteresisDecrease_ValueChanged(object sender, EventArgs e)
+        {
+            deviceSettings.DecreaseHysteresis = (int)num_hysteresisDecrease.Value;
+        }
+
+        private void num_stepIncrease_ValueChanged(object sender, EventArgs e)
+        {
+            deviceSettings.IncreaseStep = (int)num_stepIncrease.Value;
+        }
+
+        private void num_stepDecrease_ValueChanged(object sender, EventArgs e)
+        {
+            deviceSettings.DecreaseStep = (int)num_stepDecrease.Value;
+        }
         #endregion
 
-        
+
     }
 }

@@ -272,10 +272,11 @@ namespace ArchonLightingSystem.Components
             else
             {
                 usbController.Settings.RevertChanges();
+                LoadConfig();
             }
         }
 
-        public int Temperature
+        public double SensorValue
         {
             get
             {
@@ -311,75 +312,11 @@ namespace ArchonLightingSystem.Components
 
         private void LoadSensorBarConfig()
         {
-            string label;
-            int maximum = 100;
-
-            switch (sensor?.SensorType)
-            {
-                case SensorType.Voltage: 
-                    label = "mV";
-                    maximum = 13000;
-                    break;
-                case SensorType.Clock: 
-                    label = "MHz";
-                    maximum = 6000;
-                    break;
-                case SensorType.Load: 
-                    label = "%"; 
-                    maximum = 100;
-                    break;
-                case SensorType.Fan: 
-                    label = "RPM"; 
-                    maximum = 3000;
-                    break;
-                case SensorType.Flow: 
-                    label = "L/h"; 
-                    maximum = 100;
-                    break;
-                case SensorType.Control: 
-                    label = "%"; 
-                    maximum = 100;
-                    break;
-                case SensorType.Level: 
-                    label = "%";
-                    maximum = 100;
-                    break;
-                case SensorType.Power: 
-                    label = "W"; 
-                    
-                    break;
-                case SensorType.Data: 
-                    label = "GB";
-                    maximum = 1000;
-                    break;
-                case SensorType.SmallData: 
-                    label = "MB";
-                    maximum = 1000;
-                    break;
-                case SensorType.Factor: 
-                    label = "";
-                    maximum = 100;
-                    break;
-                case SensorType.Frequency: 
-                    label = "Hz";
-                    maximum = 1000;
-                    break;
-                case SensorType.Throughput: 
-                    label = "MB/s";
-                    maximum = 10000;
-                    break;
-                default: // fall-through
-                case SensorType.Temperature: 
-                    label = "°C";
-                    maximum = 100;
-                    break;
-            }
-
-            lblSensorUnits.Text = label;
-            sensorBar.Maximum = maximum;
+            lblSensorUnits.Text = SensorUnits.GetLabel(sensor);
+            sensorBar.Maximum = SensorUnits.GetMax(sensor);
         }
 
-        private int GetSensorBarValue()
+        private double GetSensorBarValue()
         {
             float? value = sensor?.Value;
 
@@ -390,12 +327,7 @@ namespace ArchonLightingSystem.Components
                 return (int)(value / 1048576); // MB/s
             }
 
-            if (sensor.SensorType == SensorType.Voltage)
-            {
-                return (int)(value * 1000); // mV
-            }
-
-            return (int)(value.Value);
+            return (value.Value);
         }
 
         private void UpdateUI(int deviceIdx)

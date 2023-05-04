@@ -28,9 +28,9 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea5 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
             this.listView1 = new System.Windows.Forms.ListView();
             this.btn_Back = new System.Windows.Forms.Button();
             this.btn_Close = new System.Windows.Forms.Button();
@@ -44,7 +44,19 @@
             this.chk_AlertFanStopped = new System.Windows.Forms.CheckBox();
             this.btn_ClearSelection = new System.Windows.Forms.Button();
             this.lbl_Path = new System.Windows.Forms.Label();
+            this.num_stepDecrease = new System.Windows.Forms.NumericUpDown();
+            this.label2 = new System.Windows.Forms.Label();
+            this.label3 = new System.Windows.Forms.Label();
+            this.num_stepIncrease = new System.Windows.Forms.NumericUpDown();
+            this.label4 = new System.Windows.Forms.Label();
+            this.num_hysteresisIncrease = new System.Windows.Forms.NumericUpDown();
+            this.label5 = new System.Windows.Forms.Label();
+            this.num_hysteresisDecrease = new System.Windows.Forms.NumericUpDown();
             ((System.ComponentModel.ISupportInitialize)(this.fanCurveChart)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_stepDecrease)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_stepIncrease)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_hysteresisIncrease)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_hysteresisDecrease)).BeginInit();
             this.SuspendLayout();
             // 
             // listView1
@@ -81,7 +93,7 @@
             this.btn_Close.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_Close.DialogResult = System.Windows.Forms.DialogResult.Cancel;
             this.btn_Close.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_Close.Location = new System.Drawing.Point(954, 526);
+            this.btn_Close.Location = new System.Drawing.Point(954, 578);
             this.btn_Close.Margin = new System.Windows.Forms.Padding(4);
             this.btn_Close.Name = "btn_Close";
             this.btn_Close.Size = new System.Drawing.Size(100, 28);
@@ -113,7 +125,7 @@
             this.btn_OK.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_OK.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.btn_OK.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_OK.Location = new System.Drawing.Point(846, 526);
+            this.btn_OK.Location = new System.Drawing.Point(846, 578);
             this.btn_OK.Margin = new System.Windows.Forms.Padding(4);
             this.btn_OK.Name = "btn_OK";
             this.btn_OK.Size = new System.Drawing.Size(100, 28);
@@ -125,23 +137,23 @@
             // fanCurveChart
             // 
             this.fanCurveChart.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea1.BorderColor = System.Drawing.Color.White;
-            chartArea1.Name = "ChartArea1";
-            this.fanCurveChart.ChartAreas.Add(chartArea1);
+            chartArea5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            chartArea5.BorderColor = System.Drawing.Color.White;
+            chartArea5.Name = "ChartArea1";
+            this.fanCurveChart.ChartAreas.Add(chartArea5);
             this.fanCurveChart.Location = new System.Drawing.Point(56, 325);
             this.fanCurveChart.Name = "fanCurveChart";
             this.fanCurveChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
-            series1.BorderWidth = 3;
-            series1.ChartArea = "ChartArea1";
-            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series1.Name = "FanCurveSeries";
-            series2.ChartArea = "ChartArea1";
-            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
-            series2.MarkerSize = 7;
-            series2.Name = "FanCurvePoints";
-            this.fanCurveChart.Series.Add(series1);
-            this.fanCurveChart.Series.Add(series2);
+            series9.BorderWidth = 3;
+            series9.ChartArea = "ChartArea1";
+            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series9.Name = "FanCurveSeries";
+            series10.ChartArea = "ChartArea1";
+            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
+            series10.MarkerSize = 7;
+            series10.Name = "FanCurvePoints";
+            this.fanCurveChart.Series.Add(series9);
+            this.fanCurveChart.Series.Add(series10);
             this.fanCurveChart.Size = new System.Drawing.Size(642, 229);
             this.fanCurveChart.TabIndex = 3;
             this.fanCurveChart.Text = "fanCurveChart";
@@ -154,7 +166,7 @@
             // chk_UseFan
             // 
             this.chk_UseFan.AutoSize = true;
-            this.chk_UseFan.Location = new System.Drawing.Point(709, 325);
+            this.chk_UseFan.Location = new System.Drawing.Point(712, 484);
             this.chk_UseFan.Name = "chk_UseFan";
             this.chk_UseFan.Size = new System.Drawing.Size(115, 20);
             this.chk_UseFan.TabIndex = 5;
@@ -166,7 +178,7 @@
             // 
             this.btnCopyFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btnCopyFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCopyFanCurve.Location = new System.Drawing.Point(709, 351);
+            this.btnCopyFanCurve.Location = new System.Drawing.Point(712, 510);
             this.btnCopyFanCurve.Name = "btnCopyFanCurve";
             this.btnCopyFanCurve.Size = new System.Drawing.Size(132, 31);
             this.btnCopyFanCurve.TabIndex = 6;
@@ -178,7 +190,7 @@
             // 
             this.btnPasteFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btnPasteFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnPasteFanCurve.Location = new System.Drawing.Point(847, 351);
+            this.btnPasteFanCurve.Location = new System.Drawing.Point(850, 510);
             this.btnPasteFanCurve.Name = "btnPasteFanCurve";
             this.btnPasteFanCurve.Size = new System.Drawing.Size(132, 31);
             this.btnPasteFanCurve.TabIndex = 7;
@@ -189,7 +201,7 @@
             // chk_AlertFanStopped
             // 
             this.chk_AlertFanStopped.AutoSize = true;
-            this.chk_AlertFanStopped.Location = new System.Drawing.Point(709, 299);
+            this.chk_AlertFanStopped.Location = new System.Drawing.Point(712, 458);
             this.chk_AlertFanStopped.Name = "chk_AlertFanStopped";
             this.chk_AlertFanStopped.Size = new System.Drawing.Size(154, 20);
             this.chk_AlertFanStopped.TabIndex = 4;
@@ -219,6 +231,114 @@
             this.lbl_Path.TabIndex = 10;
             this.lbl_Path.Text = "...";
             // 
+            // num_stepDecrease
+            // 
+            this.num_stepDecrease.Location = new System.Drawing.Point(712, 421);
+            this.num_stepDecrease.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_stepDecrease.Name = "num_stepDecrease";
+            this.num_stepDecrease.Size = new System.Drawing.Size(58, 22);
+            this.num_stepDecrease.TabIndex = 11;
+            this.num_stepDecrease.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_stepDecrease.ValueChanged += new System.EventHandler(this.num_stepDecrease_ValueChanged);
+            // 
+            // label2
+            // 
+            this.label2.AutoSize = true;
+            this.label2.Location = new System.Drawing.Point(776, 423);
+            this.label2.Name = "label2";
+            this.label2.Size = new System.Drawing.Size(130, 16);
+            this.label2.TabIndex = 12;
+            this.label2.Text = "% Decrease Step / s";
+            // 
+            // label3
+            // 
+            this.label3.AutoSize = true;
+            this.label3.Location = new System.Drawing.Point(776, 395);
+            this.label3.Name = "label3";
+            this.label3.Size = new System.Drawing.Size(122, 16);
+            this.label3.TabIndex = 14;
+            this.label3.Text = "% Increase Step / s";
+            // 
+            // num_stepIncrease
+            // 
+            this.num_stepIncrease.Location = new System.Drawing.Point(712, 393);
+            this.num_stepIncrease.Minimum = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_stepIncrease.Name = "num_stepIncrease";
+            this.num_stepIncrease.Size = new System.Drawing.Size(58, 22);
+            this.num_stepIncrease.TabIndex = 13;
+            this.num_stepIncrease.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_stepIncrease.ValueChanged += new System.EventHandler(this.num_stepIncrease_ValueChanged);
+            // 
+            // label4
+            // 
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(776, 327);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(141, 16);
+            this.label4.TabIndex = 18;
+            this.label4.Text = "% Increase Hysteresis";
+            // 
+            // num_hysteresisIncrease
+            // 
+            this.num_hysteresisIncrease.Location = new System.Drawing.Point(712, 325);
+            this.num_hysteresisIncrease.Maximum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
+            this.num_hysteresisIncrease.Name = "num_hysteresisIncrease";
+            this.num_hysteresisIncrease.Size = new System.Drawing.Size(58, 22);
+            this.num_hysteresisIncrease.TabIndex = 17;
+            this.num_hysteresisIncrease.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_hysteresisIncrease.ValueChanged += new System.EventHandler(this.num_hysteresisIncrease_ValueChanged);
+            // 
+            // label5
+            // 
+            this.label5.AutoSize = true;
+            this.label5.Location = new System.Drawing.Point(776, 355);
+            this.label5.Name = "label5";
+            this.label5.Size = new System.Drawing.Size(149, 16);
+            this.label5.TabIndex = 16;
+            this.label5.Text = "% Decrease Hysteresis";
+            // 
+            // num_hysteresisDecrease
+            // 
+            this.num_hysteresisDecrease.Location = new System.Drawing.Point(712, 353);
+            this.num_hysteresisDecrease.Maximum = new decimal(new int[] {
+            50,
+            0,
+            0,
+            0});
+            this.num_hysteresisDecrease.Name = "num_hysteresisDecrease";
+            this.num_hysteresisDecrease.Size = new System.Drawing.Size(58, 22);
+            this.num_hysteresisDecrease.TabIndex = 15;
+            this.num_hysteresisDecrease.Value = new decimal(new int[] {
+            1,
+            0,
+            0,
+            0});
+            this.num_hysteresisDecrease.ValueChanged += new System.EventHandler(this.num_hysteresisDecrease_ValueChanged);
+            // 
             // FanConfigurationForm
             // 
             this.AcceptButton = this.btn_OK;
@@ -226,7 +346,15 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.CancelButton = this.btn_Close;
-            this.ClientSize = new System.Drawing.Size(1067, 569);
+            this.ClientSize = new System.Drawing.Size(1067, 619);
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.num_hysteresisIncrease);
+            this.Controls.Add(this.label5);
+            this.Controls.Add(this.num_hysteresisDecrease);
+            this.Controls.Add(this.label3);
+            this.Controls.Add(this.num_stepIncrease);
+            this.Controls.Add(this.label2);
+            this.Controls.Add(this.num_stepDecrease);
             this.Controls.Add(this.lbl_Path);
             this.Controls.Add(this.btn_ClearSelection);
             this.Controls.Add(this.chk_AlertFanStopped);
@@ -252,6 +380,10 @@
             this.Text = "FanConfigurationForm";
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.FanConfigurationForm_KeyDown);
             ((System.ComponentModel.ISupportInitialize)(this.fanCurveChart)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_stepDecrease)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_stepIncrease)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_hysteresisIncrease)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.num_hysteresisDecrease)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -272,5 +404,13 @@
         private System.Windows.Forms.CheckBox chk_AlertFanStopped;
         private System.Windows.Forms.Button btn_ClearSelection;
         private System.Windows.Forms.Label lbl_Path;
+        private System.Windows.Forms.NumericUpDown num_stepDecrease;
+        private System.Windows.Forms.Label label2;
+        private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.NumericUpDown num_stepIncrease;
+        private System.Windows.Forms.Label label4;
+        private System.Windows.Forms.NumericUpDown num_hysteresisIncrease;
+        private System.Windows.Forms.Label label5;
+        private System.Windows.Forms.NumericUpDown num_hysteresisDecrease;
     }
 }

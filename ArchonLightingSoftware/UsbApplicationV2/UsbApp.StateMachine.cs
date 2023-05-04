@@ -3,6 +3,7 @@ using System.Threading;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.Common;
 using System.Threading.Tasks;
+using System.Diagnostics;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {

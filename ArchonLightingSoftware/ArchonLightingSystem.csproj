@@ -114,6 +114,7 @@
     <Compile Include="Interfaces\IBackgroundTask.cs" />
     <Compile Include="Interfaces\IUsbDevice.cs" />
     <Compile Include="Models\VersionXml.cs" />
+    <Compile Include="OpenHardware\SensorUnits.cs" />
     <Compile Include="ThirdParty\AIDA64Integration.cs" />
     <Compile Include="ArchonLightingSDKIntegration\MappedFileManager.cs" />
     <Compile Include="Bootloader\Bootloader.cs" />

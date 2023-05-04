@@ -248,6 +248,7 @@ namespace ArchonLightingSystem.Bootloader
             FirmwareEventHandler = null;
             FirmwareLogHandler = null;
             bootloader.ShutdownThread();
+            usbUpdateTimer.Stop();
             WriteLog(Level.Information, "--Closing Manager--");
         }
 

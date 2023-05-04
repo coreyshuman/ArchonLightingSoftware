@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.UsbApplicationV2;
@@ -28,7 +29,7 @@ namespace ArchonLightingSystem.Services
             }
             catch (Exception ex)
             {
-                Trace.WriteLine($"FanServiceThread Error: {ex.ToString()}");
+                Logger.Write(Level.Error, $"FanServiceThread Error: {ex.Message}");
             }
         }
 
@@ -42,60 +43,109 @@ namespace ArchonLightingSystem.Services
         private Tuple<byte[], byte[]> CalculateFanSpeeds(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
-            byte[] temperatureValues = new byte[DeviceControllerDefinitions.DevicePerController];
+            byte[] scaledSensorValuesForAnimation = new byte[DeviceControllerDefinitions.DevicePerController];
 
             for (int devIdx = 0; devIdx < DeviceControllerDefinitions.DevicePerController; devIdx++)
             {
+                // Default / disabled value for controller API is 0xFF
                 speedValues[devIdx] = 0xFF;
-                temperatureValues[devIdx] = 0xFF;
+                scaledSensorValuesForAnimation[devIdx] = 0xFF;
 
                 var deviceSetting = usbControllerDevice.Settings.GetDeviceByIndex(devIdx);
                 if (deviceSetting != null)
                 {
-                    var sensor = hardwareManager.GetSensorByIdentifier(deviceSetting.Sensor);
-                    if (sensor == null || !sensor.Value.HasValue)
+                    lock (deviceSetting)
                     {
-                        continue;
-                    }
-
-                    int temperature = (int)Math.Round(sensor.Value.Value);
-
-                    if (temperature < 0) temperature = 0;
-                    if (temperature > 100) temperature = 100;
-
-                    temperatureValues[devIdx] = (byte)ScaleValue(100f, 132f, 0f, 0f, temperature);
-
-                    if (deviceSetting != null && deviceSetting.UseFanCurve)
-                    {
-                        int lowerBoundValue = 0;
-                        int calculatedFanSpeed = 0;
-                        int step = 10;
-                        List<int> fanCurveValues = deviceSetting.FanCurveValues;
-                        for (int i = 0; i < fanCurveValues.Count; i++)
+                        var sensor = hardwareManager.GetSensorByIdentifier(deviceSetting.Sensor);
+                        if (sensor == null || !sensor.Value.HasValue)
                         {
-                            int comparedTemperature = i * step;
-                            if (temperature > comparedTemperature)
+                            continue;
+                        }
+
+                        double min = SensorUnits.GetMin(sensor);
+                        double max = SensorUnits.GetMax(sensor);
+                        double interval = SensorUnits.GetInterval(sensor);
+
+                        double rawSensorValue = Math.Round(sensor.Value.Value);
+
+                        // metric-based lighting animations use a range from 0 to 132
+                        scaledSensorValuesForAnimation[devIdx] = (byte)ScaleValue(max, 132f, min, 0f, rawSensorValue);
+
+                        if (deviceSetting != null && deviceSetting.UseFanCurve)
+                        {
+                            List<int> fanCurveValues = deviceSetting.FanCurveValues;
+
+                            double fanLowerBound = fanCurveValues[0];
+                            double sensorLowerBound = min;
+                            double calculatedFanSpeed = 0;
+
+                            // Find the location on the curve for the given sensor value.
+                            // Use slope equation to find value if between two curve points.
+                            for (int i = 1; i < fanCurveValues.Count; i++)
                             {
-                                lowerBoundValue = fanCurveValues[i];
+                                double sensorUpperBound = i * interval;
+                                double fanUpperBound = fanCurveValues[i];
+                                // if sensor value above upper bound, move to next interval
+                                if (rawSensorValue > sensorUpperBound)
+                                {
+                                    fanLowerBound = fanUpperBound;
+                                    sensorLowerBound = sensorUpperBound;
+                                }
+                                // sensor value is within current interval range, calculate fan speed
+                                else
+                                {
+                                    calculatedFanSpeed = ScaleValue(sensorUpperBound, fanUpperBound, sensorLowerBound, fanLowerBound, rawSensorValue);
+
+                                    break; // found our value, break from loop
+                                }
+                            }
+
+                            // compare target speed to newly calculated speed and apply hysteresis
+                            int targetFanSpeed = usbControllerDevice.AppData.FanSpeedTargetValue[devIdx];
+                            if (calculatedFanSpeed < targetFanSpeed)
+                            {
+                                int fanSpeedDecreaseAmount = (int)(targetFanSpeed - calculatedFanSpeed);
+                                if (fanSpeedDecreaseAmount > deviceSetting.DecreaseHysteresis)
+                                {
+                                    usbControllerDevice.AppData.FanSpeedTargetValue[devIdx] = (byte)calculatedFanSpeed;
+                                }
                             }
                             else
                             {
-                                if (temperature != comparedTemperature)
+                                int fanSpeedIncreaseAmount = (int)(calculatedFanSpeed - targetFanSpeed);
+                                if (fanSpeedIncreaseAmount > deviceSetting.IncreaseHysteresis)
                                 {
-                                    calculatedFanSpeed = ((fanCurveValues[i] - lowerBoundValue) / step) * (temperature - (comparedTemperature - step)) + lowerBoundValue; // y = (y2-y1)/(x2-x1)*(x-x1) + y1
+                                    usbControllerDevice.AppData.FanSpeedTargetValue[devIdx] = (byte)calculatedFanSpeed;
                                 }
-                                else
-                                {
-                                    calculatedFanSpeed = fanCurveValues[i];
-                                }
-                                break; // found our value, break from loop
                             }
+
+                            // update actual fan speed using step configuration
+                            targetFanSpeed = usbControllerDevice.AppData.FanSpeedTargetValue[devIdx];
+                            int actualFanSpeed = usbControllerDevice.ControllerData.AutoFanSpeedValue[devIdx];
+                            // switching from manual to auto mode
+                            if(actualFanSpeed == 0xFF)
+                            {
+                                actualFanSpeed = 50;
+                            }
+                            int fanAdjustAmount = targetFanSpeed - actualFanSpeed;
+                            if (targetFanSpeed < actualFanSpeed)
+                            {
+                                if (fanAdjustAmount < -deviceSetting.DecreaseStep)
+                                {
+                                    fanAdjustAmount = -deviceSetting.DecreaseStep;
+                                }
+                            }
+                            else if (fanAdjustAmount > deviceSetting.IncreaseStep)
+                            {
+                                fanAdjustAmount = deviceSetting.IncreaseStep;
+                            }
+
+                            speedValues[devIdx] = (byte)(actualFanSpeed + fanAdjustAmount);
                         }
-                        speedValues[devIdx] = (byte)calculatedFanSpeed;
                     }
                 }
             }
-            return new Tuple<byte[], byte[]>(speedValues, temperatureValues);
+            return new Tuple<byte[], byte[]>(speedValues, scaledSensorValuesForAnimation);
         }
 
         /// <summary>
@@ -112,7 +162,7 @@ namespace ArchonLightingSystem.Services
             usbControllerDevice.AppData.UpdateFanSpeedPending = true;
         }
 
-        private float ScaleValue(float fromHigher, float toHigher, float fromLower, float toLower, float value)
+        private double ScaleValue(double fromHigher, double toHigher, double fromLower, double toLower, double value)
         {
             if (value <= fromLower)
                 return toLower;

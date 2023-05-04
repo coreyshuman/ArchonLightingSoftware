@@ -12,6 +12,8 @@ using System.Reflection;
 using System.Net;
 using System.Windows.Forms;
 using LibreHardwareMonitor.Hardware;
+using static System.Windows.Forms.VisualStyles.VisualStyleElement.Status;
+using ArchonLightingSystem.OpenHardware;
 
 namespace ArchonLightingSystem.Models
 {
@@ -27,6 +29,10 @@ namespace ArchonLightingSystem.Models
         public List<int> FanCurveValues { get; set; } = new List<int>();
         public bool UseFanCurve { get; set; }
         public bool AlertOnFanStopped { get; set; }
+        public int IncreaseStep { get; set; }
+        public int DecreaseStep { get; set; }
+        public int IncreaseHysteresis { get; set; }
+        public int DecreaseHysteresis { get; set; }
 
         [XmlIgnore]
         private UserSettingsManager manager = null;
@@ -49,22 +55,30 @@ namespace ArchonLightingSystem.Models
             Sensor = string.Empty;
             SensorName = string.Empty;
             UseFanCurve = false;
+            DecreaseStep = 3;
+            IncreaseStep = 5;
+            DecreaseHysteresis = 5;
+            IncreaseHysteresis = 3;
         }
 
         private void DefaultFanCurve()
         {
             FanCurveValues.Clear();
-            FanCurveValues.Add(30);
-            FanCurveValues.Add(30);
-            FanCurveValues.Add(30);
-            FanCurveValues.Add(30);
-            FanCurveValues.Add(30);
-            FanCurveValues.Add(40);
-            FanCurveValues.Add(60);
-            FanCurveValues.Add(80);
-            FanCurveValues.Add(100);
-            FanCurveValues.Add(100);
-            FanCurveValues.Add(100);
+            for (int i = 0; i < SensorUnits.RangeCount; i++)
+            {
+                int defaultFanCurveVal = 30;
+
+                if (i > SensorUnits.RangeCount * 0.75)
+                {
+                    defaultFanCurveVal = 100;
+                }
+                else if (i >= SensorUnits.RangeCount / 2)
+                {
+                    defaultFanCurveVal = (int)Math.Round(40 + 60 * (i - SensorUnits.RangeCount / 2) * (1 / (SensorUnits.RangeCount * 0.3)));
+                }
+
+                FanCurveValues.Add(defaultFanCurveVal);
+            }
         }
 
         public void RegisterManager(UserSettingsManager manager)
@@ -76,7 +90,7 @@ namespace ArchonLightingSystem.Models
         {
             lock(FanCurveValues)
             {
-                if(FanCurveValues.Count != 11)
+                if(FanCurveValues.Count != SensorUnits.RangeCount)
                 {
                     Logger.Write(Level.Debug, $"Settings Device {Index} curve out of range, setting default values.");
                     DefaultFanCurve();
@@ -94,6 +108,16 @@ namespace ArchonLightingSystem.Models
             {
                 SensorType = LibreHardwareMonitor.Hardware.SensorType.Temperature;
             }
+
+            if(DecreaseStep < 1 ) DecreaseStep = 1;
+            if(DecreaseStep > 100) DecreaseStep = 100;
+            if (IncreaseStep < 1) IncreaseStep = 1;
+            if (IncreaseStep > 100) IncreaseStep = 100;
+
+            if (DecreaseHysteresis < 0) DecreaseHysteresis = 0;
+            if (DecreaseHysteresis > 50) DecreaseHysteresis = 50;
+            if (IncreaseHysteresis < 0) IncreaseHysteresis = 0;
+            if (IncreaseHysteresis > 50) IncreaseHysteresis = 50;
         }
     }
 
@@ -136,9 +160,9 @@ namespace ArchonLightingSystem.Models
             userSettings?.Save();
         }
 
-        public void RevertChanges()
+        public UserSettings RevertChanges()
         {
-            userSettings?.RevertChanges();
+            return userSettings?.RevertChanges();
         }
 
         public void RegisterParent(UserSettings userSettings)
@@ -197,10 +221,35 @@ namespace ArchonLightingSystem.Models
             manager?.SaveSettings(this);
         }
 
-        public void RevertChanges()
+        public UserSettings RevertChanges()
         {
             var revertedSettings = manager?.GetSettings();
-            Controllers = revertedSettings.Controllers;
+            foreach(var controller in revertedSettings.Controllers)
+            {
+                var oController = Controllers.Where(c => c.Address == controller.Address).FirstOrDefault();
+                foreach(var device in controller.Devices)
+                {
+                    var oDevice = oController.Devices.Where(d => d.Index == device.Index).FirstOrDefault();
+                    lock (oDevice) {
+                        oDevice.Sensor = device.Sensor;
+                        oDevice.SensorName = device.SensorName;
+                        oDevice.IncreaseHysteresis = device.IncreaseHysteresis;
+                        oDevice.DecreaseHysteresis = device.DecreaseHysteresis;
+                        oDevice.IncreaseStep = device.IncreaseStep;
+                        oDevice.DecreaseStep = device.DecreaseStep;
+                        oDevice.UseFanCurve = device.UseFanCurve;
+                        oDevice.AlertOnFanStopped = device.AlertOnFanStopped;
+                        oDevice.Name = device.Name;
+                        oDevice.FanCurveValues.Clear();
+                        foreach(var point in device.FanCurveValues)
+                        {
+                            oDevice.FanCurveValues.Add(point);
+                        }
+                    }
+                }
+            }
+            //Controllers = revertedSettings.Controllers;
+            return this;
         }
 
         public ControllerSettings GetControllerByAddress(int address)
