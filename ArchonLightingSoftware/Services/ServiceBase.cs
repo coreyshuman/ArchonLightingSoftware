@@ -11,11 +11,7 @@ using ArchonLightingSystem.Interfaces;
 
 namespace ArchonLightingSystem.Services
 {
-    /// <summary>
-    /// Special service handler base which will split the period time up between active controllers and
-    /// alternate between active controllers in the service handler callback.
-    /// </summary>
-    abstract class ControllerServiceBase : IService
+    abstract class ServiceBase : IService
     {
         /// <summary>
         /// Amount of delay in milliseconds between each run of the task for each controller
@@ -43,11 +39,9 @@ namespace ArchonLightingSystem.Services
 
         private bool isStarted = false;
         private int period = 500;
-        private bool delayRoundUpDown = false;
         private bool pause = false;
         private UsbControllerManager usbControllerManager = null;
         private SensorMonitorManager hardwareManager = null;
-        private int controllerIdx = 0;
 
         private CancellationTokenSource cancellationTokenSource;
         private Task task;
@@ -75,9 +69,7 @@ namespace ArchonLightingSystem.Services
                     {
                         if (pause) continue;
 
-                        var controllerContext = GetNextControllerContext();
-                        if (controllerContext == null) continue;
-                        ServiceTask(controllerContext.Item1, controllerContext.Item2);
+                        ServiceTask(cm, hw);
                     }
                     catch (Exception ex)
                     {
@@ -86,7 +78,7 @@ namespace ArchonLightingSystem.Services
                     }
                     finally
                     {
-                        Thread.Sleep(GetDelay());
+                        Thread.Sleep(period);
                     }
                 }
             });
@@ -103,64 +95,8 @@ namespace ArchonLightingSystem.Services
         /// <summary>
         /// Override this function and do your service tasks here.
         /// </summary>
-        /// <param name="usbControllerDevice"></param>
+        /// <param name="controllerManager"></param>
         /// <param name="hardwareManager"></param>
-        public abstract void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager);
-
-        public Tuple<UsbControllerDevice, SensorMonitorManager> GetNextControllerContext()
-        {
-            try
-            {
-                if (usbControllerManager.ActiveControllers.Count == 0) return null;
-
-                if (++controllerIdx >= usbControllerManager.ActiveControllers.Count)
-                {
-                    controllerIdx = 0;
-                }
-
-                var usbControllerDevice = usbControllerManager.ActiveControllers[controllerIdx];
-
-                if (usbControllerDevice == null)
-                {
-                    return null;
-                }
-
-                if(!usbControllerDevice.IsConnected)
-                {
-                    return null;
-                }
-
-                return new Tuple<UsbControllerDevice, SensorMonitorManager>(usbControllerDevice, hardwareManager);
-            }
-            catch(Exception ex)
-            {
-                Logger.Write(Level.Error, "Couldn't locate next controller: " + ex.Message);
-                return null;
-            }
-        }
-
-        // Calculate delay so that each controller is serviced at the prescribed period
-        public int GetDelay()
-        {
-            double actualPeriod = period / usbControllerManager.ActiveControllers.Count;
-
-            // alternate rounding up and down to retain better accuracy
-            if(delayRoundUpDown)
-            {
-                actualPeriod = Math.Ceiling(actualPeriod);
-            }
-            else
-            {
-                actualPeriod = Math.Floor(actualPeriod);
-            }
-            delayRoundUpDown = !delayRoundUpDown;
-
-            if(actualPeriod < 1)
-            {
-                actualPeriod = 1;
-            }
-
-            return (int)actualPeriod;
-        }
+        public abstract void ServiceTask(UsbControllerManager controllerManager, SensorMonitorManager hardwareManager);
     }
 }

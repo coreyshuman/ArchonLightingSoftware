@@ -28,10 +28,10 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea5 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
-            System.Windows.Forms.DataVisualization.Charting.Series series9 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            System.Windows.Forms.DataVisualization.Charting.Series series10 = new System.Windows.Forms.DataVisualization.Charting.Series();
-            this.listView1 = new System.Windows.Forms.ListView();
+            System.Windows.Forms.DataVisualization.Charting.ChartArea chartArea1 = new System.Windows.Forms.DataVisualization.Charting.ChartArea();
+            System.Windows.Forms.DataVisualization.Charting.Series series1 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            System.Windows.Forms.DataVisualization.Charting.Series series2 = new System.Windows.Forms.DataVisualization.Charting.Series();
+            this.listView_Hardware = new System.Windows.Forms.ListView();
             this.btn_Back = new System.Windows.Forms.Button();
             this.btn_Close = new System.Windows.Forms.Button();
             this.label1 = new System.Windows.Forms.Label();
@@ -44,14 +44,17 @@
             this.chk_AlertFanStopped = new System.Windows.Forms.CheckBox();
             this.btn_ClearSelection = new System.Windows.Forms.Button();
             this.lbl_Path = new System.Windows.Forms.Label();
-            this.num_stepDecrease = new System.Windows.Forms.NumericUpDown();
+            this.num_stepDecrease = new ArchonLightingSystem.Components.FlatNumericUpDown();
             this.label2 = new System.Windows.Forms.Label();
             this.label3 = new System.Windows.Forms.Label();
-            this.num_stepIncrease = new System.Windows.Forms.NumericUpDown();
+            this.num_stepIncrease = new ArchonLightingSystem.Components.FlatNumericUpDown();
             this.label4 = new System.Windows.Forms.Label();
-            this.num_hysteresisIncrease = new System.Windows.Forms.NumericUpDown();
+            this.num_hysteresisIncrease = new ArchonLightingSystem.Components.FlatNumericUpDown();
             this.label5 = new System.Windows.Forms.Label();
-            this.num_hysteresisDecrease = new System.Windows.Forms.NumericUpDown();
+            this.num_hysteresisDecrease = new ArchonLightingSystem.Components.FlatNumericUpDown();
+            this.listView_Selected = new System.Windows.Forms.ListView();
+            this.cbo_calcMethod = new System.Windows.Forms.ComboBox();
+            this.label6 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.fanCurveChart)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_stepDecrease)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.num_stepIncrease)).BeginInit();
@@ -59,21 +62,22 @@
             ((System.ComponentModel.ISupportInitialize)(this.num_hysteresisDecrease)).BeginInit();
             this.SuspendLayout();
             // 
-            // listView1
+            // listView_Hardware
             // 
-            this.listView1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            this.listView1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
-            this.listView1.HideSelection = false;
-            this.listView1.Location = new System.Drawing.Point(56, 75);
-            this.listView1.Margin = new System.Windows.Forms.Padding(4);
-            this.listView1.Name = "listView1";
-            this.listView1.Size = new System.Drawing.Size(642, 243);
-            this.listView1.TabIndex = 0;
-            this.listView1.UseCompatibleStateImageBehavior = false;
-            this.listView1.ItemActivate += new System.EventHandler(this.listView1_ItemActivate);
-            this.listView1.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.listView1_ItemChecked);
-            this.listView1.Click += new System.EventHandler(this.listView1_Click);
-            this.listView1.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
+            this.listView_Hardware.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.listView_Hardware.BorderStyle = System.Windows.Forms.BorderStyle.None;
+            this.listView_Hardware.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
+            this.listView_Hardware.HideSelection = false;
+            this.listView_Hardware.Location = new System.Drawing.Point(56, 75);
+            this.listView_Hardware.Margin = new System.Windows.Forms.Padding(4);
+            this.listView_Hardware.Name = "listView_Hardware";
+            this.listView_Hardware.Size = new System.Drawing.Size(642, 243);
+            this.listView_Hardware.TabIndex = 0;
+            this.listView_Hardware.UseCompatibleStateImageBehavior = false;
+            this.listView_Hardware.ItemActivate += new System.EventHandler(this.listView1_ItemActivate);
+            this.listView_Hardware.ItemChecked += new System.Windows.Forms.ItemCheckedEventHandler(this.listView1_ItemChecked);
+            this.listView_Hardware.Click += new System.EventHandler(this.listView1_Click);
+            this.listView_Hardware.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
             // 
             // btn_Back
             // 
@@ -105,7 +109,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(706, 75);
+            this.label1.Location = new System.Drawing.Point(709, 45);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(64, 16);
             this.label1.TabIndex = 3;
@@ -114,7 +118,7 @@
             // lbl_Selected
             // 
             this.lbl_Selected.AutoSize = true;
-            this.lbl_Selected.Location = new System.Drawing.Point(732, 100);
+            this.lbl_Selected.Location = new System.Drawing.Point(706, 9);
             this.lbl_Selected.Name = "lbl_Selected";
             this.lbl_Selected.Size = new System.Drawing.Size(16, 16);
             this.lbl_Selected.TabIndex = 4;
@@ -137,23 +141,23 @@
             // fanCurveChart
             // 
             this.fanCurveChart.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
-            chartArea5.BorderColor = System.Drawing.Color.White;
-            chartArea5.Name = "ChartArea1";
-            this.fanCurveChart.ChartAreas.Add(chartArea5);
+            chartArea1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            chartArea1.BorderColor = System.Drawing.Color.White;
+            chartArea1.Name = "ChartArea1";
+            this.fanCurveChart.ChartAreas.Add(chartArea1);
             this.fanCurveChart.Location = new System.Drawing.Point(56, 325);
             this.fanCurveChart.Name = "fanCurveChart";
             this.fanCurveChart.Palette = System.Windows.Forms.DataVisualization.Charting.ChartColorPalette.None;
-            series9.BorderWidth = 3;
-            series9.ChartArea = "ChartArea1";
-            series9.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
-            series9.Name = "FanCurveSeries";
-            series10.ChartArea = "ChartArea1";
-            series10.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
-            series10.MarkerSize = 7;
-            series10.Name = "FanCurvePoints";
-            this.fanCurveChart.Series.Add(series9);
-            this.fanCurveChart.Series.Add(series10);
+            series1.BorderWidth = 3;
+            series1.ChartArea = "ChartArea1";
+            series1.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            series1.Name = "FanCurveSeries";
+            series2.ChartArea = "ChartArea1";
+            series2.ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
+            series2.MarkerSize = 7;
+            series2.Name = "FanCurvePoints";
+            this.fanCurveChart.Series.Add(series1);
+            this.fanCurveChart.Series.Add(series2);
             this.fanCurveChart.Size = new System.Drawing.Size(642, 229);
             this.fanCurveChart.TabIndex = 3;
             this.fanCurveChart.Text = "fanCurveChart";
@@ -178,7 +182,7 @@
             // 
             this.btnCopyFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btnCopyFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnCopyFanCurve.Location = new System.Drawing.Point(712, 510);
+            this.btnCopyFanCurve.Location = new System.Drawing.Point(712, 523);
             this.btnCopyFanCurve.Name = "btnCopyFanCurve";
             this.btnCopyFanCurve.Size = new System.Drawing.Size(132, 31);
             this.btnCopyFanCurve.TabIndex = 6;
@@ -190,7 +194,7 @@
             // 
             this.btnPasteFanCurve.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btnPasteFanCurve.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btnPasteFanCurve.Location = new System.Drawing.Point(850, 510);
+            this.btnPasteFanCurve.Location = new System.Drawing.Point(850, 523);
             this.btnPasteFanCurve.Name = "btnPasteFanCurve";
             this.btnPasteFanCurve.Size = new System.Drawing.Size(132, 31);
             this.btnPasteFanCurve.TabIndex = 7;
@@ -213,7 +217,7 @@
             // 
             this.btn_ClearSelection.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
             this.btn_ClearSelection.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
-            this.btn_ClearSelection.Location = new System.Drawing.Point(709, 131);
+            this.btn_ClearSelection.Location = new System.Drawing.Point(922, 40);
             this.btn_ClearSelection.Margin = new System.Windows.Forms.Padding(4);
             this.btn_ClearSelection.Name = "btn_ClearSelection";
             this.btn_ClearSelection.Size = new System.Drawing.Size(132, 28);
@@ -296,6 +300,9 @@
             // 
             // num_hysteresisIncrease
             // 
+            this.num_hysteresisIncrease.BackColor = System.Drawing.SystemColors.WindowFrame;
+            this.num_hysteresisIncrease.BorderColor = System.Drawing.Color.Black;
+            this.num_hysteresisIncrease.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.num_hysteresisIncrease.Location = new System.Drawing.Point(712, 325);
             this.num_hysteresisIncrease.Maximum = new decimal(new int[] {
             50,
@@ -339,6 +346,33 @@
             0});
             this.num_hysteresisDecrease.ValueChanged += new System.EventHandler(this.num_hysteresisDecrease_ValueChanged);
             // 
+            // listView_Selected
+            // 
+            this.listView_Selected.HideSelection = false;
+            this.listView_Selected.Location = new System.Drawing.Point(712, 75);
+            this.listView_Selected.Name = "listView_Selected";
+            this.listView_Selected.Size = new System.Drawing.Size(342, 131);
+            this.listView_Selected.TabIndex = 19;
+            this.listView_Selected.UseCompatibleStateImageBehavior = false;
+            // 
+            // cbo_calcMethod
+            // 
+            this.cbo_calcMethod.FormattingEnabled = true;
+            this.cbo_calcMethod.Location = new System.Drawing.Point(887, 212);
+            this.cbo_calcMethod.Name = "cbo_calcMethod";
+            this.cbo_calcMethod.Size = new System.Drawing.Size(167, 24);
+            this.cbo_calcMethod.TabIndex = 20;
+            this.cbo_calcMethod.SelectedIndexChanged += new System.EventHandler(this.cbo_calcMethod_SelectedIndexChanged);
+            // 
+            // label6
+            // 
+            this.label6.AutoSize = true;
+            this.label6.Location = new System.Drawing.Point(742, 215);
+            this.label6.Name = "label6";
+            this.label6.Size = new System.Drawing.Size(124, 16);
+            this.label6.TabIndex = 21;
+            this.label6.Text = "Calculation Method:";
+            // 
             // FanConfigurationForm
             // 
             this.AcceptButton = this.btn_OK;
@@ -347,6 +381,9 @@
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.CancelButton = this.btn_Close;
             this.ClientSize = new System.Drawing.Size(1067, 619);
+            this.Controls.Add(this.label6);
+            this.Controls.Add(this.cbo_calcMethod);
+            this.Controls.Add(this.listView_Selected);
             this.Controls.Add(this.label4);
             this.Controls.Add(this.num_hysteresisIncrease);
             this.Controls.Add(this.label5);
@@ -367,7 +404,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.btn_Close);
             this.Controls.Add(this.btn_Back);
-            this.Controls.Add(this.listView1);
+            this.Controls.Add(this.listView_Hardware);
             this.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(232)))), ((int)(((byte)(233)))), ((int)(((byte)(243)))));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
@@ -391,7 +428,7 @@
 
         #endregion
 
-        private System.Windows.Forms.ListView listView1;
+        private System.Windows.Forms.ListView listView_Hardware;
         private System.Windows.Forms.Button btn_Back;
         private System.Windows.Forms.Button btn_Close;
         private System.Windows.Forms.Label label1;
@@ -404,13 +441,16 @@
         private System.Windows.Forms.CheckBox chk_AlertFanStopped;
         private System.Windows.Forms.Button btn_ClearSelection;
         private System.Windows.Forms.Label lbl_Path;
-        private System.Windows.Forms.NumericUpDown num_stepDecrease;
+        private ArchonLightingSystem.Components.FlatNumericUpDown num_stepDecrease;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
-        private System.Windows.Forms.NumericUpDown num_stepIncrease;
+        private ArchonLightingSystem.Components.FlatNumericUpDown num_stepIncrease;
         private System.Windows.Forms.Label label4;
-        private System.Windows.Forms.NumericUpDown num_hysteresisIncrease;
+        private ArchonLightingSystem.Components.FlatNumericUpDown num_hysteresisIncrease;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.NumericUpDown num_hysteresisDecrease;
+        private ArchonLightingSystem.Components.FlatNumericUpDown num_hysteresisDecrease;
+        private System.Windows.Forms.ListView listView_Selected;
+        private System.Windows.Forms.ComboBox cbo_calcMethod;
+        private System.Windows.Forms.Label label6;
     }
 }

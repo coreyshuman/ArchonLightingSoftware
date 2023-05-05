@@ -10,18 +10,18 @@ using ArchonLightingSystem.Common;
 
 namespace ArchonLightingSystem.Services
 {
-    class SensorUpdateService : ControllerServiceBase
+    class SensorUpdateService : ServiceBase
     {
         /// <summary>
         /// Service which periodically reads internal temperature sensors.
         /// </summary>
-        /// <param name="taskFrequency">Task execution frequency in Hz. One controller updated per execution.</param>
-        public SensorUpdateService(int taskFrequency)
+        /// <param name="taskPeriod">Task execution period</param>
+        public SensorUpdateService(int taskPeriod)
         {
-            TaskFrequency = taskFrequency;
+            TaskPeriod = taskPeriod;
         }
 
-        public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
+        public override void ServiceTask(UsbControllerManager controllerManager, SensorMonitorManager hardwareManager)
         {
             try
             {
@@ -29,7 +29,7 @@ namespace ArchonLightingSystem.Services
             }
             catch (Exception ex)
             {
-                Logger.Write(Level.Error, $"HardwareUpdateService Error: {ex}");
+                Logger.Write(Level.Error, $"SensorUpdateService Error: {ex}");
             }
         }
     }

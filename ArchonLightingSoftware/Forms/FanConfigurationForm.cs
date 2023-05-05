@@ -27,18 +27,11 @@ namespace ArchonLightingSystem.Forms
         private SensorMonitorManager hardwareManager;
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private Node currentNode = null;
-        private string identifier = "";
+
+        private ISensor primarySensor = null;
         private DataPoint selectedDataPoint = null;
         private DataPoint lastSelectedDataPoint = null;
         private DeviceSettings deviceSettings = null;
-
-        public string Identifier
-        {
-            get
-            {
-                return identifier;
-            }
-        }
 
         #region initializers
         public FanConfigurationForm()
@@ -54,19 +47,28 @@ namespace ArchonLightingSystem.Forms
 
             chk_UseFan.Checked = settings.UseFanCurve;
             chk_AlertFanStopped.Checked = settings.AlertOnFanStopped;
-            identifier = settings.Sensor;
-            if(identifier != "")
+
+            if(settings.Sensor != "")
             {
-                currentNode = hardwareManager.GetParentNodeByIdentifier(identifier);
+                currentNode = hardwareManager.GetParentNodeByIdentifier(settings.Sensor);
             }
+
+            primarySensor = hardwareManager.GetSensorByIdentifier(settings.Sensor);
 
             num_hysteresisDecrease.Value = settings.DecreaseHysteresis;
             num_hysteresisIncrease.Value = settings.IncreaseHysteresis;
             num_stepDecrease.Value = settings.DecreaseStep;
             num_stepIncrease.Value = settings.IncreaseStep;
 
+            cbo_calcMethod.DisplayMember = "Text";
+            cbo_calcMethod.ValueMember = "Value";
+            cbo_calcMethod.Items.Clear();
+            cbo_calcMethod.Items.AddRange(CalculationMethods.GetComboBoxItems());
+            cbo_calcMethod.SelectedIndex = (int)deviceSettings.CalculationMethod;
+
             InitializeGrid();
             InitializeFanCurve();
+            UpdateSelectedGrid();
 
             AppTheme.ApplyThemeToForm(this);
         }
@@ -85,15 +87,17 @@ namespace ArchonLightingSystem.Forms
                     imageList.Images.Add(resourceKey, (Image)resource);
             }
             
-            listView1.View = View.Details;
-            listView1.FullRowSelect = true;
-            listView1.SmallImageList = imageList;
+            listView_Hardware.View = View.Details;
+            listView_Hardware.FullRowSelect = true;
+            listView_Hardware.SmallImageList = imageList;
 
-            listView1.Columns.Add("Type", 150, HorizontalAlignment.Center);
-            listView1.Columns.Add("Name", 240, HorizontalAlignment.Left);
-            listView1.Columns.Add("Children", 120, HorizontalAlignment.Left);
+            listView_Hardware.Columns.Add("Type", 150, HorizontalAlignment.Center);
+            listView_Hardware.Columns.Add("Name", 240, HorizontalAlignment.Left);
+            listView_Hardware.Columns.Add("Children", 120, HorizontalAlignment.Left);
 
-            LoadGridForNode(currentNode);
+            listView_Selected.View = View.List;
+
+            LoadHardwareGridForNode(currentNode);
         }
 
         void InitializeFanCurve()
@@ -116,8 +120,8 @@ namespace ArchonLightingSystem.Forms
             chart.AxisY.MajorGrid.LineColor = AppTheme.PrimaryText;
             chart.AxisY.MajorTickMark.LineColor = AppTheme.PrimaryText;
 
-            var sensor = hardwareManager.GetSensorByIdentifier(Identifier);
-            SetFanCurveRange(sensor);
+            
+            SetFanCurveRange(primarySensor);
             UpdateFanCurveChart();
         }
 
@@ -163,6 +167,7 @@ namespace ArchonLightingSystem.Forms
 
                 linePoints.AddXY(range[i], defaultFanCurveVal);
                 pointPoints.AddXY(range[i], defaultFanCurveVal);
+                deviceSettings.FanCurveValues[i] = defaultFanCurveVal;
             }
         }
         #endregion
@@ -191,9 +196,9 @@ namespace ArchonLightingSystem.Forms
             fanCurveChart.Invalidate();
         }
 
-        private void LoadGridForNode(Node topNode = null)
+        private void LoadHardwareGridForNode(Node topNode = null)
         {
-            listView1.Items.Clear();
+            listView_Hardware.Items.Clear();
             Collection<Node> nodes;
 
             if (topNode == null)
@@ -222,7 +227,7 @@ namespace ArchonLightingSystem.Forms
                     value = sensor.Value;
                     item.Text = ((TypeNode)node.Parent).Text;
                     item.ImageKey = ((TypeNode)node.Parent).ImageKey;
-                    if(sensor.Sensor.Identifier.ToString() == identifier)
+                    if(sensor.Sensor.Identifier.ToString() == deviceSettings.Sensor)
                     {
                         item.Selected = true;
                         lbl_Selected.Text = sensor.Text;
@@ -233,11 +238,11 @@ namespace ArchonLightingSystem.Forms
                     item.Text = ((HardwareNode)node).Hardware.HardwareType.ToString();
                 }
 
-                listView1.Columns[2].Text = colName;
+                listView_Hardware.Columns[2].Text = colName;
                 item.SubItems.Add(value);
 
                 item.Tag = node;
-                listView1.Items.Add(item);
+                listView_Hardware.Items.Add(item);
             }
 
             string path = string.Empty;
@@ -251,20 +256,44 @@ namespace ArchonLightingSystem.Forms
             lbl_Path.Text = path;
         }
 
+        private void UpdateSelectedGrid()
+        {
+            listView_Selected.Items.Clear();
+
+            foreach(var identifier in deviceSettings.IdentifierList)
+            {
+                var sensor = hardwareManager.GetSensorByIdentifier(identifier);
+                if(sensor != null)
+                {
+                    listView_Selected.Items.Add(new ListViewItem(sensor.Name));
+                }
+            }
+        }
+
         private void SelectSensor(SensorNode node)
         {
             lbl_Selected.Text = node.Text;
-            identifier = node.Sensor.Identifier.ToString();
-            var sensor = hardwareManager.GetSensorByIdentifier(Identifier);
-            SetFanCurveRange(sensor);
-            deviceSettings.Sensor = null;
-            deviceSettings.SensorName = null;
-            if (sensor != null)
+            var identifier = node.Sensor.Identifier.ToString();
+            var sensor = hardwareManager.GetSensorByIdentifier(identifier);
+
+            if(primarySensor == null)
             {
-                deviceSettings.Sensor = Identifier;
-                deviceSettings.SensorName = sensor.Name.Trim();
-                deviceSettings.SensorType = sensor.SensorType;
+                primarySensor = sensor;
+                SetFanCurveRange(sensor);
+                deviceSettings.Sensor = identifier;
+                deviceSettings.SensorName = sensor?.Name.Trim();
+                deviceSettings.SensorType = sensor?.SensorType;
+                deviceSettings.IdentifierList.Clear();
+                deviceSettings.IdentifierList.Add(identifier);
             }
+            else if (sensor.SensorType == primarySensor.SensorType) {
+                if(!deviceSettings.IdentifierList.Contains(identifier))
+                {
+                    deviceSettings.IdentifierList.Add(identifier);
+                }
+            }
+
+            UpdateSelectedGrid();
         }
 
         private void clearSelectedPoint()
@@ -460,11 +489,13 @@ namespace ArchonLightingSystem.Forms
 
         private void btn_ClearSelection_Click(object sender, EventArgs e)
         {
-            identifier = string.Empty;
+            deviceSettings.IdentifierList.Clear();
+            primarySensor = null;
             lbl_Selected.Text = "...";
             SetFanCurveRange(null);
-            LoadGridForNode(null);
-            deviceSettings.Sensor = Identifier;
+            LoadHardwareGridForNode(null);
+            UpdateSelectedGrid();
+            deviceSettings.Sensor = string.Empty;
             deviceSettings.SensorName = string.Empty;
             deviceSettings.SensorType = SensorType.Temperature;
         }
@@ -473,7 +504,7 @@ namespace ArchonLightingSystem.Forms
         {
             if (currentNode?.Parent != null)
             {
-                LoadGridForNode(currentNode.Parent);
+                LoadHardwareGridForNode(currentNode.Parent);
             }
         }
 
@@ -512,10 +543,10 @@ namespace ArchonLightingSystem.Forms
         private void listView1_ItemActivate(object sender, EventArgs e)
         {
             int selectedIndex = ((ListView)sender).SelectedIndices[0];
-            Node node = (Node)listView1.Items[selectedIndex].Tag;
+            Node node = (Node)listView_Hardware.Items[selectedIndex].Tag;
             if (node?.Nodes.Count > 0)
             {
-                LoadGridForNode(node);
+                LoadHardwareGridForNode(node);
             }
             else if (node.GetType() == typeof(SensorNode))
             {
@@ -541,6 +572,11 @@ namespace ArchonLightingSystem.Forms
         private void num_stepDecrease_ValueChanged(object sender, EventArgs e)
         {
             deviceSettings.DecreaseStep = (int)num_stepDecrease.Value;
+        }
+
+        private void cbo_calcMethod_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            deviceSettings.CalculationMethod = (CalculationMethods.Methods)cbo_calcMethod.SelectedIndex;
         }
         #endregion
 

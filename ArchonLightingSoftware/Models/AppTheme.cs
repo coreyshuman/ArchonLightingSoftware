@@ -1,4 +1,6 @@
-﻿using System;
+﻿using ArchonLightingSystem.Common;
+using ArchonLightingSystem.Components;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 using System.Windows.Forms.ComponentModel;
@@ -75,6 +77,16 @@ namespace ArchonLightingSystem.Models
                     trackBar.BackColor = AppTheme.Background;
                 }
 
+                if (control is FlatNumericUpDown numUpDown)
+                {
+                    numUpDown.ForeColor = AppTheme.PrimaryText;
+                    numUpDown.BackColor = AppTheme.ComponentBackground;
+                    //numUpDown.BorderColor = Color.Green;
+                    //numUpDown.Font = AppTheme.ComponentFont;
+                    numUpDown.BorderStyle = BorderStyle.FixedSingle;
+                    //numUpDown.ButtonHighlightColor = AppTheme.PrimaryHighlight;
+                }
+
                 if (control is DataGridView grid)
                 {
                     grid.ForeColor = AppTheme.PrimaryText;
@@ -96,6 +108,14 @@ namespace ArchonLightingSystem.Models
                     grid.DefaultCellStyle.SelectionBackColor = AppTheme.PrimaryLowLight;
                     grid.AlternatingRowsDefaultCellStyle.BackColor = AppTheme.ComponentBackground;
                     grid.AlternatingRowsDefaultCellStyle.ForeColor = AppTheme.PrimaryText;
+                }
+
+                if(control is ListView listView)
+                {
+                    listView.ForeColor = AppTheme.PrimaryText;
+                    listView.BackColor = AppTheme.ComponentBackground;
+                    listView.Font = AppTheme.ComponentFont;
+                    listView.BorderStyle = BorderStyle.None;
                 }
 
                 if(control is BindingNavigator nav)

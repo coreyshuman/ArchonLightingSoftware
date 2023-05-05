@@ -3,18 +3,19 @@ using ArchonLightingSystem.OpenHardware;
 using System.Collections.Generic;
 using ArchonLightingSystem.UsbApplicationV2;
 using ArchonLightingSystem.Common;
+using ArchonLightingSystem.Interfaces;
 
 namespace ArchonLightingSystem.Services
 {
     class ServiceManager
     {
-        private readonly List<ControllerServiceBase> services = new List<ControllerServiceBase>();
+        private readonly List<IService> services = new List<IService>();
 
         public ServiceManager()
         {
-            services.Add(new SensorUpdateService(5));
-            services.Add(new FanControllerService(5));
-            services.Add(new LightControllerService(1000));
+            services.Add(new SensorUpdateService(200));
+            services.Add(new FanControllerService(500));
+            services.Add(new LightControllerService(33));
             services.Add(new TimeServiceController(30000));
         }
 

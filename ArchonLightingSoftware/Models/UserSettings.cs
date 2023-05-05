@@ -26,6 +26,8 @@ namespace ArchonLightingSystem.Models
         public string Sensor { get; set; }
         public string SensorName { get; set; }
         public SensorType? SensorType { get; set; }
+        public List<string> IdentifierList { get; set; } = new List<string>();
+        public CalculationMethods.Methods CalculationMethod { get; set; }
         public List<int> FanCurveValues { get; set; } = new List<int>();
         public bool UseFanCurve { get; set; }
         public bool AlertOnFanStopped { get; set; }
@@ -59,6 +61,8 @@ namespace ArchonLightingSystem.Models
             IncreaseStep = 5;
             DecreaseHysteresis = 5;
             IncreaseHysteresis = 3;
+            IdentifierList.Clear();
+            CalculationMethod = CalculationMethods.Methods.Max;
         }
 
         private void DefaultFanCurve()
@@ -118,6 +122,12 @@ namespace ArchonLightingSystem.Models
             if (DecreaseHysteresis > 50) DecreaseHysteresis = 50;
             if (IncreaseHysteresis < 0) IncreaseHysteresis = 0;
             if (IncreaseHysteresis > 50) IncreaseHysteresis = 50;
+
+            if(!IdentifierList.Contains(Sensor))
+            {
+                IdentifierList.Add(Sensor);
+                IdentifierList.Reverse();
+            }
         }
     }
 
@@ -240,10 +250,16 @@ namespace ArchonLightingSystem.Models
                         oDevice.UseFanCurve = device.UseFanCurve;
                         oDevice.AlertOnFanStopped = device.AlertOnFanStopped;
                         oDevice.Name = device.Name;
+                        oDevice.CalculationMethod = device.CalculationMethod;
                         oDevice.FanCurveValues.Clear();
                         foreach(var point in device.FanCurveValues)
                         {
                             oDevice.FanCurveValues.Add(point);
+                        }
+                        oDevice.IdentifierList.Clear();
+                        foreach (var ident in device.IdentifierList)
+                        {
+                            oDevice.IdentifierList.Add(ident);
                         }
                     }
                 }

@@ -6,6 +6,7 @@ using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 using ArchonLightingSystem.OpenHardware;
 using ArchonLightingSystem.UsbApplicationV2;
+using LibreHardwareMonitor.Hardware;
 
 namespace ArchonLightingSystem.Services
 {
@@ -14,10 +15,10 @@ namespace ArchonLightingSystem.Services
         /// <summary>
         /// Service which periodically updates fan speeds based on temperature sensor and fan curve settings.
         /// </summary>
-        /// <param name="taskFrequency">Task execution frequency in Hz. One controller updated per execution.</param>
-        public FanControllerService(int taskFrequency)
+        /// <param name="taskPeriod">Task execution period</param>
+        public FanControllerService(int taskPeriod)
         {
-            TaskFrequency = taskFrequency;
+            TaskPeriod = taskPeriod;
         }
 
         public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
@@ -36,10 +37,9 @@ namespace ArchonLightingSystem.Services
         /// <summary>
         /// Map fan temperature to fan speed based on speed curve
         /// </summary>
-        /// <param name="applicationData"></param>
-        /// <param name="controllerSettings"></param>
+        /// <param name="usbControllerDevice"></param>
         /// <param name="hardwareManager"></param>
-        /// <returns>Array of bytes containing speed values</returns>
+        /// <returns>A tuple of array of bytes, the first containing speed values and the second containing sensor values for animations</returns>
         private Tuple<byte[], byte[]> CalculateFanSpeeds(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {
             byte[] speedValues = new byte[DeviceControllerDefinitions.DevicePerController];
@@ -56,17 +56,27 @@ namespace ArchonLightingSystem.Services
                 {
                     lock (deviceSetting)
                     {
-                        var sensor = hardwareManager.GetSensorByIdentifier(deviceSetting.Sensor);
-                        if (sensor == null || !sensor.Value.HasValue)
+                        List<double> values = new List<double>();
+                        ISensor primarySensor = null;
+
+                        foreach(var identifier in deviceSetting.IdentifierList)
+                        {
+                            var sensor = hardwareManager.GetSensorByIdentifier(identifier);
+                            if(primarySensor == null) primarySensor = sensor;
+                            if(sensor?.Value.HasValue == true) values.Add(sensor.Value.Value);
+                        }
+
+                        
+                        if (primarySensor == null)
                         {
                             continue;
                         }
 
-                        double min = SensorUnits.GetMin(sensor);
-                        double max = SensorUnits.GetMax(sensor);
-                        double interval = SensorUnits.GetInterval(sensor);
+                        double min = SensorUnits.GetMin(primarySensor);
+                        double max = SensorUnits.GetMax(primarySensor);
+                        double interval = SensorUnits.GetInterval(primarySensor);
 
-                        double rawSensorValue = Math.Round(sensor.Value.Value);
+                        double rawSensorValue = primarySensor.Value ?? 0;
 
                         // metric-based lighting animations use a range from 0 to 132
                         scaledSensorValuesForAnimation[devIdx] = (byte)ScaleValue(max, 132f, min, 0f, rawSensorValue);
@@ -75,12 +85,29 @@ namespace ArchonLightingSystem.Services
                         {
                             List<int> fanCurveValues = deviceSetting.FanCurveValues;
 
+                            switch (deviceSetting.CalculationMethod)
+                            {
+                                case CalculationMethods.Methods.Max:
+                                    rawSensorValue = values.Max();
+                                    break;
+                                case CalculationMethods.Methods.Min:
+                                    rawSensorValue = values.Min();
+                                    break;
+                                case CalculationMethods.Methods.Average:
+                                    rawSensorValue = values.Average();
+                                    break;
+                                case CalculationMethods.Methods.Sum:
+                                    rawSensorValue = values.Sum();
+                                    break;
+                            }
+
                             double fanLowerBound = fanCurveValues[0];
                             double sensorLowerBound = min;
                             double calculatedFanSpeed = 0;
 
                             // Find the location on the curve for the given sensor value.
                             // Use slope equation to find value if between two curve points.
+                            bool found = false;
                             for (int i = 1; i < fanCurveValues.Count; i++)
                             {
                                 double sensorUpperBound = i * interval;
@@ -95,9 +122,15 @@ namespace ArchonLightingSystem.Services
                                 else
                                 {
                                     calculatedFanSpeed = ScaleValue(sensorUpperBound, fanUpperBound, sensorLowerBound, fanLowerBound, rawSensorValue);
-
+                                    found = true;
                                     break; // found our value, break from loop
                                 }
+                            }
+
+                            // value is out of bounds, use highest fan curve value
+                            if (!found)
+                            {
+                                calculatedFanSpeed = fanCurveValues.Last();
                             }
 
                             // compare target speed to newly calculated speed and apply hysteresis

@@ -15,14 +15,13 @@ namespace ArchonLightingSystem.Services
         private byte[,] ledFrame = new byte[DeviceControllerDefinitions.DevicePerController, DeviceControllerDefinitions.LedBytesPerDevice];
 
         /// <summary>
-        /// Service which periodically updates leds based on dynamic lighting options.
+        /// Service which periodically updates leds based on dynamic lighting sources.
         /// </summary>
-        /// <param name="taskFrequency">Task execution frequency in Hz. One controller updated per execution.</param>
-        public LightControllerService(int taskFrequency)
+        /// <param name="taskPeriod">Task execution period</param>
+        public LightControllerService(int taskPeriod)
         {
-            TaskFrequency = taskFrequency;
+            TaskPeriod = taskPeriod;
         }
-
 
         public override void ServiceTask(UsbControllerDevice usbControllerDevice, SensorMonitorManager hardwareManager)
         {

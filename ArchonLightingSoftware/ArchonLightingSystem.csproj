@@ -105,6 +105,9 @@
     <Compile Include="Common\Task\EventDrivenBackgroundTask.cs" />
     <Compile Include="Common\Logger.cs" />
     <Compile Include="Common\Task\PeriodicBackgroundTask.cs" />
+    <Compile Include="Components\FlatNumericUpDown.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="Forms\LogForm.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -112,9 +115,12 @@
       <DependentUpon>LogForm.cs</DependentUpon>
     </Compile>
     <Compile Include="Interfaces\IBackgroundTask.cs" />
+    <Compile Include="Interfaces\IService.cs" />
     <Compile Include="Interfaces\IUsbDevice.cs" />
+    <Compile Include="Models\CalculationMethods.cs" />
     <Compile Include="Models\VersionXml.cs" />
     <Compile Include="OpenHardware\SensorUnits.cs" />
+    <Compile Include="Services\ServiceBase.cs" />
     <Compile Include="ThirdParty\AIDA64Integration.cs" />
     <Compile Include="ArchonLightingSDKIntegration\MappedFileManager.cs" />
     <Compile Include="Bootloader\Bootloader.cs" />

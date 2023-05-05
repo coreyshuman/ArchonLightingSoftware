@@ -78,12 +78,12 @@ namespace ArchonLightingSystem
             this.notifyIcon1 = new System.Windows.Forms.NotifyIcon(this.components);
             this.notifiyIconContextMenu = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.closeToolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.disableNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label2 = new System.Windows.Forms.Label();
             this.txt_ControllerName = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.chk_AlertOnDisconnect = new System.Windows.Forms.CheckBox();
             this.lbl_Disconnected = new System.Windows.Forms.Label();
-            this.disableNotificationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -573,6 +573,14 @@ namespace ArchonLightingSystem
             this.closeToolStripMenuItem1.Text = "Close";
             this.closeToolStripMenuItem1.Click += new System.EventHandler(this.closeToolStripMenuItem1_Click);
             // 
+            // disableNotificationToolStripMenuItem
+            // 
+            this.disableNotificationToolStripMenuItem.CheckOnClick = true;
+            this.disableNotificationToolStripMenuItem.Name = "disableNotificationToolStripMenuItem";
+            this.disableNotificationToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
+            this.disableNotificationToolStripMenuItem.Text = "Suppress Notification";
+            this.disableNotificationToolStripMenuItem.CheckedChanged += new System.EventHandler(this.disableNotificationToolStripMenuItem_CheckedChanged);
+            // 
             // label2
             // 
             this.label2.AutoSize = true;
@@ -625,14 +633,6 @@ namespace ArchonLightingSystem
             this.lbl_Disconnected.Size = new System.Drawing.Size(107, 20);
             this.lbl_Disconnected.TabIndex = 83;
             this.lbl_Disconnected.Text = "Disconnected";
-            // 
-            // disableNotificationToolStripMenuItem
-            // 
-            this.disableNotificationToolStripMenuItem.CheckOnClick = true;
-            this.disableNotificationToolStripMenuItem.Name = "disableNotificationToolStripMenuItem";
-            this.disableNotificationToolStripMenuItem.Size = new System.Drawing.Size(187, 22);
-            this.disableNotificationToolStripMenuItem.Text = "Suppress Notification";
-            this.disableNotificationToolStripMenuItem.CheckedChanged += new System.EventHandler(this.disableNotificationToolStripMenuItem_CheckedChanged);
             // 
             // AppForm
             // 

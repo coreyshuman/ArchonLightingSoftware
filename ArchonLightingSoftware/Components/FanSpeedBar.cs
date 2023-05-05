@@ -268,7 +268,7 @@ namespace ArchonLightingSystem.Components
                 bar.Top = top;
                 if(value < 100)
                 {
-                    lblValue.Text = value.ToString("00.##");
+                    lblValue.Text = value.ToString("00.00");
                 } 
                 else
                 {
