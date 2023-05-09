@@ -26,6 +26,8 @@ namespace ArchonLightingSystem
         private SensorMonitorManager hardwareManager = null;
         private SequencerForm sequencerForm = null;
         private LogForm logForm = null;
+        private StatsForm statsForm = null;
+        private StatsConfigForm statsConfigForm = null;
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
 
@@ -520,7 +522,6 @@ namespace ArchonLightingSystem
             allowClose = true;
             this.Close();
         }
-        #endregion
 
         private void disableNotificationToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
@@ -528,5 +529,41 @@ namespace ArchonLightingSystem
 
             disableNotification = notifMenuItem.Checked;
         }
+
+        private void showStatsToolStripMenuItem_ShowStats_Click(object sender, EventArgs e)
+        {
+            if (statsForm == null || statsForm.IsDisposed)
+            {
+                statsForm = new StatsForm();
+                //statsForm.InitializeForm(usbControllerManager);
+                statsForm.Location = this.Location;
+                statsForm.Show();
+            }
+            if (statsForm.WindowState == FormWindowState.Minimized)
+            {
+                statsForm.WindowState = FormWindowState.Normal;
+            }
+            statsForm.Focus();
+        }
+
+        private void configToolStripMenuItem_StatsConfigure_Click(object sender, EventArgs e)
+        {
+            if (statsConfigForm == null || statsConfigForm.IsDisposed)
+            {
+                statsConfigForm = new StatsConfigForm();
+                statsConfigForm.InitializeForm(statsForm);
+                statsConfigForm.Location = this.Location;
+                statsConfigForm.ShowDialog();
+            }
+            if (statsConfigForm.WindowState == FormWindowState.Minimized)
+            {
+                statsConfigForm.WindowState = FormWindowState.Normal;
+            }
+            statsConfigForm.Focus();
+        }
+
+        #endregion
+
+
     }
 } 

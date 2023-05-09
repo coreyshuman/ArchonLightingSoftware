@@ -114,6 +114,18 @@
     <Compile Include="Forms\LogForm.Designer.cs">
       <DependentUpon>LogForm.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\StatsConfigForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\StatsConfigForm.Designer.cs">
+      <DependentUpon>StatsConfigForm.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\StatsForm.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\StatsForm.Designer.cs">
+      <DependentUpon>StatsForm.cs</DependentUpon>
+    </Compile>
     <Compile Include="Interfaces\IBackgroundTask.cs" />
     <Compile Include="Interfaces\IService.cs" />
     <Compile Include="Interfaces\IUsbDevice.cs" />
@@ -247,6 +259,12 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\SequencerForm.resx">
       <DependentUpon>SequencerForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\StatsConfigForm.resx">
+      <DependentUpon>StatsConfigForm.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\StatsForm.resx">
+      <DependentUpon>StatsForm.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
