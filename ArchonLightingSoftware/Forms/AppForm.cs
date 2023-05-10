@@ -536,13 +536,14 @@ namespace ArchonLightingSystem
             {
                 statsForm = new StatsForm();
                 //statsForm.InitializeForm(usbControllerManager);
-                statsForm.Location = this.Location;
+                
                 statsForm.Show();
             }
             if (statsForm.WindowState == FormWindowState.Minimized)
             {
                 statsForm.WindowState = FormWindowState.Normal;
             }
+            statsForm.Location = this.Location;
             statsForm.Focus();
         }
 

@@ -1,13 +1,13 @@
-﻿namespace ArchonLightingSystem.Forms
+﻿namespace ArchonLightingSystem.Components
 {
-    partial class StatsForm
+    partial class GaugeArc
     {
         /// <summary>
         /// Required designer variable.
         /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
+        /// <summary> 
         /// Clean up any resources being used.
         /// </summary>
         /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
@@ -20,7 +20,7 @@
             base.Dispose(disposing);
         }
 
-        #region Windows Form Designer generated code
+        #region Component Designer generated code
 
         /// <summary>
         /// Required method for Designer support - do not modify
@@ -33,23 +33,16 @@
             // 
             // panel_Container
             // 
-            this.panel_Container.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.panel_Container.Location = new System.Drawing.Point(0, 1);
+            this.panel_Container.BackColor = System.Drawing.Color.Bisque;
+            this.panel_Container.Location = new System.Drawing.Point(0, 0);
             this.panel_Container.Name = "panel_Container";
-            this.panel_Container.Size = new System.Drawing.Size(1115, 450);
+            this.panel_Container.Size = new System.Drawing.Size(100, 100);
             this.panel_Container.TabIndex = 0;
             // 
-            // StatsForm
+            // GaugeArc
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(9F, 20F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1116, 450);
-            this.Controls.Add(this.panel_Container);
-            this.Name = "StatsForm";
-            this.Text = "StatsForm";
-            this.TopMost = true;
+            this.Name = "GaugeArc";
+            this.Paint += new System.Windows.Forms.PaintEventHandler(this.GaugeArc_Paint);
             this.ResumeLayout(false);
 
         }
