@@ -15,12 +15,14 @@ namespace ArchonLightingSystem.Components
     public partial class GaugeArc : UserControl
     {
         private double val = 0;
+        private double[] valBuf;
         private double scale = 100;
         private double min = 0;
         private double max = 100;
         private double overload = 100;
         private bool flipped = false;
         private string unitLabel = "%";
+        Icon icon = null;
 
         public GaugeArc()
         {
@@ -45,6 +47,7 @@ namespace ArchonLightingSystem.Components
             base.MinimumSize = new Size(this.Width, this.Height);
             this.BackColor = Color.LightGray;
             this.DoubleBuffered = true;
+            valBuf = new double[20];
         }
 
         /// <summary>
@@ -60,15 +63,15 @@ namespace ArchonLightingSystem.Components
             {
                 if(value < min)
                 {
-                    val = min;
+                    SetValue(min);
                 }
                 else if(value > max)
                 {
-                    val = max;
+                    SetValue(max);
                 }
                 else
                 {
-                    val = value;
+                    SetValue(value);
                 }
                 Invalidate();
             }
@@ -89,11 +92,18 @@ namespace ArchonLightingSystem.Components
                 {
                     val = value;
                 }
-                if(max < value)
+                if (max < value)
                 {
+                    if (overload == max) overload = value + 1;
                     max = value + 1;
                 }
+                if (overload <= value || overload == min)
+                {
+                    overload = value;
+                }
+
                 min = value;
+                FillValueBuffer(min);
                 Invalidate();
             }
         }
@@ -117,11 +127,13 @@ namespace ArchonLightingSystem.Components
                 {
                     min = value - 1;
                 }
-                if(overload == max)
+                if (overload >= value || overload == max)
                 {
                     overload = value;
                 }
+
                 max = value;
+                FillValueBuffer(min);
                 Invalidate();
             }
         }
@@ -241,6 +253,22 @@ namespace ArchonLightingSystem.Components
         }
 
         /// <summary>
+        /// The image shown in the corner of the gauge.
+        /// </summary>
+        public Icon Image
+        {
+            get
+            {
+                return icon;
+            }
+            set
+            {
+                icon = value;
+                Invalidate();
+            }
+        }
+
+        /// <summary>
         /// Primary color of the gauge's drawn arc.
         /// </summary>
         public Color LineColor { get; set; }
@@ -260,46 +288,105 @@ namespace ArchonLightingSystem.Components
             Pen pen = new Pen(this.ForeColor, (float)(scale / 55d));
             Pen penCircle = new Pen(this.ForeColor, (float)(scale / 35d));
             Pen penLine = new Pen(this.LineColor, (float)(scale / 35d));
-            Pen overloadLine = new Pen(this.OverLineColor, (float)(scale / 35d));
             Font font = new Font("monospace", (float)(scale / 10d), FontStyle.Bold);
             SolidBrush brush = new SolidBrush(this.ForeColor);
             SolidBrush brushBack = new SolidBrush(this.BackColor);
 
+            double xOffset = (flipped ? 0.4 : 0.2);
+            int yOffsetScaled = (int)(scale * 0.2);
+
 
             if (overload < max)
             {
-                double primaryLineMax = overload / max;
-                double primaryToMaxOffset = max - overload;
+                double z = (overload - min) / (max - min);
+                if(!flipped)
+                {
+                    z = 1 - z;
+                }
 
-                g.DrawBezier(penLine,
-                    new Point((int)(scale * primaryLineMax * (flipped ? 0.4 : 0.2)), (int)CalcArcCurve(0, scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * primaryLineMax * (flipped ? 0.7 : 0.5)), (int)CalcArcCurve((scale * 0.3 * primaryLineMax), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * primaryLineMax * (flipped ? 1.1 : 0.9)), (int)CalcArcCurve((scale * 0.7 * primaryLineMax), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * primaryLineMax * (flipped ? 1.4 : 1.2)), (int)CalcArcCurve((scale * primaryLineMax), scale, flipped) + (int)(scale * 0.2)));
+                Pen penOverloadLine = new Pen(this.OverLineColor, (float)(scale / 35d));
 
-                g.DrawBezier(overloadLine,
-                    new Point((int)(scale * (flipped ? 0.4 : 0.2)), (int)CalcArcCurve(primaryLineMax, scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 0.7 : 0.5)), (int)CalcArcCurve((scale * (primaryLineMax + 0.3 * (1 - primaryLineMax))), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 1.1 : 0.9)), (int)CalcArcCurve((scale * (primaryLineMax + 0.7 * (1 - primaryLineMax))), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 1.4 : 1.2)), (int)CalcArcCurve((scale * 1.0), scale, flipped) + (int)(scale * 0.2)));
+                double x0 = 0;
+                double x1 = 0.4 * z;
+                double x2 = 0.6 * z;
+                double x3 = z;
+                g.DrawBezier((flipped ? penLine : penOverloadLine),
+                    new Point((int)(scale * (xOffset + x0)), (int)CalcArcCurve((scale * x0), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x1)), (int)CalcArcCurve((scale * x1), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x2)), (int)CalcArcCurve((scale * x2), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x3)), (int)CalcArcCurve((scale * x3), scale, flipped) + yOffsetScaled));
+
+                double x4 = z;
+                double x5 = z + 0.4 * (1 - z);
+                double x6 = z + 0.6 * (1 - z);
+                double x7 = 1.0;
+                g.DrawBezier((flipped ? penOverloadLine : penLine),
+                    new Point((int)(scale * (xOffset + x4)), (int)CalcArcCurve((scale * x4), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x5)), (int)CalcArcCurve((scale * x5), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x6)), (int)CalcArcCurve((scale * x6), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x7)), (int)CalcArcCurve((scale * x7), scale, flipped) + yOffsetScaled));
+
+                Pen penOverloadDash = new Pen(this.OverLineColor, (float)(scale / 55d));
+                float lOffsetScaled = (float)(scale * (flipped ? -1 : 1) * 0.08);
+                float lLengthScaled = (float)(scale * (flipped ? -1 : 1) * 0.1);
+                float xOffsetScaled = (float)(scale * xOffset);
+                float dashXScaled = (float)(scale * (flipped ? x7 : x0));
+                float dashYScaled = (float)CalcArcCurve(dashXScaled, scale, flipped) + yOffsetScaled;
+                g.DrawLine(penOverloadDash,
+                    dashXScaled + lOffsetScaled + xOffsetScaled,
+                    dashYScaled,
+                    dashXScaled + lOffsetScaled + xOffsetScaled + lLengthScaled,
+                    dashYScaled
+                );
+
+                dashXScaled = (float)(scale * (z + 0.2 * ((flipped ? 1 : 0) - z)));
+                dashYScaled = (float)CalcArcCurve(dashXScaled, scale, flipped) + yOffsetScaled;
+                g.DrawLine(penOverloadDash,
+                    dashXScaled + lOffsetScaled + xOffsetScaled,
+                    dashYScaled,
+                    dashXScaled + lOffsetScaled + xOffsetScaled + lLengthScaled,
+                    dashYScaled
+                );
 
             }
             else
             {
+                double x0 = 0;
+                double x1 = 0.3;
+                double x2 = 0.7;
+                double x3 = 1.0;
                 g.DrawBezier(penLine,
-                    new Point((int)(scale * (flipped ? 0.4 : 0.2)), (int)CalcArcCurve(0, scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 0.7 : 0.5)), (int)CalcArcCurve((scale * 0.3), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 1.1 : 0.9)), (int)CalcArcCurve((scale * 0.7), scale, flipped) + (int)(scale * 0.2)),
-                    new Point((int)(scale * (flipped ? 1.4 : 1.2)), (int)CalcArcCurve((scale * 1.0), scale, flipped) + (int)(scale * 0.2)));
+                    new Point((int)(scale * (xOffset + x0)), (int)CalcArcCurve(x0, scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x1)), (int)CalcArcCurve((scale * x1), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x2)), (int)CalcArcCurve((scale * x2), scale, flipped) + yOffsetScaled),
+                    new Point((int)(scale * (xOffset + x3)), (int)CalcArcCurve((scale * x3), scale, flipped) + yOffsetScaled));
+
+                Pen penDash = new Pen(this.LineColor, (float)(scale / 55d));
+                float lOffsetScaled = (float)(scale * (flipped ? -1 : 1) * 0.08);
+                float lLengthScaled = (float)(scale * (flipped ? -1 : 1) * 0.1);
+                float xOffsetScaled = (float)(scale * xOffset);
+                float dashXScaled = (float)(scale * (flipped ? x3 : x0));
+                float dashYScaled = (float)CalcArcCurve(dashXScaled, scale, flipped) + yOffsetScaled;
+                g.DrawLine(penDash,
+                    dashXScaled + lOffsetScaled + xOffsetScaled,
+                    dashYScaled,
+                    dashXScaled + lOffsetScaled + xOffsetScaled + lLengthScaled,
+                    dashYScaled
+                );
             }
             
             // this throws a generic gdi+ error occassionally
-            g.DrawIcon(Icon.FromHandle(Properties.Resources.temperature.GetHicon()), new Rectangle { 
-                X = (int)(scale * (flipped ? 0.1 : 1.2)),
-                Y = (int)(scale * 0.1),
-                Width = (int)(scale * 0.24),
-                Height = (int)(scale * 0.24)
-            });
+            if(icon != null)
+            {
+                g.DrawIcon(icon, new Rectangle
+                {
+                    X = (int)(scale * (flipped ? 0.1 : 1.2)),
+                    Y = (int)(scale * 0.1),
+                    Width = (int)(scale * 0.24),
+                    Height = (int)(scale * 0.24)
+                });
+            }
+            
 
 
             string tickLabel = min.ToString("0.");
@@ -317,7 +404,7 @@ namespace ArchonLightingSystem.Components
             tickLabel = max.ToString("0.") + unitLabel;
             tickLabelOffset = (flipped ? g.MeasureString(tickLabel, font).Width : 0);
             g.DrawString(tickLabel, font, brush, new Point(
-                (int)(scale * (flipped ? 1.2 : 0.25) - tickLabelOffset),
+                (int)(scale * (flipped ? 1.2 : 0.50) - tickLabelOffset),
                 (int)CalcArcCurve((scale * (flipped ? 1.0 : 0.0)), scale, flipped) + (int)(scale * 0.1)));
 
             var labelString = Label.Substring(0, (Label.Length > 10 ? 10 : Label.Length));
@@ -327,9 +414,10 @@ namespace ArchonLightingSystem.Components
 
 
             // temp
+            /*
             g.DrawString(val.ToString("0."), font, brush,
                 new Point((int)((scale * (flipped ? 1.5 : 0.1)) - (flipped ? stringLen.Width : 0)), (int)(scale * 0.5)));
-
+            */
 
             // linear
             double scaledX = (val - min) / (max - min);
@@ -359,20 +447,20 @@ namespace ArchonLightingSystem.Components
             float indicatorY = (float)CalcArcCurve(indicatorX, scale, flipped);
 
             g.DrawLine(pen,
-                indicatorX + (float)(scale * (flipped ? 0.31 : 0.01)),
+                indicatorX + (float)(scale * (flipped ? 0.26 : 0.01)),
                 indicatorY + (float)(scale * 0.22),
-                indicatorX + (float)(scale * (flipped ? 0.61 : 0.31)),
+                indicatorX + (float)(scale * (flipped ? 0.56 : 0.31)),
                 indicatorY + (float)(scale * 0.22)
                 );
 
             g.FillEllipse(brushBack,
-                indicatorX + (float)(scale * (flipped ? 0.4 : 0.1)),
+                indicatorX + (float)(scale * (flipped ? 0.35 : 0.1)),
                 indicatorY + (float)(scale * 0.15),
                 (float)(scale * 0.12),
                 (float)(scale * 0.12));
 
             g.DrawEllipse(penCircle,
-                indicatorX + (float)(scale * (flipped ? 0.4 : 0.1)),
+                indicatorX + (float)(scale * (flipped ? 0.35 : 0.1)),
                 indicatorY + (float)(scale * 0.15), 
                 (float)(scale * 0.12), 
                 (float)(scale * 0.12));
@@ -394,6 +482,38 @@ namespace ArchonLightingSystem.Components
             double y = Math.Sqrt(radius - Math.Pow(x + xOffset, 2)) - yOffset;
 
             return scale - y;
+        }
+
+        private void SetValue(double v)
+        {
+            int i;
+            double total = 0;
+
+            if (true)
+            {
+                for (i = valBuf.Length - 1; i > 0; i--)
+                {
+                    valBuf[i] = valBuf[i - 1];
+                }
+                valBuf[0] = v;
+                for (i = 0; i < valBuf.Length; i++)
+                {
+                    total += valBuf[i];
+                }
+                val = total / valBuf.Length;
+            }
+
+            Invalidate();
+        }
+
+        private void FillValueBuffer(double v)
+        {
+            int i;
+
+            for (i = valBuf.Length - 1; i > 0; i--)
+            {
+                valBuf[i] = v;
+            }
         }
     }
 }

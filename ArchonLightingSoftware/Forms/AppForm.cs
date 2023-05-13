@@ -535,7 +535,7 @@ namespace ArchonLightingSystem
             if (statsForm == null || statsForm.IsDisposed)
             {
                 statsForm = new StatsForm();
-                //statsForm.InitializeForm(usbControllerManager);
+                statsForm.InitializeForm(hardwareManager);
                 
                 statsForm.Show();
             }

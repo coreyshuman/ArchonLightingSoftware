@@ -122,7 +122,14 @@ namespace ArchonLightingSystem.Models
                 {
                     nav.BackColor = AppTheme.ComponentBackground;
                     nav.ForeColor = AppTheme.PrimaryText;
-                    
+                }
+
+                if(control is GaugeArc arc)
+                {
+                    arc.BackColor = AppTheme.Background;
+                    arc.ForeColor = AppTheme.PrimaryText;
+                    arc.LineColor = AppTheme.PrimaryHighlight;
+                    arc.OverLineColor = AppTheme.PrimaryLowLight;
                 }
 
                 if (control is ContainerControl cControl)

@@ -238,7 +238,7 @@ namespace ArchonLightingSystem.Components
             hidden = true;
         }
 
-        public void SetFanSpeedValue(double v)
+        private void SetFanSpeedValue(double v)
         {
             int i;
             double total = 0;
