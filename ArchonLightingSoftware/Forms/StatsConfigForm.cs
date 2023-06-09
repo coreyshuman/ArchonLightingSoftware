@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ArchonLightingSystem.Components;
+using ArchonLightingSystem.Models;
 using Microsoft.Win32;
 
 namespace ArchonLightingSystem.Forms
@@ -26,6 +27,9 @@ namespace ArchonLightingSystem.Forms
             UpdateScreenList();
 
             SystemEvents.DisplaySettingsChanged += SystemEvents_DisplaySettingsChanged;
+
+            AppTheme.ApplyThemeToForm(this);
+            lbl_GaugeList.Font = AppTheme.ComponentFontLarge;
         }
 
         ~StatsConfigForm()

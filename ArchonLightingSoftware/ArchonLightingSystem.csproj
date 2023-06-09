@@ -108,17 +108,17 @@
     <Compile Include="Components\FlatNumericUpDown.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="Components\GaugeTacho.cs">
+      <SubType>UserControl</SubType>
+    </Compile>
+    <Compile Include="Components\GaugeTacho.Designer.cs">
+      <DependentUpon>GaugeTacho.cs</DependentUpon>
+    </Compile>
     <Compile Include="Components\GaugeArc.cs">
       <SubType>UserControl</SubType>
     </Compile>
     <Compile Include="Components\GaugeArc.Designer.cs">
       <DependentUpon>GaugeArc.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Components\UserControl1.cs">
-      <SubType>UserControl</SubType>
-    </Compile>
-    <Compile Include="Components\UserControl1.Designer.cs">
-      <DependentUpon>UserControl1.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\LogForm.cs">
       <SubType>Form</SubType>
@@ -247,6 +247,9 @@
       <DependentUpon>SubformBase.cs</DependentUpon>
     </Compile>
     <Compile Include="Common\Util.cs" />
+    <EmbeddedResource Include="Components\GaugeTacho.resx">
+      <DependentUpon>GaugeTacho.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Components\GaugeArc.resx">
       <DependentUpon>GaugeArc.cs</DependentUpon>
     </EmbeddedResource>

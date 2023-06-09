@@ -21,8 +21,11 @@ namespace ArchonLightingSystem.Components
         private double max = 100;
         private double overload = 100;
         private bool flipped = false;
-        private string unitLabel = "%";
-        Icon icon = null;
+        private string unitLabel;
+        private Color lineColor;
+        private Color overloadLineColor;
+        private String label;
+        private Icon icon = null;
 
         public GaugeArc()
         {
@@ -45,7 +48,9 @@ namespace ArchonLightingSystem.Components
             base.Width = 160;
             base.Height = 140;
             base.MinimumSize = new Size(this.Width, this.Height);
-            this.BackColor = Color.LightGray;
+            this.BackColor = Color.Black;
+            this.lineColor = Color.White;
+            this.overloadLineColor = Color.Red;
             this.DoubleBuffered = true;
             valBuf = new double[20];
         }
@@ -222,7 +227,6 @@ namespace ArchonLightingSystem.Components
         /// <summary>
         /// Get or Set the unit symbol shown on the gauge.
         /// </summary>
-        [DefaultValue("%")]
         public String UnitSymbol
         {
             get
@@ -271,14 +275,47 @@ namespace ArchonLightingSystem.Components
         /// <summary>
         /// Primary color of the gauge's drawn arc.
         /// </summary>
-        public Color LineColor { get; set; }
+        public Color LineColor
+        {
+            get
+            {
+                return lineColor;
+            }
+            set
+            {
+                lineColor = value;
+                Invalidate();
+            }
+        }
 
         /// <summary>
         /// Warning color of the gauge's drawn arc in the overload region.
         /// </summary>
-        public Color OverLineColor { get; set; }
+        public Color OverLineColor
+        {
+            get
+            {
+                return overloadLineColor;
+            }
+            set
+            {
+                overloadLineColor = value;
+                Invalidate();
+            }
+        }
 
-        public String Label { get; set; }
+        public String Label
+        {
+            get
+            {
+                return label;
+            }
+            set
+            {
+                label = value;
+                Invalidate();
+            }
+        }
 
         private void GaugeArc_Paint(object sender, PaintEventArgs e)
         {

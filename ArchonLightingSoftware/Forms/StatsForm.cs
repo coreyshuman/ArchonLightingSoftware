@@ -92,7 +92,16 @@ namespace ArchonLightingSystem.Forms
             gauge4.MinimumValue = 800;
             gauge4.MaximumValue = 5000;
 
+            
+
             AppTheme.ApplyThemeToForm(this);
+
+            var gaugeTacho = new GaugeTacho();
+            gaugeTacho.Top = 0;
+            gaugeTacho.Left = 800;
+            gaugeTacho.Width = 600;
+            container.Controls.Add(gaugeTacho);
+            gaugeTacho.Show();
         }
 
         public void InitializeForm(SensorMonitorManager sensorMonitor)

@@ -56,6 +56,7 @@ namespace ArchonLightingSystem.Models
                     button.ForeColor = AppTheme.PrimaryText;
                     button.BackColor = AppTheme.ComponentBackground;
                     button.Font = AppTheme.ComponentFont;
+                    button.FlatStyle = FlatStyle.Popup;
                 }
 
                 if (control is ComboBox combo)
@@ -63,6 +64,7 @@ namespace ArchonLightingSystem.Models
                     combo.ForeColor = AppTheme.PrimaryText;
                     combo.BackColor = AppTheme.ComponentBackground;
                     combo.Font = AppTheme.ComponentFont;  
+                    combo.FlatStyle = FlatStyle.Popup;
                 }
 
                 if(control is TextBox textBox)
@@ -118,7 +120,15 @@ namespace ArchonLightingSystem.Models
                     listView.BorderStyle = BorderStyle.None;
                 }
 
-                if(control is BindingNavigator nav)
+                if (control is ListBox listBox)
+                {
+                    listBox.ForeColor = AppTheme.PrimaryText;
+                    listBox.BackColor = AppTheme.ComponentBackground;
+                    listBox.Font = AppTheme.ComponentFont;
+                    listBox.BorderStyle = BorderStyle.None;
+                }
+
+                if (control is BindingNavigator nav)
                 {
                     nav.BackColor = AppTheme.ComponentBackground;
                     nav.ForeColor = AppTheme.PrimaryText;

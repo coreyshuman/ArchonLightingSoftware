@@ -280,7 +280,6 @@ namespace ArchonLightingSystem
         }
         #endregion
 
-
         #region event_handlers
         //This is a callback function that gets called when a Windows message is received by the form.
         //We will receive various different types of messages, but the ones we really want to use are the WM_DEVICECHANGE messages.
