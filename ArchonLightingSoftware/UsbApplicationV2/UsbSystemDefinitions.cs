@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Runtime.InteropServices;
 using Microsoft.Win32.SafeHandles;
+using System.Threading;
 
 namespace ArchonLightingSystem.UsbApplicationV2
 {
@@ -46,30 +47,33 @@ namespace ArchonLightingSystem.UsbApplicationV2
         internal const uint ERROR_IO_PENDING = 0x000003E5;
         internal const uint ERROR_INSUFFICIENT_BUFFER = 0x0000007A;
 
-
-        //Various structure definitions for structures that this code will be using
+        [StructLayout(LayoutKind.Sequential)]
         internal struct SP_DEVICE_INTERFACE_DATA
         {
             internal uint cbSize;               //DWORD
             internal Guid InterfaceClassGuid;   //GUID
             internal uint Flags;                //DWORD
-            internal uint Reserved;             //ULONG_PTR MSDN says ULONG_PTR is "typedef unsigned __int3264 ULONG_PTR;"  
+            internal IntPtr Reserved;             //ULONG_PTR MSDN says ULONG_PTR is "typedef unsigned __int3264 ULONG_PTR;"  
         }
 
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
         internal struct SP_DEVICE_INTERFACE_DETAIL_DATA
         {
             internal uint cbSize;               //DWORD
-            internal char[] DevicePath;         //TCHAR array of any size
+            [MarshalAs(UnmanagedType.LPWStr)] 
+            internal string DevicePath;         //TCHAR array of any size
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         internal struct SP_DEVINFO_DATA
         {
             internal uint cbSize;       //DWORD
             internal Guid ClassGuid;    //GUID
             internal uint DevInst;      //DWORD
-            internal uint Reserved;     //ULONG_PTR  MSDN says ULONG_PTR is "typedef unsigned __int3264 ULONG_PTR;"  
+            internal IntPtr Reserved;     //ULONG_PTR  MSDN says ULONG_PTR is "typedef unsigned __int3264 ULONG_PTR;"  
         }
 
+        [StructLayout(LayoutKind.Sequential)]
         internal struct DEV_BROADCAST_DEVICEINTERFACE
         {
             internal uint dbcc_size;            //DWORD
@@ -77,15 +81,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             internal uint dbcc_reserved;        //DWORD
             internal Guid dbcc_classguid;       //GUID
             internal char[] dbcc_name;          //TCHAR array
-        }
-
-        internal struct OVERLAPPED
-        {
-            internal UInt32 Internal;
-            internal UInt32 InternalHigh;
-            internal uint Offset;
-            internal uint OffsetHigh;
-            internal IntPtr hEvent;
         }
 
 //DLL Imports.  Need these to access various C style unmanaged functions contained in their respective DLL files.
@@ -181,7 +176,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             byte[] lpBuffer,
             uint nNumberOfBytesToWrite,
             ref uint lpNumberOfBytesWritten,
-            ref OVERLAPPED lpOverlapped
+            ref NativeOverlapped lpOverlapped
         );
 
         //Uses a handle (created with CreateFile()), and lets us read USB data from the device.
@@ -191,7 +186,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             IntPtr lpBuffer,
             uint nNumberOfBytesToRead,
             ref uint lpNumberOfBytesRead,
-            ref OVERLAPPED lpOverlapped
+            ref NativeOverlapped lpOverlapped
         );
 
         //Uses a handle (created with CreateFile()), and lets us create an event (used for overlapped IO)
@@ -220,14 +215,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern uint CancelIoEx(
             SafeFileHandle hFile,
-            ref OVERLAPPED lpOverlapped
+            ref NativeOverlapped lpOverlapped
         );
 
         //Uses a handle (created with CreateFile()), and lets us get the result from an overlapped IO event
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         internal static extern bool GetOverlappedResult(
             SafeFileHandle hFile,
-            ref OVERLAPPED lpOverlapped,
+            ref NativeOverlapped lpOverlapped,
             ref uint lpNumberOfBytesTransferred,
             bool bWait
         );

@@ -343,25 +343,25 @@ namespace ArchonLightingSystem.UsbApplicationV2
                             try
                             {
                                 pUnmanagedDetailedInterfaceDataStructure = Marshal.AllocHGlobal((int)structureSize);    //Reserve some unmanaged memory for the structure.
-                                detailedInterfaceDataStructure.cbSize = 6; //Initialize the cbSize parameter (4 bytes for DWORD + 2 bytes for unicode null terminator)
+                                detailedInterfaceDataStructure.cbSize = Environment.Is64BitProcess ? 8 : 4 + (uint)Marshal.SystemDefaultCharSize; // DWORD + 2 byte null unicode, see: https://stackoverflow.com/questions/9245595/win32api-usb-setupdigetdeviceinterfacedetail-fail
                                 Marshal.StructureToPtr(detailedInterfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, false); //Copy managed structure contents into the unmanaged memory buffer.
 
                                 //Now call SetupDiGetDeviceInterfaceDetail() a second time to receive the device path in the structure at pUnmanagedDetailedInterfaceDataStructure.
                                 if (SetupDiGetDeviceInterfaceDetail(pDeviceInfoTable, ref interfaceDataStructure, pUnmanagedDetailedInterfaceDataStructure, structureSize, IntPtr.Zero, IntPtr.Zero))
                                 {
                                     //Need to extract the path information from the unmanaged "structure".  The path starts at (pUnmanagedDetailedInterfaceDataStructure + sizeof(DWORD)).
-                                    IntPtr pToDevicePath = new IntPtr((uint)pUnmanagedDetailedInterfaceDataStructure.ToInt32() + 4);  //Add 4 to the pointer (to get the pointer to point to the path, instead of the DWORD cbSize parameter)
-                                    string devicePath = Marshal.PtrToStringUni(pToDevicePath); //Now copy the path information into the globally defined DevicePath String.
+                                    IntPtr pToDevicePath = new IntPtr((long)pUnmanagedDetailedInterfaceDataStructure + 4);  //Add 4 to the pointer (to get the pointer to point to the path, instead of the DWORD cbSize parameter)
+                                    detailedInterfaceDataStructure.DevicePath = Marshal.PtrToStringUni(pToDevicePath); //Now copy the path information into the DevicePath String.
 
                                     // if device already exists in our list, set IsFound to true. Otherwise, add to list
-                                    var foundDevice = usbDevices.Where(dev => dev.DevicePath == devicePath).FirstOrDefault();
+                                    var foundDevice = usbDevices.Where(dev => dev.DevicePath == detailedInterfaceDataStructure.DevicePath).FirstOrDefault();
                                     if (foundDevice != null)
                                     {
                                         foundDevice.IsFound = true;
                                     }
                                     else
                                     {
-                                        usbDevices.Add(new UsbDevice { DevicePath = devicePath, IsFound = true });
+                                        usbDevices.Add(new UsbDevice { DevicePath = detailedInterfaceDataStructure.DevicePath, IsFound = true });
                                     }
 
                                     //We now have the proper device path, and we can finally use the path to open I/O handle(s) to the device.
@@ -371,6 +371,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
                                     errorStatus = (uint)Marshal.GetLastWin32Error();
                                     Logger.Write(Level.Error, $"USB DeviceDetail unknown WIN32 error: 0x{errorStatus:X}");
                                 }
+                            }
+                            catch(Exception ex)
+                            {
+                                Logger.Write(Level.Error, $"USB DeviceDetail exception: {ex.Message}");
                             }
                             finally
                             {
