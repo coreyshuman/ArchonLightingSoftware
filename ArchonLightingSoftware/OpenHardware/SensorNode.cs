@@ -21,7 +21,7 @@ namespace ArchonLightingSystem.OpenHardware
         private ISensor sensor;
         private HardwareSettings settings;
         private TemperatureUnitManager unitManager;
-        public string format;
+        public string format = "{0:F0} ?";
         private bool plot = false;
         private Color? penColor = null;
 

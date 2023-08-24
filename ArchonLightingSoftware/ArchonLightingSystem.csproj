@@ -326,6 +326,12 @@
     <Content Include="assets\darkarchon.ico" />
     <Content Include="assets\processing.png" />
     <Content Include="Documentation\modes.txt" />
+    <None Include="Resources\time.png" />
+    <None Include="Resources\power-supply.png" />
+    <None Include="Resources\loudspeaker.png" />
+    <None Include="Resources\intel.png" />
+    <None Include="Resources\current.png" />
+    <None Include="Resources\battery.png" />
     <None Include="Resources\acicon.png" />
     <None Include="Resources\voltage.png" />
     <None Include="Resources\throughput.png" />

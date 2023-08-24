@@ -113,7 +113,7 @@ namespace ArchonLightingSystem.Models
                 SensorType = LibreHardwareMonitor.Hardware.SensorType.Temperature;
             }
 
-            if(DecreaseStep < 1 ) DecreaseStep = 1;
+            if(DecreaseStep < 1) DecreaseStep = 1;
             if(DecreaseStep > 100) DecreaseStep = 100;
             if (IncreaseStep < 1) IncreaseStep = 1;
             if (IncreaseStep > 100) IncreaseStep = 100;

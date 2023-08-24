@@ -125,7 +125,7 @@ namespace ArchonLightingSystem.Forms
             UpdateFanCurveChart();
         }
 
-        void SetFanCurveRange(ISensor sensor)
+        void SetFanCurveRange(ISensor sensor, bool saveValues = false)
         {
             string label = SensorUnits.GetLabel(sensor);
             double[] range = SensorUnits.GetRange(sensor);
@@ -167,7 +167,11 @@ namespace ArchonLightingSystem.Forms
 
                 linePoints.AddXY(range[i], defaultFanCurveVal);
                 pointPoints.AddXY(range[i], defaultFanCurveVal);
-                deviceSettings.FanCurveValues[i] = defaultFanCurveVal;
+
+                if(saveValues)
+                {
+                    deviceSettings.FanCurveValues[i] = defaultFanCurveVal;
+                }
             }
         }
         #endregion
@@ -492,7 +496,7 @@ namespace ArchonLightingSystem.Forms
             deviceSettings.IdentifierList.Clear();
             primarySensor = null;
             lbl_Selected.Text = "...";
-            SetFanCurveRange(null);
+            SetFanCurveRange(null, true);
             LoadHardwareGridForNode(null);
             UpdateSelectedGrid();
             deviceSettings.Sensor = string.Empty;

@@ -27,11 +27,11 @@ namespace ArchonLightingSystem.OpenHardware
             {
                 case SensorType.Voltage:
                     this.ImageKey = Util.GetPropertyName(() => Resources.voltage);
-                    this.Text = "Voltages";
+                    this.Text = "Voltage";
                     break;       
                 case SensorType.Clock:
                     this.ImageKey = Util.GetPropertyName(() => Resources.clock);
-                    this.Text = "Clocks";
+                    this.Text = "Clock";
                     break;       
                 case SensorType.Load:
                     this.ImageKey = Util.GetPropertyName(() => Resources.load);
@@ -39,27 +39,27 @@ namespace ArchonLightingSystem.OpenHardware
                     break;
                 case SensorType.Temperature:
                     this.ImageKey = Util.GetPropertyName(() => Resources.temperature);
-                    this.Text = "Temperatures";
+                    this.Text = "Temperature";
                     break;
                 case SensorType.Fan:
                     this.ImageKey = Util.GetPropertyName(() => Resources.fan);
-                    this.Text = "Fans";
+                    this.Text = "Fan";
                     break;
                 case SensorType.Flow:
                     this.ImageKey = Util.GetPropertyName(() => Resources.flow);
-                    this.Text = "Flows";
+                    this.Text = "Flow";
                     break;
                 case SensorType.Control:
                     this.ImageKey = Util.GetPropertyName(() => Resources.control);
-                    this.Text = "Controls";
+                    this.Text = "Control";
                     break;
                 case SensorType.Level:
                     this.ImageKey = Util.GetPropertyName(() => Resources.level);
-                    this.Text = "Levels";
+                    this.Text = "Level";
                     break;
                 case SensorType.Power:
                     this.ImageKey = Util.GetPropertyName(() => Resources.power);
-                    this.Text = "Powers";
+                    this.Text = "Power";
                     break;
                 case SensorType.Data:
                     this.ImageKey = Util.GetPropertyName(() => Resources.data);
@@ -71,15 +71,34 @@ namespace ArchonLightingSystem.OpenHardware
                     break;
                 case SensorType.Factor:
                     this.ImageKey = Util.GetPropertyName(() => Resources.factor);
-                    this.Text = "Factors";
+                    this.Text = "Factor";
                     break;
                 case SensorType.Frequency:
                     this.ImageKey = Util.GetPropertyName(() => Resources.clock);
-                    this.Text = "Frequencys";
+                    this.Text = "Frequency";
                     break;
                 case SensorType.Throughput:
                     this.ImageKey = Util.GetPropertyName(() => Resources.throughput);
                     this.Text = "Throughput";
+                    break;
+                case SensorType.Current:
+                    this.ImageKey = Util.GetPropertyName(() => Resources.current);
+                    this.Text = "Current";
+                    break;
+                case SensorType.Noise:
+                    this.ImageKey = Util.GetPropertyName(() => Resources.loudspeaker);
+                    this.Text = "Noise Level";
+                    break;
+                case SensorType.TimeSpan:
+                    this.ImageKey = Util.GetPropertyName(() => Resources.time);
+                    this.Text = "Time";
+                    break;
+                case SensorType.Energy:
+                    this.ImageKey = Util.GetPropertyName(() => Resources.battery);
+                    this.Text = "Capacity";
+                    break;
+                default:
+                    this.Text = "Unknown";
                     break;
             }
 

@@ -56,6 +56,7 @@ namespace ArchonLightingSystem.OpenHardware
             computer.IsGpuEnabled = true;
             computer.IsStorageEnabled = true;
             computer.IsMemoryEnabled = true;
+            computer.IsBatteryEnabled = true;
 
             computer.Open();
 

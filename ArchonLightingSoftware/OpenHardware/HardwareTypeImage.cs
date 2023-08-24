@@ -33,31 +33,41 @@ namespace ArchonLightingSystem.OpenHardware
             switch (hardwareType)
             {
                 case HardwareType.Cpu:
-                    image = Util.GetPropertyName(() => Resources .cpu);
+                    image = Util.GetPropertyName(() => Resources.cpu);
                     break;
                 case HardwareType.GpuNvidia:
-                    image = Util.GetPropertyName(() => Resources .nvidia);
+                    image = Util.GetPropertyName(() => Resources.nvidia);
                     break;
                 case HardwareType.GpuAmd:
-                    image = Util.GetPropertyName(() => Resources .ati);
+                    image = Util.GetPropertyName(() => Resources.ati);
+                    break;
+                case HardwareType.GpuIntel:
+                    image = Util.GetPropertyName(() => Resources.intel);
                     break;
                 case HardwareType.Storage:
-                    image = Util.GetPropertyName(() => Resources .hdd);
+                    image = Util.GetPropertyName(() => Resources.hdd);
                     break;
                 case HardwareType.Motherboard:
-                    image = Util.GetPropertyName(() => Resources .mainboard);
+                    image = Util.GetPropertyName(() => Resources.mainboard);
                     break;
                 case HardwareType.SuperIO:
-                    image = Util.GetPropertyName(() => Resources .chip);
+                case HardwareType.EmbeddedController:
+                    image = Util.GetPropertyName(() => Resources.chip);
                     break;
                 case HardwareType.Memory:
-                    image = Util.GetPropertyName(() => Resources .ram);
+                    image = Util.GetPropertyName(() => Resources.ram);
                     break;
                 case HardwareType.Cooler:
-                    image = Util.GetPropertyName(() => Resources .fan);
+                    image = Util.GetPropertyName(() => Resources.fan);
                     break;
                 case HardwareType.Network:
-                    image = Util.GetPropertyName(() => Resources .nic);
+                    image = Util.GetPropertyName(() => Resources.nic);
+                    break;
+                case HardwareType.Psu:
+                    image = Util.GetPropertyName(() => Resources.power_supply);
+                    break;
+                case HardwareType.Battery:
+                    image = Util.GetPropertyName(() => Resources.battery);
                     break;
 
             }
