@@ -13,8 +13,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
     public static partial class UsbApp
     {
         private static UsbReadWrite usbIO = new UsbReadWrite();
-        private static uint defaultReadTimeout = 15; //ms
-        private static uint eepromReadTimeout = 250; //ms
+        private static uint defaultReadTimeout = 25; //ms
+        private static uint eepromReadTimeout = 275; //ms
 
         private static async Task<ControlPacket> ReadBootloaderInfo(IUsbDevice usbDevice, CancellationTokenSource cancelToken)
         {
@@ -224,6 +224,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
                 if (0 == await usbIO.Write(usbDevice, usbBuffer, sendLen, cancelToken))
                 {
+                    Logger.Write(Level.Trace, $"SendFrames {usbDevice.ShortName} {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)} no bytes sent.");
                     return 0;
                 }
                 byteCnt -= sendLen;
@@ -290,6 +291,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                 if(byteCnt == 0)
                 {
+                    Logger.Write(Level.Warning, $"USB {usbDevice.ShortName} {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)} received no response.");
                     return null;
                 }
 
@@ -305,15 +307,15 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     {
                         // handle error codes from the Controller
                         byte errorCode = controlPacket.Data[0];
-                        string err = $"USB Controller Error. Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
-                        Logger.Write(Level.Error, err);
+                        string err = $"USB {usbDevice.ShortName} controller error. Address ({{0}}). Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
+                        //Logger.Write(Level.Error, err);
                         throw new Exception(err);
                     }
 
                     // handle incorrect cmd response received. Old data in OS buffer? Discard and try reading again.
                     if (controlPacket.Cmd != cmd)
                     {
-                        Logger.Write(Level.Warning, $"Received wrong response. " +
+                        Logger.Write(Level.Warning, $"USB {usbDevice.ShortName} received wrong response. " +
                         $"Expected {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), cmd)} " +
                         $"Received {Enum.GetName(typeof(UsbAppCommon.CONTROL_CMD), controlPacket.Cmd)} Len {controlPacket.Len}");
 

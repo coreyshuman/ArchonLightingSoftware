@@ -77,7 +77,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
                 catch (Exception ex)
                 {
-                    Logger.Write(Level.Error, ex.Message);
+                    Logger.Write(Level.Error, string.Format(ex.Message, controllerInstance.Address));
                 }
                 finally
                 {
@@ -130,113 +130,5 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
             }
         }
-
-        /*
-        public static async Task DeviceDoWork(UsbControllerDevice controllerInstance)
-        {
-            Byte[] rxtxBuffer = new Byte[UsbAppCommon.USB_BUFFER_SIZE];
-            uint byteCnt = 0;
-            int i = 0;
-
-            if (await controllerInstance.semaphore.WaitAsync(200))
-            {
-                try
-                {
-                    if(controllerInstance.IsDisconnected)
-                    {
-                        return;
-                    }
-
-                    if (!controllerInstance.AppIsInitialized)
-                    {
-                        Logger.Write(Level.Trace, "Initialize ApplicationData");
-                        controllerInstance.AppData = new ApplicationData();
-                        controllerInstance.AppIsInitialized = true;
-                    }
-
-                    if (!controllerInstance.UsbDevice.IsAttached && controllerInstance.AppData.DeviceControllerData.IsInitialized)
-                    {
-                        Logger.Write(Level.Trace, "Initialize DeviceControllerData");
-                        controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
-                    }
-
-                    if (controllerInstance.UsbDevice.IsAttached == true)    //Do not try to use the read/write handles unless the USB controllerInstance is attached and ready
-                    {
-                        if (controllerInstance.AppData.DeviceControllerData == null)
-                        {
-                            Logger.Write(Level.Trace, "Reinitialize ApplicationData");
-                            controllerInstance.AppData.DeviceControllerData = new DeviceControllerData();
-                        }
-                        if (!controllerInstance.AppData.DeviceControllerData.IsInitialized)
-                        {
-                            Logger.Write(Level.Trace, "Get Device Initialization");
-                            await GetDeviceInitialization(controllerInstance);
-                        }
-
-                        for (i = 0; i < UsbAppCommon.USB_BUFFER_SIZE; i++)
-                        {
-                            rxtxBuffer[i] = 0;
-                        }
-
-                        // stop general tasks when paused
-                        if (!controllerInstance.IsPaused)
-                        {
-                            for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
-                            {
-                                rxtxBuffer[i] = controllerInstance.AppData.DeviceControllerData.TemperatureValue[i];
-                            }
-                            if (GenerateAndSendFrames(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED, rxtxBuffer, DeviceControllerDefinitions.DevicePerController) > 0)
-                            {
-                                //await Task.Delay(2);
-                                ControlPacket response = GetDeviceResponse(controllerInstance, UsbAppCommon.CONTROL_CMD.CMD_READ_FANSPEED);
-                                if (response != null)
-                                {
-                                    for (i = 0; i < DeviceControllerDefinitions.DevicePerController; i++)
-                                    {
-                                        //AppData.FanSpeed[i] = (uint)(response.Data[0 + i*2] + (response.Data[1 + i * 2] << 8));
-                                        controllerInstance.AppData.DeviceControllerData.MeasuredFanRpm[i] = (UInt16)(response.Data[0 + i * 2] + (response.Data[1 + i * 2] << 8));
-                                    }
-                                }
-                            }
-
-                            if(controllerInstance.AppData.UpdateFanSpeedPending)
-                            {
-                                await WriteFanSpeed(controllerInstance, controllerInstance.AppData.DeviceControllerData.AutoFanSpeedValue);
-                                controllerInstance.AppData.UpdateFanSpeedPending = false;
-                            }
-                        }
-
-                        if (controllerInstance.AppData.ResetToBootloaderPending)
-                        {
-                            controllerInstance.AppData.ResetToBootloaderPending = false;
-                            ResetDeviceToBootloader(controllerInstance);
-                            controllerInstance.Disconnect();
-                        }
-
-
-
-                        
-
-                        if (controllerInstance.AppData.ReadDebugPending)
-                        {
-                            controllerInstance.AppData.ReadDebugPending = false;
-                            await ReadDebug(controllerInstance);
-                        }
-
-                        
-                    }
-                }
-                catch (Exception ex)
-                {
-                    Logger.Write(Level.Error, $"DeviceDoWork Error: {ex.ToString()}");
-                    throw ex;
-                }
-                finally
-                {
-                    controllerInstance.semaphore.Release();
-                }
-            }
-        }
-        */
     }
 }

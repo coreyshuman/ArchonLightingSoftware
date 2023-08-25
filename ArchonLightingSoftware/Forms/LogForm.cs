@@ -27,7 +27,7 @@ namespace ArchonLightingSystem.Forms
 
             cb_Level.Items.Clear();
             cb_Level.Items.AddRange(Enum.GetNames(typeof(Level)));
-            cb_Level.SelectedIndex = (int)Logger.GetLevel();
+            cb_Level.SelectedIndex = (int)Logger.GetMinDisplayLevel();
         }
 
         private void GetLogs()
@@ -66,37 +66,13 @@ namespace ArchonLightingSystem.Forms
                 return;
             }
 
-            var textColor = Color.White;
-            string msg = $"{lineNumber,4} ";
-            switch (log.Level)
-            {
-                case Level.Error:
-                    textColor = Color.PaleVioletRed;
-                    msg += "[ERROR]";
-                    break;
-                case Level.Warning:
-                    textColor = Color.Goldenrod;
-                    msg += "[WARN ]";
-                    break;
-                case Level.Debug:
-                    textColor = Color.MediumOrchid;
-                    msg += "[DEBUG]";
-                    break;
-                case Level.Trace:
-                    textColor = Color.LightSkyBlue;
-                    msg += "[TRACE]";
-                    break;
-                case Level.Information:
-                    msg += "[INFO ]";
-                    break;
-            }
-
+            string msg = $"{lineNumber,4} {log.Time.ToString("s")} {log.Tag.Name}";
             msg += $" {log.Message}" + Environment.NewLine;
 
             lineNumber++;
             try 
             { 
-                txt_log.SelectionColor = textColor;
+                txt_log.SelectionColor = log.Tag.Color;
                 txt_log.SelectionBackColor = (lineNumber % 2 == 0) ? txt_log.BackColor : AppTheme.Background;
                 txt_log.AppendText(msg);
             }
@@ -115,9 +91,9 @@ namespace ArchonLightingSystem.Forms
         {
             Level lev = (Level)((ComboBox)sender).SelectedIndex;
 
-            if(lev != Logger.GetLevel())
+            if(lev != Logger.GetMinDisplayLevel())
             {
-                Logger.SetLevel(lev);
+                Logger.SetMinDisplayLevel(lev);
                 GetLogs();
             }        
         }

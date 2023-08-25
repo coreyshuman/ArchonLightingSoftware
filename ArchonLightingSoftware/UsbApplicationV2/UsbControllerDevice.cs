@@ -45,7 +45,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             ReadWriteThread = new BackgroundWorker();
             ReadWriteThread.WorkerReportsProgress = true;
             ReadWriteThread.DoWork += new DoWorkEventHandler(ReadWriteThread_DoWork);
-            ReadWriteThread.RunWorkerAsync();
+            //ReadWriteThread.RunWorkerAsync();
 
             IsDisconnected = true;
             IsConnected = false;
@@ -78,6 +78,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             IsDisconnected = false;
             hasConnected = true;
             IsConnected = true;
+            ReadWriteThread.RunWorkerAsync();
         }
 
         private async void ReadWriteThread_DoWork(object sender, DoWorkEventArgs e)
