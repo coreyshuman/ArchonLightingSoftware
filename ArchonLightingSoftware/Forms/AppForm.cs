@@ -36,12 +36,10 @@ namespace ArchonLightingSystem
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private DragWindowSupport dragSupport = new DragWindowSupport();
         private UserSettingsManager settingsManager = new UserSettingsManager();
-        private UserSettings userSettings = null;
         private bool isHidden = false;
         private bool allowVisible = false;
         private bool allowClose = false;
         private bool formIsBusy = false;
-        private string lastNotification = "";
         private bool disableNotification = false;
         private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1,1);
 
@@ -59,7 +57,6 @@ namespace ArchonLightingSystem
             dragSupport.Initialize(this, menuStrip1);
             dragSupport.DragWindowEvent += new DragWindowEventDelegate(DragWindowEventHandler);
 
-            userSettings = settingsManager.GetSettings();
             hardwareManager = new SensorMonitorManager();
             if (Settings.Default.MainWindowLocation.X >= 0)
             {
@@ -76,9 +73,15 @@ namespace ArchonLightingSystem
             startWithWindowsToolStripMenuItem.Checked = startupManager.Startup;
 
             // Handle cleanup when the user logs off
-            Microsoft.Win32.SystemEvents.SessionEnded += delegate {
+            Microsoft.Win32.SystemEvents.SessionEnding += delegate {
+                Logger.Write(Level.Trace, "Shutdown");
                 serviceManager.StopServices();
                 hardwareManager.Close();
+            };
+
+            Microsoft.Win32.SystemEvents.PowerModeChanged += delegate
+            {
+                Logger.Write(Level.Trace, "Power mode changed");
             };
 
             serviceManager.StartServices(usbControllerManager, hardwareManager);
@@ -265,7 +268,6 @@ namespace ArchonLightingSystem
             notifyIcon1.BalloonTipIcon = ToolTipIcon.Error;
             notifyIcon1.Icon = Resources.darkarchon;
             notifyIcon1.ShowBalloonTip(duration);
-            lastNotification = content;
         }
 
         private void SetErrorIcon(bool error)

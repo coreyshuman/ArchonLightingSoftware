@@ -308,8 +308,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         // handle error codes from the Controller
                         byte errorCode = controlPacket.Data[0];
                         string err = $"USB {usbDevice.ShortName} controller error. Address ({{0}}). Error code = [{errorCode.ToString("X2")}]. Error message: {GetErrorMessage(errorCode)}";
-                        //Logger.Write(Level.Error, err);
-                        throw new Exception(err);
+                        Logger.Write(Level.Warning, err);
+                        //throw new Exception(err);
+                        return null;
                     }
 
                     // handle incorrect cmd response received. Old data in OS buffer? Discard and try reading again.
@@ -380,7 +381,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             if (crc != rxCrc)
             {
-                Trace.WriteLine($"Invalid CRC. Expected [{crc:X2}] Received [{rxCrc:X2}]");
+                Logger.Write(Level.Warning, $"Invalid CRC. Expected [{crc:X2}] Received [{rxCrc:X2}]");
                 return 0;
             }
 

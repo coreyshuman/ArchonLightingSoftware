@@ -226,5 +226,14 @@ namespace ArchonLightingSystem.UsbApplicationV2
             ref uint lpNumberOfBytesTransferred,
             bool bWait
         );
+
+        [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+        internal static extern bool GetOverlappedResultEx(
+            SafeFileHandle hFile,
+            ref NativeOverlapped lpOverlapped,
+            ref uint lpNumberOfBytesTransferred,
+            uint dwMilliseconds,
+            bool bAlertable
+        );
     }
 }

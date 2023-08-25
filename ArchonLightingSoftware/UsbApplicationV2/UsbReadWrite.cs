@@ -14,7 +14,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
 {
     internal class UsbReadWrite : UsbSystemDefinitions
     {
-
         /// <summary>
         /// Write buffer to USB device. 
         /// </summary>
@@ -30,8 +29,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             uint bytesWritten = 0;
             Byte[] usbReport = new Byte[USB_PACKET_SIZE];
             int i;
-
-            TaskCompletionSource<uint> taskCompletionSource = null;
 
             if (cancelToken == null)
             {
@@ -88,7 +85,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 }
 
                 // use overlapped event to wait for response
-                eventHandle = CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero);
+                eventHandle = CreateEvent(IntPtr.Zero, true, false, IntPtr.Zero);
                 if(eventHandle.IsInvalid)
                 {
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
@@ -106,97 +103,47 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     return Task.FromResult(bytesWritten);
                 }
 
-                var lastError = Marshal.GetLastWin32Error();
+                var writeFileLastError = Marshal.GetLastWin32Error();
 
-                if (lastError == ERROR_DEVICE_NOT_CONNECTED)
+                if (writeFileLastError == ERROR_DEVICE_NOT_CONNECTED)
                 {
                     Logger.Write(Level.Trace, "UsbWrite device disconnected");
                     cancelToken.Cancel();
                     return Task.FromResult(0u);
                 }
 
-                if (lastError == ERROR_IO_PENDING)
+                if (writeFileLastError == ERROR_IO_PENDING)
                 {
-                    if (cancelToken.IsCancellationRequested)
+                    if(GetOverlappedResultEx(device.WriteHandleToUSBDevice, ref overlapped, ref bytesWritten, 150, false))
                     {
-                        Logger.Write(Level.Trace, "UsbWrite overlapped cancelled");
-                        CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
-                        return Task.FromResult(0u);
+                        if (bytesWritten == 0)
+                            Logger.Write(Level.Trace, $"UsbWrite overlapped {bytesWritten} bytes written");
+
+                        return Task.FromResult(bytesWritten);
                     }
 
-                    taskCompletionSource = new TaskCompletionSource<uint>();
+                    uint getOverlappedLastError = (uint)Marshal.GetLastWin32Error();
 
-                    Task.Factory.StartNew(() =>
+                    switch(getOverlappedLastError)
                     {
-                        try
-                        {
-                            if (cancelToken.IsCancellationRequested)
-                            {
-                                Logger.Write(Level.Trace, "UsbWrite overlapped cancelled 2");
-                                CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
-                                taskCompletionSource.SetResult(0u);
-                                return;
-                            }
+                        case WAIT_TIMEOUT:
+                            // Timeout error;
+                            Logger.Write(Level.Trace, $"UsbWrite Timeout {device.ShortName}");
+                            break;
 
-                            uint result = WaitForSingleObject(eventHandle, 150); // ms timeout period
+                        default:
+                            // Undefined error;
+                            Logger.Write(Level.Trace, $"UsbWrite getOverlapped error. LastWin32Error=[{getOverlappedLastError:X}]");
+                            break;
+                    }
 
-                            if (cancelToken.IsCancellationRequested)
-                            {
-                                Logger.Write(Level.Trace, "UsbWrite overlapped cancelled 3");
-                                CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
-                                taskCompletionSource.SetResult(0u);
-                                return;
-                            }
-
-                            uint errorCode;
-                            switch (result)
-                            {
-                                case WAIT_OBJECT_0:
-                                    // Success;
-                                    if (GetOverlappedResult(device.WriteHandleToUSBDevice, ref overlapped, ref bytesWritten, false))
-                                    {
-                                        if (bytesWritten == 0)
-                                            Logger.Write(Level.Trace, $"UsbWrite overlapped {bytesWritten} bytes written");
-
-                                        taskCompletionSource.SetResult(bytesWritten);
-                                        return;
-                                    }
-                                    errorCode = (uint)Marshal.GetLastWin32Error();
-                                    Logger.Write(Level.Trace, $"UsbWrite overlapped no response. LastWin32Error=[{errorCode.ToString("X8")}]");
-                                    break;
-
-                                case WAIT_TIMEOUT:
-                                    // Timeout error;
-                                    Logger.Write(Level.Trace, $"UsbWrite Timeout {device.ShortName}");
-                                    break;
-
-                                default:
-                                    // Undefined error;
-                                    errorCode = (uint)Marshal.GetLastWin32Error();
-                                    Logger.Write(Level.Trace, $"UsbWrite undefined error. WaitForSingleObject=[{result.ToString("X8")}] LastWin32Error=[{errorCode.ToString("X8")}]");
-                                    break;
-                            }
-
-                            CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
-                            taskCompletionSource.SetResult(0u);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Write(Level.Trace, $"Undefined UsbWrite thread Error: {ex.Message}");
-                            CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
-                            taskCompletionSource.SetException(ex);
-                        }
-                        finally
-                        {
-                            eventHandle.Close();
-                        }
-                    }, cancelToken.Token, TaskCreationOptions.None, TaskScheduler.Default);
-
-                    return taskCompletionSource.Task;
+                    CancelIoEx(device.WriteHandleToUSBDevice, ref overlapped);
+                    WaitForSingleObject(eventHandle, 250);
+                    return Task.FromResult(0u);
                 }
                 else
                 {
-                    throw new Exception($"Unknown WIN32 Error: {lastError:X}");
+                    throw new Exception($"UsbWrite writeFile error. LastWin32Error=[{writeFileLastError:X}]");
                 }
             }
             catch (Exception ex)
@@ -205,10 +152,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
             finally
             {
-                if (taskCompletionSource == null)
-                {
-                    eventHandle?.Close();
-                }
+                eventHandle?.Close();
             }
 
             // failed to write
@@ -231,8 +175,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             IntPtr pINBuffer = IntPtr.Zero;
             uint bytesRead = 0;
             UInt32 result;
-
-            TaskCompletionSource<uint> taskCompletionSource = null;
 
             if (cancelToken == null)
             {
@@ -275,7 +217,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
                 buffer[0] = 0;
 
                 // use overlapped event to wait for response
-                eventHandle = CreateEvent(IntPtr.Zero, false, false, IntPtr.Zero);
+                eventHandle = CreateEvent(IntPtr.Zero, true, false, IntPtr.Zero);
                 if (eventHandle.IsInvalid)
                 {
                     Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
@@ -306,79 +248,44 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
                 if (lastError == ERROR_IO_PENDING)
                 {
-                    if (cancelToken.IsCancellationRequested)
+                    result = WaitForSingleObject(eventHandle, readTimeout);
+
+                    uint errorCode;
+                    switch (result)
                     {
-                        CancelIoEx(device.ReadHandleToUSBDevice, ref overlapped);
-                        Logger.Write(Level.Trace, "UsbRead overlapped cancelled");
-                        return Task.FromResult(0u);
+                        case WAIT_OBJECT_0:
+                            // Success;
+                            if (GetOverlappedResult(device.ReadHandleToUSBDevice, ref overlapped, ref bytesRead, false))
+                            {
+                                Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
+                                if (bytesRead == 0)
+                                    Logger.Write(Level.Trace, $"UsbRead overlapped {bytesRead} bytes read");
+
+                                return Task.FromResult(bytesRead);
+                            }
+                            errorCode = (uint)Marshal.GetLastWin32Error();
+                            Logger.Write(Level.Trace, $"UsbRead overlapped no response. LastWin32Error=[{errorCode:X}]");
+                            break;
+
+                        case WAIT_TIMEOUT:
+                            // Timeout error;
+                            Logger.Write(Level.Trace, $"UsbRead timeout");
+                            break;
+
+                        default:
+                            // Undefined error;
+                            errorCode = (uint)Marshal.GetLastWin32Error();
+                            Logger.Write(Level.Trace, $"UsbRead wait error. WaitForSingleObject=[{result.ToString("X8")}] LastWin32Error=[{errorCode:X}]");
+                            break;
                     }
 
-                    taskCompletionSource = new TaskCompletionSource<uint>();
-
-                    Task.Factory.StartNew(() =>
-                    {
-                        try
-                        {
-                            result = WaitForSingleObject(eventHandle, readTimeout);
-
-                            if (cancelToken.IsCancellationRequested)
-                            {
-                                CancelIoEx(device.ReadHandleToUSBDevice, ref overlapped);
-                                Logger.Write(Level.Trace, "UsbRead overlapped cancelled 2");
-                                taskCompletionSource.SetResult(0u);
-                                return;
-                            }
-
-                            uint errorCode;
-                            switch (result)
-                            {
-                                case WAIT_OBJECT_0:
-                                    // Success;
-                                    if (GetOverlappedResult(device.ReadHandleToUSBDevice, ref overlapped, ref bytesRead, false))
-                                    {
-                                        Marshal.Copy(pINBuffer, buffer, 0, (int)bytesRead);    //Copy over the data from unmanged memory into the managed byte[] INBuffer
-                                        if (bytesRead == 0)
-                                            Logger.Write(Level.Trace, $"UsbRead overlapped {bytesRead} bytes read");
-                                        taskCompletionSource.SetResult(bytesRead);
-                                        return;
-                                    }
-                                    errorCode = (uint)Marshal.GetLastWin32Error();
-                                    Logger.Write(Level.Trace, $"UsbW. LastWin32Error=[{errorCode.ToString("X8")}]");
-                                    break;
-
-                                case WAIT_TIMEOUT:
-                                    // Timeout error;
-                                    Logger.Write(Level.Trace, $"UsbRead timeout");
-                                    break;
-
-                                default:
-                                    // Undefined error;
-                                    errorCode = (uint)Marshal.GetLastWin32Error();
-                                    Logger.Write(Level.Trace, $"UsbRead undefined error. WaitForSingleObject=[{result.ToString("X8")}] LastWin32Error=[{errorCode.ToString("X8")}]");
-                                    break;
-                            }
-
-                            CancelIoEx(device.ReadHandleToUSBDevice, ref overlapped);
-                            taskCompletionSource.SetResult(0u);
-                        }
-                        catch (Exception ex)
-                        {
-                            Logger.Write(Level.Trace, $"Undefined UsbRead thread Error: {ex.Message}");
-                            CancelIoEx(device.ReadHandleToUSBDevice, ref overlapped);
-                            taskCompletionSource.SetException(ex);
-                        }
-                        finally
-                        {
-                            eventHandle.Dispose();
-                            Marshal.FreeHGlobal(pINBuffer);
-                        }
-                    }, cancelToken.Token, TaskCreationOptions.None, TaskScheduler.Default);
-
-                    return taskCompletionSource.Task;
+                    CancelIoEx(device.ReadHandleToUSBDevice, ref overlapped);
+                    WaitForSingleObject(eventHandle, 250);
+                    return Task.FromResult(0u);
                 }
                 else
                 {
-                    throw new Exception($"Unknown WIN32 Error: {lastError:X}");
+                    throw new Exception($"UsbRead readFile error: {lastError:X}");
                 }
             }
             catch (Exception e)
@@ -387,13 +294,10 @@ namespace ArchonLightingSystem.UsbApplicationV2
             }
             finally
             {
-                if (taskCompletionSource == null)
+                eventHandle?.Close();
+                if (pINBuffer != IntPtr.Zero)
                 {
-                    eventHandle?.Close();
-                    if (pINBuffer != IntPtr.Zero)
-                    {
-                        Marshal.FreeHGlobal(pINBuffer);
-                    }
+                    Marshal.FreeHGlobal(pINBuffer);
                 }
             }
 
