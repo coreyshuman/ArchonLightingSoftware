@@ -12,6 +12,7 @@ using ArchonLightingSystem.Forms;
 using ArchonLightingSystem.WindowsSystem.Startup;
 using ArchonLightingSystem.UsbApplicationV2;
 using System.Threading;
+using System.Drawing;
 
 namespace ArchonLightingSystem
 {
@@ -31,11 +32,11 @@ namespace ArchonLightingSystem
         private StartupManager startupManager = new StartupManager();
         private ServiceManager serviceManager = new ServiceManager();
 
-        UsbApplicationV2.UsbControllerManager usbControllerManager;
+        UsbControllerManager usbControllerManager = new UsbControllerManager();
 
         private List<ControllerComponent> deviceComponents = new List<ControllerComponent>();
         private DragWindowSupport dragSupport = new DragWindowSupport();
-        private UserSettingsManager settingsManager = new UserSettingsManager();
+        private UserProfileManager userProfileManager = null;
         private bool isHidden = false;
         private bool allowVisible = false;
         private bool allowClose = false;
@@ -64,8 +65,6 @@ namespace ArchonLightingSystem
                 Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
-            // debug testing new manager
-            usbControllerManager = new UsbControllerManager();
             usbControllerManager.Register(Handle, Definitions.ApplicationVid, Definitions.ApplicationPid);
             usbControllerManager.UsbControllerEvent += UsbControllerManger_UsbControllerEvent;
 
@@ -85,6 +84,8 @@ namespace ArchonLightingSystem
             };
 
             serviceManager.StartServices(usbControllerManager, hardwareManager);
+
+            userProfileManager = new UserProfileManager(usbControllerManager);
 
             allowVisible = !startInBackground;
             isHidden = startInBackground;
@@ -110,6 +111,12 @@ namespace ArchonLightingSystem
             AppTheme.ApplyThemeToForm(this);
 
             lbl_Disconnected.ForeColor = AppTheme.PrimaryLowLight;
+
+            btn_Profile1.BackColor = usbControllerManager.GetUserSettings().UserProfiles[0].ProfileColor;
+            btn_Profile2.BackColor = usbControllerManager.GetUserSettings().UserProfiles[1].ProfileColor;
+            btn_Profile3.BackColor = usbControllerManager.GetUserSettings().UserProfiles[2].ProfileColor;
+            btn_Profile4.BackColor = usbControllerManager.GetUserSettings().UserProfiles[3].ProfileColor;
+            btn_Profile5.BackColor = usbControllerManager.GetUserSettings().UserProfiles[4].ProfileColor;
         }
         #endregion
 
@@ -564,8 +571,47 @@ namespace ArchonLightingSystem
             statsConfigForm.Focus();
         }
 
-        #endregion
+        private void btn_Profile1_Click(object sender, EventArgs e)
+        {
+            btn_Profile1.BackColor = HandleProfileButtonClick(0);
+        }
 
+        private void btn_Profile2_Click(object sender, EventArgs e)
+        {
+            btn_Profile2.BackColor = HandleProfileButtonClick(1);
+        }
+
+        private void btn_Profile3_Click(object sender, EventArgs e)
+        {
+            btn_Profile3.BackColor = HandleProfileButtonClick(2);
+        }
+
+        private void btn_Profile4_Click(object sender, EventArgs e)
+        {
+            btn_Profile4.BackColor = HandleProfileButtonClick(3);
+        }
+
+        private void btn_Profile5_Click(object sender, EventArgs e)
+        {
+            btn_Profile5.BackColor = HandleProfileButtonClick(4);
+        }
+
+        private Color HandleProfileButtonClick(int profileNumber)
+        {
+            if(Form.ModifierKeys == Keys.Control)
+            {
+                ColorDialog colorDialog = new ColorDialog();
+                colorDialog.Color = usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor;
+                colorDialog.ShowDialog();
+                usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor = colorDialog.Color;
+                userProfileManager.SaveProfile(profileNumber);
+            } else {
+                userProfileManager.ApplyProfile(profileNumber);
+                UpdateFormData(usbControllerDevice);
+            }
+            return usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor;
+        }
+        #endregion
 
     }
 } 

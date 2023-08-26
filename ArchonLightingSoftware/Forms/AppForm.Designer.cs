@@ -87,6 +87,11 @@ namespace ArchonLightingSystem
             this.label3 = new System.Windows.Forms.Label();
             this.chk_AlertOnDisconnect = new System.Windows.Forms.CheckBox();
             this.lbl_Disconnected = new System.Windows.Forms.Label();
+            this.btn_Profile1 = new System.Windows.Forms.Button();
+            this.btn_Profile2 = new System.Windows.Forms.Button();
+            this.btn_Profile3 = new System.Windows.Forms.Button();
+            this.btn_Profile4 = new System.Windows.Forms.Button();
+            this.btn_Profile5 = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.trk_FanSpeed1)).BeginInit();
@@ -669,12 +674,82 @@ namespace ArchonLightingSystem
             this.lbl_Disconnected.TabIndex = 83;
             this.lbl_Disconnected.Text = "Disconnected";
             // 
+            // btn_Profile1
+            // 
+            this.btn_Profile1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Profile1.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Profile1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Profile1.Location = new System.Drawing.Point(873, 39);
+            this.btn_Profile1.Name = "btn_Profile1";
+            this.btn_Profile1.Size = new System.Drawing.Size(42, 37);
+            this.btn_Profile1.TabIndex = 84;
+            this.btn_Profile1.Text = "1";
+            this.btn_Profile1.UseVisualStyleBackColor = false;
+            this.btn_Profile1.Click += new System.EventHandler(this.btn_Profile1_Click);
+            // 
+            // btn_Profile2
+            // 
+            this.btn_Profile2.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Profile2.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Profile2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Profile2.Location = new System.Drawing.Point(921, 39);
+            this.btn_Profile2.Name = "btn_Profile2";
+            this.btn_Profile2.Size = new System.Drawing.Size(42, 37);
+            this.btn_Profile2.TabIndex = 85;
+            this.btn_Profile2.Text = "2";
+            this.btn_Profile2.UseVisualStyleBackColor = false;
+            this.btn_Profile2.Click += new System.EventHandler(this.btn_Profile2_Click);
+            // 
+            // btn_Profile3
+            // 
+            this.btn_Profile3.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Profile3.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Profile3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Profile3.Location = new System.Drawing.Point(969, 39);
+            this.btn_Profile3.Name = "btn_Profile3";
+            this.btn_Profile3.Size = new System.Drawing.Size(42, 37);
+            this.btn_Profile3.TabIndex = 86;
+            this.btn_Profile3.Text = "3";
+            this.btn_Profile3.UseVisualStyleBackColor = false;
+            this.btn_Profile3.Click += new System.EventHandler(this.btn_Profile3_Click);
+            // 
+            // btn_Profile4
+            // 
+            this.btn_Profile4.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Profile4.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Profile4.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Profile4.Location = new System.Drawing.Point(1017, 39);
+            this.btn_Profile4.Name = "btn_Profile4";
+            this.btn_Profile4.Size = new System.Drawing.Size(42, 37);
+            this.btn_Profile4.TabIndex = 87;
+            this.btn_Profile4.Text = "4";
+            this.btn_Profile4.UseVisualStyleBackColor = false;
+            this.btn_Profile4.Click += new System.EventHandler(this.btn_Profile4_Click);
+            // 
+            // btn_Profile5
+            // 
+            this.btn_Profile5.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(64)))), ((int)(((byte)(64)))), ((int)(((byte)(64)))));
+            this.btn_Profile5.FlatStyle = System.Windows.Forms.FlatStyle.Popup;
+            this.btn_Profile5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btn_Profile5.Location = new System.Drawing.Point(1065, 39);
+            this.btn_Profile5.Name = "btn_Profile5";
+            this.btn_Profile5.Size = new System.Drawing.Size(42, 37);
+            this.btn_Profile5.TabIndex = 88;
+            this.btn_Profile5.Text = "5";
+            this.btn_Profile5.UseVisualStyleBackColor = false;
+            this.btn_Profile5.Click += new System.EventHandler(this.btn_Profile5_Click);
+            // 
             // AppForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(32)))), ((int)(((byte)(32)))), ((int)(((byte)(32)))));
             this.ClientSize = new System.Drawing.Size(1331, 736);
+            this.Controls.Add(this.btn_Profile5);
+            this.Controls.Add(this.btn_Profile4);
+            this.Controls.Add(this.btn_Profile3);
+            this.Controls.Add(this.btn_Profile2);
+            this.Controls.Add(this.btn_Profile1);
             this.Controls.Add(this.lbl_Disconnected);
             this.Controls.Add(this.chk_AlertOnDisconnect);
             this.Controls.Add(this.label3);
@@ -769,6 +844,11 @@ namespace ArchonLightingSystem
         private System.Windows.Forms.ToolStripMenuItem statsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem showStatsToolStripMenuItem_ShowStats;
         private System.Windows.Forms.ToolStripMenuItem configToolStripMenuItem_StatsConfigure;
+        private System.Windows.Forms.Button btn_Profile1;
+        private System.Windows.Forms.Button btn_Profile2;
+        private System.Windows.Forms.Button btn_Profile3;
+        private System.Windows.Forms.Button btn_Profile4;
+        private System.Windows.Forms.Button btn_Profile5;
     }
 }
 

@@ -195,6 +195,11 @@ namespace ArchonLightingSystem.UsbApplicationV2
             return usbControllerInstances.Where(c => c.Address == deviceAddress).FirstOrDefault();
         }
 
+        public UserSettings GetUserSettings()
+        {
+            return userSettings;
+        }
+
         public void HandleWindowEvent(ref System.Windows.Forms.Message m)
         {
             usbDeviceManager.HandleWindowEvent(ref m);

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using ArchonLightingSystem.Common;
 using ArchonLightingSystem.Models;
 
@@ -84,6 +85,18 @@ namespace ArchonLightingSystem.Models
             }
 
             return Length;
+        }
+
+        public Color GetColor(int deviceIndex, int lightIndex)
+        {
+            return Color.FromArgb(Colors[deviceIndex, lightIndex * 3 + 1], Colors[deviceIndex, lightIndex * 3 + 0], Colors[deviceIndex, lightIndex * 3 + 2]);
+        }
+
+        public void SetColor(int deviceIndex, int lightIndex, Color color)
+        {
+            Colors[deviceIndex, lightIndex * 3 + 0] = color.G; 
+            Colors[deviceIndex, lightIndex * 3 + 1] = color.R;
+            Colors[deviceIndex, lightIndex * 3 + 2] = color.B;
         }
     }
 }

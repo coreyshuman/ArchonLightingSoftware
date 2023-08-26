@@ -142,6 +142,8 @@
     <Compile Include="Interfaces\IService.cs" />
     <Compile Include="Interfaces\IUsbDevice.cs" />
     <Compile Include="Models\CalculationMethods.cs" />
+    <Compile Include="Models\ColorXml.cs" />
+    <Compile Include="Models\UserProfiles.cs" />
     <Compile Include="Models\VersionXml.cs" />
     <Compile Include="OpenHardware\SensorUnits.cs" />
     <Compile Include="Services\ServiceBase.cs" />

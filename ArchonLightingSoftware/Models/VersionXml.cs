@@ -33,8 +33,10 @@ namespace ArchonLightingSystem.Models
             set
             {
                 Version temp;
-                Version.TryParse(value, out temp);
-                this.Version = temp;
+                if(Version.TryParse(value, out temp))
+                {
+                    this.Version = temp;
+                }
             }
         }
 

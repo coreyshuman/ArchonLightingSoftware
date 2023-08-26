@@ -26,7 +26,7 @@ namespace ArchonLightingSystem.Models
         public string Sensor { get; set; }
         public string SensorName { get; set; }
         public SensorType? SensorType { get; set; }
-        public List<string> IdentifierList { get; set; } = new List<string>();
+        public List<string> IdentifierList { get; } = new List<string>();
         public CalculationMethods.Methods CalculationMethod { get; set; }
         public List<int> FanCurveValues { get; set; } = new List<int>();
         public bool UseFanCurve { get; set; }
@@ -90,15 +90,17 @@ namespace ArchonLightingSystem.Models
             this.manager = manager;
         }
 
-        public void Validate()
+        public bool Validate()
         {
+            bool needSave = false;
+
             lock(FanCurveValues)
             {
                 if(FanCurveValues.Count != SensorUnits.RangeCount)
                 {
+                    needSave = true;
                     Logger.Write(Level.Debug, $"Settings Device {Index} curve out of range, setting default values.");
                     DefaultFanCurve();
-                    return;
                 }
 
                 for(int i = 0; i < FanCurveValues.Count; i++)
@@ -110,6 +112,7 @@ namespace ArchonLightingSystem.Models
 
             if(Sensor.IsNotNullOrEmpty() && !SensorType.HasValue)
             {
+                needSave = true;
                 SensorType = LibreHardwareMonitor.Hardware.SensorType.Temperature;
             }
 
@@ -125,9 +128,12 @@ namespace ArchonLightingSystem.Models
 
             if(!IdentifierList.Contains(Sensor))
             {
+                needSave = true;
                 IdentifierList.Add(Sensor);
                 IdentifierList.Reverse();
             }
+
+            return needSave;
         }
     }
 
@@ -180,8 +186,10 @@ namespace ArchonLightingSystem.Models
             this.userSettings = userSettings;
         }
 
-        public void Validate()
+        public bool Validate()
         {
+            bool needSave = false;
+
             lock(Devices)
             {
                 Devices.RemoveAll(d => d.Index >= DeviceControllerDefinitions.DevicePerController);
@@ -192,6 +200,7 @@ namespace ArchonLightingSystem.Models
                     int count = Devices.Where(d => d.Index == i).Count();
                     if (count == 0)
                     {
+                        needSave = true;
                         Logger.Write(Level.Debug, $"Settings Controller {Address} Device {i} adding default.");
                         Devices.Add(new DeviceSettings(i));
                     }
@@ -199,6 +208,7 @@ namespace ArchonLightingSystem.Models
                     {
                         while(Devices.Where(d => d.Index == i).Count() > 1)
                         {
+                            needSave = true;
                             Logger.Write(Level.Debug, $"Settings Controller {Address} Device {i} removing duplicate.");
                             Devices.Remove(Devices.Where(d => d.Index == i).Last());
                         }
@@ -206,16 +216,21 @@ namespace ArchonLightingSystem.Models
                     Devices.Where(d => d.Index == i).First().Validate();
                 }
             }
+
+            return needSave;
         }
     }
 
     [Serializable]
     public class UserSettings
     {
+        public static int MaxUserProfiles { get; } = 5;
+
         [XmlIgnore]
         private UserSettingsManager manager = null;
 
-        public List<ControllerSettings> Controllers { get; private set; } = new List<ControllerSettings>();
+        public List<ControllerSettings> Controllers { get; } = new List<ControllerSettings>();
+        public List<UserProfile> UserProfiles { get; } = new List<UserProfile>();
 
         public string ComputerName { get; set; } = "XxX";
         public VersionXml SoftwareVersion { get; set; } = new Version(0,0);
@@ -279,8 +294,10 @@ namespace ArchonLightingSystem.Models
             Controllers.ForEach(c => c.RegisterParent(this));
         }
 
-        public void Validate()
+        public bool Validate()
         {
+            bool needSave = false;
+
             lock (Controllers)
             {
                 Controllers.RemoveAll(d => d.Address >= DeviceControllerDefinitions.MaxControllers);
@@ -291,6 +308,7 @@ namespace ArchonLightingSystem.Models
                     int count = Controllers.Where(d => d.Address == i).Count();
                     if (count == 0)
                     {
+                        needSave = true;
                         Logger.Write(Level.Debug, $"Settings Controller {i} adding default.");
                         Controllers.Add(new ControllerSettings(i));
                     }
@@ -298,13 +316,43 @@ namespace ArchonLightingSystem.Models
                     {
                         while (Controllers.Where(d => d.Address == i).Count() > 1)
                         {
+                            needSave = true;
                             Logger.Write(Level.Debug, $"Settings Controller {i} removing duplicate.");
                             Controllers.Remove(Controllers.Where(d => d.Address == i).Last());
                         }
                     }
-                    Controllers.Where(d => d.Address == i).LastOrDefault().Validate();
+                    needSave |= Controllers.Where(d => d.Address == i).First().Validate();
                 }
             }
+
+            lock (UserProfiles)
+            {
+                UserProfiles.RemoveAll(d => d.Index >= MaxUserProfiles);
+                UserProfiles.RemoveAll(d => d.Index < 0);
+
+                for (int i = 0; i < MaxUserProfiles; i++)
+                {
+                    int count = UserProfiles.Where(d => d.Index == i).Count();
+                    if (count == 0)
+                    {
+                        needSave = true;
+                        Logger.Write(Level.Debug, $"Settings User Profile {i} adding default.");
+                        UserProfiles.Add(new UserProfile(i));
+                    }
+                    else if (count > 1)
+                    {
+                        while (UserProfiles.Where(d => d.Index == i).Count() > 1)
+                        {
+                            needSave = true;
+                            Logger.Write(Level.Debug, $"Settings User Profile {i} removing duplicate.");
+                            UserProfiles.Remove(UserProfiles.Where(d => d.Index == i).Last());
+                        }
+                    }
+                    needSave |= UserProfiles.Where(d => d.Index == i).First().Validate();
+                }
+            }
+
+            return needSave;
         }
     }
 
@@ -338,15 +386,38 @@ namespace ArchonLightingSystem.Models
                 {
                     var settings = (UserSettings)xs.Deserialize(sr);
                     sr.Close();
-                    settings.Validate();
+
+                    bool needSave = false;
+                    needSave |= settings.Validate();
                     settings.RegisterManager(this);
-                    LoadPlatformVariables(settings);
+                    needSave |= LoadPlatformVariables(settings);
+
+                    if(needSave)
+                    {
+                        SaveSettings(settings);
+                    }
+
                     return settings;
                 }
             }
             catch (Exception ex)
             {
                 Logger.Write(Level.Error, $"Failed to open settings file: {ex.Message} {ex.InnerException?.Message}");
+                // try to copy corrupted file to backup
+                try
+                {
+                    using(var sr = File.OpenRead(UserSettingsFilePath))
+                    {
+                        using(var sw = File.OpenWrite(UserSettingsFilePath + ".bak"))
+                        {
+                            sw.SetLength(0);
+                            sr.CopyTo(sw);
+                            sr.Close();
+                            sw.Close();
+                        }
+                    }
+                }
+                catch { }
             }
             return GetDefaultSettings();
         }
@@ -357,18 +428,20 @@ namespace ArchonLightingSystem.Models
             settings.Validate();
             settings.RegisterManager(this);
             LoadPlatformVariables(settings);
+            SaveSettings(settings);
             return settings;
         }
 
-        private void LoadPlatformVariables(UserSettings settings)
+        private bool LoadPlatformVariables(UserSettings settings)
         {
-            bool needsSave = false;
+            bool needSave = false;
+
             if(settings.SoftwareVersion < Definitions.SoftwareVersion)
             {
                 // todo can run migrations on settings file
                 Logger.Write(Level.Debug, $"Update settings software version from {settings.SoftwareVersion} to {Definitions.SoftwareVersion}");
                 settings.SoftwareVersion = Definitions.SoftwareVersion;
-                needsSave = true;
+                needSave = true;
             }
             Logger.Write(Level.Information, $"Software Version: {settings.SoftwareVersion}");
 
@@ -376,7 +449,7 @@ namespace ArchonLightingSystem.Models
             {
                 Logger.Write(Level.Debug, $"Update settings computer name from {settings.ComputerName} to {System.Environment.MachineName}");
                 settings.ComputerName= System.Environment.MachineName;
-                needsSave = true;
+                needSave = true;
             }
             Logger.Write(Level.Information, $"Computer Name: {settings.ComputerName}");
 
@@ -392,7 +465,7 @@ namespace ArchonLightingSystem.Models
                     {
                         Logger.Write(Level.Debug, $"Update settings firmware version from {settings.LatestFirmwareVersion} to {firmwareVer}");
                         settings.LatestFirmwareVersion = firmwareVer;
-                        needsSave = true;
+                        needSave = true;
                     }
                     Logger.Write(Level.Information, $"Latest firmware version: {settings.LatestFirmwareVersion}");
                 }
@@ -403,10 +476,8 @@ namespace ArchonLightingSystem.Models
                 settings.LatestFirmwareVersion = new Version(0,0);
             }
 
-            if(needsSave)
-            {
-                SaveSettings(settings);
-            }
+            return needSave;
+            
         }
     }
 }
