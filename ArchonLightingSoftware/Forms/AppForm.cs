@@ -13,6 +13,7 @@ using ArchonLightingSystem.WindowsSystem.Startup;
 using ArchonLightingSystem.UsbApplicationV2;
 using System.Threading;
 using System.Drawing;
+using ArchonLightingSystem.WindowsSystem;
 
 namespace ArchonLightingSystem
 {
@@ -45,6 +46,8 @@ namespace ArchonLightingSystem
         private SemaphoreSlim formUpdateSemaphore = new SemaphoreSlim(1,1);
 
         private UsbControllerDevice usbControllerDevice = null;
+
+        private GlobalKeyboardHook globalKeyboardHook = null;
 
         #region initializers
         public unsafe AppForm(bool startInBackground)
@@ -82,6 +85,13 @@ namespace ArchonLightingSystem
             {
                 Logger.Write(Level.Trace, "Power mode changed");
             };
+
+            globalKeyboardHook = new GlobalKeyboardHook();
+            globalKeyboardHook.RegisterKeyboardHook(new List<Keys> { Keys.LControlKey, Keys.LShiftKey, Keys.LMenu, Keys.G },
+                () =>
+                {
+                    toggleHDRToolStripMenuItem_Click(this, new EventArgs());
+                });
 
             serviceManager.StartServices(usbControllerManager, hardwareManager);
 
@@ -531,6 +541,11 @@ namespace ArchonLightingSystem
             this.Close();
         }
 
+        private void toggleHDRToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            HdrManager.SetHdrEnabled(!HdrManager.IsHdrEnabled());
+        }
+
         private void disableNotificationToolStripMenuItem_CheckedChanged(object sender, EventArgs e)
         {
             var notifMenuItem = (ToolStripMenuItem)sender;
@@ -613,5 +628,6 @@ namespace ArchonLightingSystem
         }
         #endregion
 
+        
     }
 } 

@@ -87,6 +87,9 @@
   <PropertyGroup>
     <ApplicationIcon>assets\archon.ico</ApplicationIcon>
   </PropertyGroup>
+  <PropertyGroup>
+    <ApplicationManifest>Properties\app.manifest</ApplicationManifest>
+  </PropertyGroup>
   <ItemGroup>
     <Reference Include="Microsoft.CSharp" />
     <Reference Include="Microsoft.VisualBasic" />
@@ -229,6 +232,15 @@
     <Compile Include="UsbApplicationV2\UsbDeviceManager.cs" />
     <Compile Include="UsbApplicationV2\UsbReadWrite.cs" />
     <Compile Include="UsbApplicationV2\UsbSystemDefinitions.cs" />
+    <Compile Include="WindowsSystem\GlobalKeyboardHook.cs" />
+    <Compile Include="WindowsSystem\HdrManager.cs" />
+    <Compile Include="WindowsSystem\Native\Kernel32.cs" />
+    <Compile Include="WindowsSystem\Native\User32.cs" />
+    <Compile Include="WindowsSystem\Native\WinDef.cs" />
+    <Compile Include="WindowsSystem\Native\WinError.cs" />
+    <Compile Include="WindowsSystem\Native\Wingdi.cs" />
+    <Compile Include="WindowsSystem\Native\Winnt.cs" />
+    <Compile Include="WindowsSystem\Native\WinUser.cs" />
     <Compile Include="WindowsSystem\Startup\StartupManager.cs" />
     <Compile Include="WindowsSystem\Startup\TaskScheduler.cs" />
     <Compile Include="OpenHardware\TypeNode.cs" />
@@ -249,6 +261,7 @@
       <DependentUpon>SubformBase.cs</DependentUpon>
     </Compile>
     <Compile Include="Common\Util.cs" />
+    <Compile Include="WindowsSystem\WindowsSystem.cs" />
     <EmbeddedResource Include="Components\GaugeTacho.resx">
       <DependentUpon>GaugeTacho.cs</DependentUpon>
     </EmbeddedResource>
