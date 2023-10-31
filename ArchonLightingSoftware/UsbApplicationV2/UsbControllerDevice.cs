@@ -45,7 +45,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
             ReadWriteThread = new BackgroundWorker();
             ReadWriteThread.WorkerReportsProgress = true;
             ReadWriteThread.DoWork += new DoWorkEventHandler(ReadWriteThread_DoWork);
-            //ReadWriteThread.RunWorkerAsync();
 
             IsDisconnected = true;
             IsConnected = false;
@@ -78,7 +77,8 @@ namespace ArchonLightingSystem.UsbApplicationV2
             IsDisconnected = false;
             hasConnected = true;
             IsConnected = true;
-            ReadWriteThread.RunWorkerAsync();
+            if(!ReadWriteThread.IsBusy)
+                ReadWriteThread.RunWorkerAsync();
         }
 
         private async void ReadWriteThread_DoWork(object sender, DoWorkEventArgs e)
@@ -102,15 +102,9 @@ namespace ArchonLightingSystem.UsbApplicationV2
                     }
 
                 }
-                catch (Exception exc)
+                catch (Exception ex)
                 {
-                    /*
-                    ControllerErrorEvent?.Invoke(this, new UsbControllerErrorEventArgs
-                    {
-                        Message = exc.Message
-                    });
-                    */
-                    Trace.WriteLine($"ReadWriteThread Error: {exc.ToString()}");
+                    Trace.WriteLine($"ReadWriteThread Error: {ex.Message}");
 
                     // exponential retry backoff on consecutive errors
                     consecutiveErrors++;

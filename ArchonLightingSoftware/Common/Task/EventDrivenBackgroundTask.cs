@@ -14,6 +14,8 @@ namespace ArchonLightingSystem.Common
         readonly AutoResetEvent autoResetEvent = new AutoResetEvent(false);
         private bool disposed = false;
 
+        public bool Disposed { get { return disposed; } }
+
         public Task StartTask(Func<CancellationToken, Task<BackgroundTaskResponse>> recurringAction)
         {
             if (recurringAction == null) throw new ArgumentException(nameof(recurringAction));

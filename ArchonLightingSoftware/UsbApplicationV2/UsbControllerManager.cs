@@ -29,7 +29,6 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private object disconnectedDevicesLock = new object();
         private List<UsbDevice> pendingRetryDevices = new List<UsbDevice>();
         private SemaphoreSlim pendingSemaphore = new SemaphoreSlim(1, 1);
-        private Task testTask= null;
 
         private async Task<BackgroundTaskResponse> processPendingDevices(CancellationToken token)
         {
@@ -121,7 +120,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
 
             isRegistered = true;
 
-            Logger.Write(Level.Debug, $"Register UsbControllerManager vid={vid} pid={pid}");
+            Logger.Write(Level.Trace, $"Register UsbControllerManager vid={vid} pid={pid}");
 
             usbEventBackgroundTask = new EventDrivenBackgroundTask();
             periodicBackgroundTask = new PeriodicBackgroundTask(5000);
@@ -130,7 +129,7 @@ namespace ArchonLightingSystem.UsbApplicationV2
             usbDeviceManager.RegisterEventHandler(handle);
             usbDeviceManager.RegisterUsbDevice(vid, pid);
 
-            testTask = usbEventBackgroundTask.StartTask(processPendingDevices);
+            usbEventBackgroundTask.StartTask(processPendingDevices);
             periodicBackgroundTask.StartTask(processPeriodicTasks);
         }
 
@@ -142,7 +141,22 @@ namespace ArchonLightingSystem.UsbApplicationV2
         private Task<BackgroundTaskResponse> processPeriodicTasks(CancellationToken cancellationToken)
         {
             // trigger usb event task to perform connection retries
-            usbEventBackgroundTask.NextStep();
+            // if task failed, attempt to reinitialize
+            try
+            {
+                if (usbEventBackgroundTask.Disposed)
+                {
+                    Logger.Write(Level.Debug, $"Attempt restart UsbControllerManager");
+                    usbEventBackgroundTask = new EventDrivenBackgroundTask();
+                    usbEventBackgroundTask.StartTask(processPendingDevices);
+                }
+                    
+                usbEventBackgroundTask.NextStep();
+            }
+            catch (Exception ex)
+            {
+                Logger.Write(Level.Error, $"Fatal error, background task died: ${ex.Message}");
+            }
 
             // perform health checks
             if (!suppressErrors)
