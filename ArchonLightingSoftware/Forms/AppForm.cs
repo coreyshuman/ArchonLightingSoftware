@@ -86,12 +86,7 @@ namespace ArchonLightingSystem
                 Logger.Write(Level.Trace, "Power mode changed");
             };
 
-            globalKeyboardHook = new GlobalKeyboardHook();
-            globalKeyboardHook.RegisterKeyboardHook(new List<Keys> { Keys.LControlKey, Keys.LShiftKey, Keys.LMenu, Keys.G },
-                () =>
-                {
-                    toggleHDRToolStripMenuItem_Click(this, new EventArgs());
-                });
+            InitializeKeybinds();
 
             serviceManager.StartServices(usbControllerManager, hardwareManager);
 
@@ -127,6 +122,25 @@ namespace ArchonLightingSystem
             btn_Profile3.BackColor = usbControllerManager.GetUserSettings().UserProfiles[2].ProfileColor;
             btn_Profile4.BackColor = usbControllerManager.GetUserSettings().UserProfiles[3].ProfileColor;
             btn_Profile5.BackColor = usbControllerManager.GetUserSettings().UserProfiles[4].ProfileColor;
+        }
+
+        void InitializeKeybinds()
+        {
+            globalKeyboardHook = new GlobalKeyboardHook();
+            globalKeyboardHook.RegisterKeyboardHook(new List<Keys> { Keys.LControlKey, Keys.LShiftKey, Keys.LMenu, Keys.G },
+                () =>
+                {
+                    toggleHDRToolStripMenuItem_Click(this, new EventArgs());
+                });
+
+            for (int i = 0; i < 5; i++)
+            {
+                int keyIndex = i;
+                globalKeyboardHook.RegisterKeyboardHook(
+                    new List<Keys> { Keys.LControlKey, Keys.LShiftKey, Keys.LMenu, (Keys.D1 + keyIndex) },
+                    () => ApplyProfile(keyIndex)
+                );
+            }
         }
         #endregion
 
@@ -611,20 +625,25 @@ namespace ArchonLightingSystem
             btn_Profile5.BackColor = HandleProfileButtonClick(4);
         }
 
-        private Color HandleProfileButtonClick(int profileNumber)
+        private Color HandleProfileButtonClick(int profileIndex)
         {
             if(Form.ModifierKeys == Keys.Control)
             {
                 ColorDialog colorDialog = new ColorDialog();
-                colorDialog.Color = usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor;
+                colorDialog.Color = usbControllerManager.GetUserSettings().UserProfiles[profileIndex].ProfileColor;
                 colorDialog.ShowDialog();
-                usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor = colorDialog.Color;
-                userProfileManager.SaveProfile(profileNumber);
+                usbControllerManager.GetUserSettings().UserProfiles[profileIndex].ProfileColor = colorDialog.Color;
+                userProfileManager.SaveProfile(profileIndex);
             } else {
-                userProfileManager.ApplyProfile(profileNumber);
-                UpdateFormData(usbControllerDevice);
+                ApplyProfile(profileIndex);
             }
-            return usbControllerManager.GetUserSettings().UserProfiles[profileNumber].ProfileColor;
+            return usbControllerManager.GetUserSettings().UserProfiles[profileIndex].ProfileColor;
+        }
+
+        private void ApplyProfile(int profileIndex)
+        {
+            userProfileManager.ApplyProfile(profileIndex);
+            UpdateFormData(usbControllerDevice);
         }
         #endregion
 
