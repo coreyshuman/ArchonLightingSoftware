@@ -69,6 +69,13 @@ namespace ArchonLightingSystem.UsbApplicationV2
                         controllerInstance.AppData.UpdateConfigPending = false;
                     }
 
+                    if(controllerInstance.AppData.CommitConfigPending)
+                    {
+                        await SendCommitConfigCmd(controllerInstance.UsbDevice, cancelToken);
+                        controllerInstance.AppData.CommitConfigPending = false;
+                        Logger.Write(Level.Information, $"Device Address {controllerInstance.Address} config updated.");
+                    }
+
                     if (controllerInstance.AppData.SendTimePending)
                     {
                         controllerInstance.AppData.SendTimePending = false;

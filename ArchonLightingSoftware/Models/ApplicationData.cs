@@ -15,7 +15,7 @@ namespace ArchonLightingSystem.Models
         public bool ReadConfigPending { get; set; }
         public bool DefaultConfigPending { get; set; }
         public bool UpdateConfigPending { get; set; }
-        public bool WriteConfigPending { get; set; }
+        public bool CommitConfigPending { get; set; }
         public bool ReadDebugPending { get; set; }
         public bool ResetToBootloaderPending { get; set; }
         public bool UpdateFanSpeedPending { get; set; }
@@ -38,7 +38,7 @@ namespace ArchonLightingSystem.Models
             ReadDebugPending = false;
             DefaultConfigPending = false;
             UpdateConfigPending = false;
-            WriteConfigPending = false;
+            CommitConfigPending = false;
             ResetToBootloaderPending = false;
             UpdateFanSpeedPending = false;
             WriteLedFrame = false;

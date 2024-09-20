@@ -64,7 +64,28 @@ namespace ArchonLightingSystem
             hardwareManager = new SensorMonitorManager();
             if (Settings.Default.MainWindowLocation.X >= 0)
             {
-                this.Location = Settings.Default.MainWindowLocation;
+                var screen = Screen.FromControl(this);
+                var x = Settings.Default.MainWindowLocation.X;
+                var y = Settings.Default.MainWindowLocation.Y;
+                if(x > screen.Bounds.Width - this.Width)
+                {
+                    x = screen.Bounds.Width - this.Width;
+                }
+                if(x < 0)
+                {
+                    x = 0;
+                }
+                if(y < 0)
+                {
+                    y = 0;
+                }
+
+                if(y > screen.Bounds.Height - this.Height)
+                {
+                    x = screen.Bounds.Height - this.Height;
+                }
+                this.Left = x;
+                this.Top = y;
                 Logger.Write(Level.Trace, $"Window location setting: {this.Location}");
             }
 
@@ -369,7 +390,7 @@ namespace ArchonLightingSystem
 
         private void btn_SaveConfig_Click(object sender, EventArgs e)
         {
-            usbControllerDevice.AppData.WriteConfigPending = true;
+            usbControllerDevice.AppData.CommitConfigPending = true;
         }
 
         private void cbo_DeviceAddress_SelectedIndexChanged(object sender, EventArgs e)
